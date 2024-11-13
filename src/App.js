@@ -1,5 +1,7 @@
+import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+import Map from './Map';
 
 function App() {
   return (
@@ -9,6 +11,12 @@ function App() {
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>
+        <p>
+          by Derry
+          Tis is fast
+        </p>
+        
+      <Map />
         <a
           className="App-link"
           href="https://reactjs.org"
