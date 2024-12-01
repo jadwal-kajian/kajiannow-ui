@@ -69,7 +69,16 @@ function GoogleMap({ locations }) {
         });
 
         marker.addListener('click', () => {
-          window.open(location.gmaps_url, '_blank');
+          const confirmOpen = window.confirm(
+            `Topic: ${location.topic}\n` +
+            `Time: ${location.time_start} - ${location.time_end}\n` +
+            `Location: ${location.loc_name}\n` +
+            `Speaker: ${location.speaker}\n\n` +
+            `Do you want to open this place in Google Maps?`
+          );
+          if (confirmOpen) {
+            window.open(location.gmaps_url, '_blank');
+          }
         });
       });
     }
