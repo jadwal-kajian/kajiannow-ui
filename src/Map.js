@@ -1,9 +1,18 @@
 // GoogleMap.js
 /* global google */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 
-function GoogleMap({ locations }) {
+const GoogleMap = forwardRef(({ locations }, ref) => {
   const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    setCenter: (coords) => {
+      if (mapInstance.current) {
+        mapInstance.current.setCenter(coords);
+      }
+    }
+  }));
 
   useEffect(() => {
     async function initMap() {
@@ -15,6 +24,8 @@ function GoogleMap({ locations }) {
         zoom: 12,
         mapId: "4504f8b37365c3d0",
       });
+
+      mapInstance.current = map;
 
       locations.forEach(location => {
         const markerContent = document.createElement('div');
@@ -89,7 +100,9 @@ function GoogleMap({ locations }) {
     initMap();
   }, [locations]);
 
-  return <div ref={mapRef} style={{ width: '100%', height: '500px' }} />;
-}
+  return (
+    <div ref={mapRef} style={{ width: '100%', height: '500px' }} />
+  );
+});
 
 export default GoogleMap;
