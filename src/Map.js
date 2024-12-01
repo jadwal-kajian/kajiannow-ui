@@ -4,7 +4,9 @@ import React, { useEffect, useRef } from 'react';
 
 function GoogleMap() {
   const mapRef = useRef(null);
-  const position = { lat: 37.4239163, lng: -122.0947209 };
+//   const position = { lat: 37.4239163, lng: -122.0947209 };
+//   Change to jakarta
+  const position = { lat: -6.2088, lng: 106.8456 };
 
   useEffect(() => {
     async function initMap() {
@@ -22,7 +24,9 @@ function GoogleMap() {
       markerContent.innerHTML = `
         <div style="position: relative; display: inline-block;">
           <div style="background-color: #fc0303; color: white; padding: 5px 10px; border-radius: 5px;">
-            Kajian Keluarga 10.00 - 12.00 WIB
+            "Menggapai Jannah dengan Ilmu"
+            </br>
+            10.00 - 12.00 WIB
           </div>
           <div style="
             visibility: hidden;
@@ -38,7 +42,7 @@ function GoogleMap() {
             white-space: nowrap;
             margin-bottom: 10px;
           " class="marker-hover-text">
-            Ustadz Syafiq Basalamah
+            Masjid Al Aqsha - Ustadz Syafiq Basalamah
           </div>
         </div>
       `;
