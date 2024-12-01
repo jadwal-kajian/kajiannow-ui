@@ -20,17 +20,22 @@ function GoogleMap({ locations }) {
         const markerContent = document.createElement('div');
         markerContent.innerHTML = `
           <div style="position: relative; display: inline-block;">
-            <div style="background-color: #fc0303; color: white; padding: 5px 10px; border-radius: 5px;">
-              ${location.topic}
-              </br>
-              ${location.time_start} - ${location.time_end}
-            </div>
+            <div style="
+              width: 10px;
+              height: 10px;
+              background-color: red;
+              border-radius: 50%;
+              position: absolute;
+              bottom: 0;
+              left: 50%;
+              transform: translateX(-50%);
+              z-index: 1;
+            "></div>
             <div style="
               visibility: hidden;
-              background-color: black;
-              color: #fff;
-              text-align: center;
-              padding: 5px;
+              background-color: #fc0303;
+              color: white;
+              padding: 5px 10px;
               border-radius: 5px;
               position: absolute;
               bottom: 100%;
@@ -38,7 +43,12 @@ function GoogleMap({ locations }) {
               transform: translateX(-50%);
               white-space: nowrap;
               margin-bottom: 10px;
+              z-index: 2;
             " class="marker-hover-text">
+              ${location.topic}
+              </br>
+              ${location.time_start} - ${location.time_end}
+              </br>
               ${location.loc_name} - ${location.speaker}
             </div>
           </div>
