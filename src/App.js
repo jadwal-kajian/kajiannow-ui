@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import Map from './Map';
 
 function App() {
   const [data, setData] = useState([]);
+  const mapRef = useRef(null);
 
   const fetchData = async () => {
     try {
@@ -23,6 +24,24 @@ function App() {
     fetchData();
   }, []);
 
+  const handleSetCenter = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          if (mapRef.current) {
+            mapRef.current.setCenter({ lat: latitude, lng: longitude });
+          }
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  };
+
   return (
     <div className="App">
       <header className="App-header">
@@ -30,7 +49,9 @@ function App() {
         KajianNow!
         <br/>Jadwal Kajian Sunnah Terupdate Setiap Hari
         </p>
-        <Map locations={data} />
+        <button onClick={handleSetCenter}>Posisikan saya di tengah peta</button>
+        <br/>
+        <Map locations={data} ref={mapRef} />
 {/*         
         <button onClick={fetchData}>Get JSON</button>
         <textarea
