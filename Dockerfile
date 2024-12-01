@@ -11,7 +11,7 @@ COPY package*.json ./
 RUN npm install
 
 # Add environment variable for the API key
-ENV REACT_APP_MAP_API_KEY=REDACTED_GOOGLE_MAPS_KEY
+ENV VITE_GOOGLE_MAPS_API_KEY=REDACTED_GOOGLE_MAPS_KEY
 
 # Copy the rest of the application code
 COPY . .
@@ -23,7 +23,8 @@ RUN npm run build
 FROM nginx:alpine
 
 # Copy the built application from the previous stage
-COPY --from=0 /app/build /usr/share/nginx/html
+# COPY --from=0 /app/build /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
 # Expose port 80
 EXPOSE 80
