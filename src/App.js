@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import Map from './Map';
 
@@ -8,7 +7,7 @@ function App() {
 
   const fetchData = async () => {
     try {
-      const response = await fetch('http://arm.derrylab.com:9090/schedule', {
+      const response = await fetch('https://kajian-api.derrylab.com/schedule', {
         headers: {
           'accept': 'application/json'
         }
@@ -27,20 +26,11 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
         <p>
         KajianNow!
-        <br/>by Derry Pratama
+        <br/>by derrylab
         </p>
         <Map locations={data} />
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
         <button onClick={fetchData}>Get JSON</button>
         <textarea
           value={JSON.stringify(data, null, 2)}
@@ -48,6 +38,9 @@ function App() {
           rows="10"
           cols="50"
         />
+        <p>
+          &copy; 2024 <a href="https://derrylab.com" target="_blank" rel="noopener noreferrer">derrylab.com</a>. All rights reserved.
+        </p>
       </header>
     </div>
   );
