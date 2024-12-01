@@ -10,10 +10,13 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
+# Add environment variable for the API key
+ENV REACT_APP_MAP_API_KEY=REDACTED_GOOGLE_MAPS_API_KEY
+
 # Copy the rest of the application code
 COPY . .
 
-# Build the React application
+# Ensure the environment variable is available during the build
 RUN npm run build
 
 # Use an official Nginx image to serve the built application
