@@ -2,7 +2,7 @@
 /* global google */
 import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 
-const GoogleMap = forwardRef(({ locations }, ref) => {
+const GoogleMap = forwardRef(({ locations, showAllInfo }, ref) => {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
 
@@ -43,7 +43,7 @@ const GoogleMap = forwardRef(({ locations }, ref) => {
               z-index: 1;
             "></div>
             <div style="
-              visibility: hidden;
+              visibility: ${showAllInfo ? 'visible' : 'hidden'};
               background-color: #fc0303;
               color: white;
               padding: 5px 10px;
@@ -68,11 +68,15 @@ const GoogleMap = forwardRef(({ locations }, ref) => {
         `;
 
         markerContent.addEventListener('mouseenter', () => {
-          markerContent.querySelector('.marker-hover-text').style.visibility = 'visible';
+          if (!showAllInfo) {
+            markerContent.querySelector('.marker-hover-text').style.visibility = 'visible';
+          }
         });
 
         markerContent.addEventListener('mouseleave', () => {
-          markerContent.querySelector('.marker-hover-text').style.visibility = 'hidden';
+          if (!showAllInfo) {
+            markerContent.querySelector('.marker-hover-text').style.visibility = 'hidden';
+          }
         });
 
         const marker = new AdvancedMarkerElement({
@@ -98,7 +102,7 @@ const GoogleMap = forwardRef(({ locations }, ref) => {
     }
 
     initMap();
-  }, [locations]);
+  }, [locations, showAllInfo]);
 
   return (
     <div ref={mapRef} style={{ width: '100%', height: '500px' }} />
