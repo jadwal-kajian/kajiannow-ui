@@ -4,6 +4,7 @@ import Map from './Map';
 
 function App() {
   const [data, setData] = useState([]);
+  const [showAllInfo, setShowAllInfo] = useState(false);
   const mapRef = useRef(null);
 
   const fetchData = async () => {
@@ -42,17 +43,33 @@ function App() {
     }
   };
 
+  const toggleShowAllInfo = () => {
+    setShowAllInfo(!showAllInfo);
+  };
+
   return (
     <div className="App">
       <header className="App-header">
         <p>
-        KajianNow!
-        <br/>Jadwal Kajian Sunnah Terupdate Setiap Hari
+          <b>KajianNow!</b> - Jadwal Kajian Sunnah Terupdate Setiap Hari
+          <br/><i>Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju surga. (HR. Muslim)</i>
         </p>
-        <button onClick={handleSetCenter}>Posisikan saya di tengah peta</button>
+        <Map locations={data} ref={mapRef} showAllInfo={showAllInfo} />
+        <p style={{ fontSize: '14px' }}>
+          <b>Penggunaan:</b>
+          <br/>- Titik merah merupakan lokasi dan jadwal kajian.
+          <br/>- Klik titik merah untuk melihat detail informasi kajian dan membuka peta.
+          <br/>- Klik "Tampilkan Semua Info" untuk melihat semua jadwal.
+        </p>
+        <button onClick={handleSetCenter} style={{ margin: '10px', padding: '10px 20px', border: 'none', borderRadius: '5px', background: '#007BFF', color: 'white', cursor: 'pointer', width: '250px' }}>
+          Posisikan Peta Sesuai Lokasi Saya
+        </button>
+        <button onClick={toggleShowAllInfo} style={{ margin: '10px', padding: '10px 20px', border: 'none', borderRadius: '5px', background: '#007BFF', color: 'white', cursor: 'pointer', width: '250px' }}>
+          {showAllInfo ? 'Sembunyikan Semua Info' : 'Tampilkan Semua Info'}
+        </button>
+        
         <br/>
-        <Map locations={data} ref={mapRef} />
-{/*         
+        {/*         
         <button onClick={fetchData}>Get JSON</button>
         <textarea
           value={JSON.stringify(data, null, 2)}
