@@ -70,11 +70,11 @@ function GoogleMap({ locations }) {
 
         marker.addListener('click', () => {
           const confirmOpen = window.confirm(
-            `Topic: ${location.topic}\n` +
-            `Time: ${location.time_start} - ${location.time_end}\n` +
-            `Location: ${location.loc_name}\n` +
-            `Speaker: ${location.speaker}\n\n` +
-            `Do you want to open this place in Google Maps?`
+            `Judul: ${location.topic}\n` +
+            `Waktu: ${location.time_start} - ${location.time_end}\n` +
+            `Lokasi: ${location.loc_name}\n` +
+            `Pembicara: ${location.speaker}\n\n` +
+            `Apakah Anda mau buka lokasi kajian ini di Google Maps?`
           );
           if (confirmOpen) {
             window.open(location.gmaps_url, '_blank');
