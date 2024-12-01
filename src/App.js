@@ -1,25 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import logo from './logo.svg';
 import './App.css';
 import Map from './Map';
-import GoogleMapWithFetch from './Mapsnew';
 
 function App() {
-  const [data, setData] = useState('');
+  const [data, setData] = useState([]);
 
   const fetchData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/schedule', {
+      const response = await fetch('http://arm.derrylab.com:9090/schedule', {
         headers: {
           'accept': 'application/json'
         }
       });
       const result = await response.json();
-      setData(JSON.stringify(result, null, 2));
+      setData(result);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   return (
     <div className="App">
@@ -29,8 +32,7 @@ function App() {
         KajianNow!
         <br/>by Derry Pratama
         </p>
-      {/* <GoogleMapWithFetch /> */}
-      <Map />
+        <Map locations={data} />
         <a
           className="App-link"
           href="https://reactjs.org"
@@ -41,8 +43,8 @@ function App() {
         </a>
         <button onClick={fetchData}>Get JSON</button>
         <textarea
-          value={data}
-          onChange={(e) => setData(e.target.value)}
+          value={JSON.stringify(data, null, 2)}
+          onChange={(e) => setData(JSON.parse(e.target.value))}
           rows="10"
           cols="50"
         />
