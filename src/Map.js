@@ -50,6 +50,8 @@ function GoogleMap({ locations }) {
               ${location.time_start} - ${location.time_end}
               </br>
               ${location.loc_name} - ${location.speaker}
+              </br>
+              ${location.notes}
             </div>
           </div>
         `;
@@ -74,6 +76,7 @@ function GoogleMap({ locations }) {
             `Waktu: ${location.time_start} - ${location.time_end}\n` +
             `Lokasi: ${location.loc_name}\n` +
             `Pembicara: ${location.speaker}\n\n` +
+            `Catatan: ${location.notes}\n\n` +
             `Apakah Anda mau buka lokasi kajian ini di Google Maps?`
           );
           if (confirmOpen) {
