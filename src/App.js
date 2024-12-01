@@ -28,18 +28,19 @@ function App() {
       <header className="App-header">
         <p>
         KajianNow!
-        <br/>by derrylab
+        <br/>Jadwal Kajian Sunnah Terupdate Setiap Hari
         </p>
         <Map locations={data} />
+{/*         
         <button onClick={fetchData}>Get JSON</button>
         <textarea
           value={JSON.stringify(data, null, 2)}
           onChange={(e) => setData(JSON.parse(e.target.value))}
           rows="10"
           cols="50"
-        />
+        /> */}
         <p>
-          &copy; 2024 <a href="https://derrylab.com" target="_blank" rel="noopener noreferrer">derrylab.com</a>. All rights reserved.
+          &copy; 2024 <a href="https://derrylab.com" target="_blank" rel="noopener noreferrer">derrylab.com</a>
         </p>
       </header>
     </div>
