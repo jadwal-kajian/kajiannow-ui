@@ -5,6 +5,7 @@ import Map from './Map';
 function App() {
   const [data, setData] = useState([]);
   const [showAllInfo, setShowAllInfo] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState('');
   const mapRef = useRef(null);
 
   const fetchData = async () => {
@@ -21,8 +22,27 @@ function App() {
     }
   };
 
+  const fetchLastUpdate = async () => {
+    try {
+      const response = await fetch('https://kajian-api.derrylab.com/last_update', {
+        headers: {
+          'accept': 'application/json'
+        }
+      });
+      const result = await response.json();
+      const date = new Date(result.last_update);
+      const dayName = date.toLocaleDateString('id-ID', { weekday: 'long' });
+      const formattedDate = date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      setLastUpdate(`${dayName}, ${formattedDate} (${time})`);
+    } catch (error) {
+      console.error('Error fetching last update:', error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchLastUpdate();
   }, []);
 
   const handleSetCenter = () => {
@@ -54,6 +74,7 @@ function App() {
           <b>KajianNow!</b> - Jadwal Kajian Sunnah Terupdate Setiap Hari
           <br/><i>Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju surga. (HR. Muslim)</i>
         </p>
+        <p>Update Terakhir: {lastUpdate}</p>
         <Map locations={data} ref={mapRef} showAllInfo={showAllInfo} />
         <p style={{ fontSize: '14px' }}>
           <b>Penggunaan:</b>
