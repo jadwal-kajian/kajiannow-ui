@@ -22,8 +22,8 @@ function Header() {
       <div className="logo">
         <img src={logo} alt="kajiannow" className="mx-auto w-[70%] md:w-[30%]" />
       </div>
-      <div className="slogan font-semibold text-sm md:text-[16px]">Jadwal Kajian Sunnah Terupdate Setiap Hari</div>
-      <div className="slogan font-semibold text-sm md:text-[16px]">Berikut Jadwal Kajian Hari {date}</div>
+      <div className="slogan font-semibold text-sm md:text-[16px]">Jadwal Terupdate Setiap Hari</div>
+      <div className="slogan font-semibold text-sm md:text-[16px]">Kajian Sunnah Hari {date}</div>
     </header>
   );
 }
