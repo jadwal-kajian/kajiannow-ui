@@ -30,6 +30,7 @@ const KajianMap = forwardRef(({ locations, center = { lat: -6.2088, lng: 106.845
           <MarkerWithInfo
             key={location.id || `${location.lat}-${location.lng}-${index}`}
             location={location}
+            locations={locations}
             showAllInfo={showAllInfo}
           />
         ))}

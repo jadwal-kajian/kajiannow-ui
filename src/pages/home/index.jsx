@@ -4,7 +4,12 @@ import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import KajianMap from "components/kajianMap";
 import { fetchKajianData } from "services/api";
 import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+import SwalPopup from "components/swalPopup";
+
 import info from "assets/icons/info.png";
+
+const Popup = withReactContent(Swal);
 
 const Home = () => {
   const [data, setData] = useState([]);
@@ -13,7 +18,7 @@ const Home = () => {
 
   const fetchData = async () => {
     try {
-      const result = await fetchKajianData(); // Call the service function
+      const result = await fetchKajianData();
       setData(result);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -43,21 +48,9 @@ const Home = () => {
   };
 
   const showInfo = () => {
-    Swal.fire({
-      html: `
-        <div style="display: flex; gap: 8px; flex-direction: column; text-align: left;">
-          <div style="position: relative; padding-left: 20px;">
-            <span style="position: absolute; left: 0; top: 0; font-size: 20px;">&#8226;</span>
-            Titik merah menunjukkan lokasi dan jadwal kajian
-          </div>
-          <div style="position: relative; padding-left: 20px;">
-            <span style="position: absolute; left: 0; top: 0; font-size: 20px;">&#8226;</span>
-            Untuk melihat detail kajian dan peta, klik titik merah
-          </div>
-        </div>
-      `,
-      icon: "info",
-      confirmButtonText: "Syukron",
+    Popup.fire({
+      html: <SwalPopup type={"petunjuk"} close={() => Popup.close()} />,
+      showConfirmButton: false,
     });
   };
 
