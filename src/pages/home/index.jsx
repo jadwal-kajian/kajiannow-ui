@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import KajianMap from "components/kajianMap";
 import { fetchKajianData } from "services/api";
 import Swal from "sweetalert2";
@@ -65,8 +67,18 @@ const Home = () => {
 
       <div className="action-area w-full flex justify-center items-center gap-2">
         <img src={info} alt="info" onClick={showInfo} className="w-[42px] cursor-pointer" />
+
+        <button
+          onClick={() => setShowAllInfo(!showAllInfo)}
+          className="relative w-[38px] h-[38px] text-xl p-2 border-none rounded-full bg-orange-600 text-white cursor-pointer overflow-hidden"
+        >
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            {showAllInfo ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
+          </span>
+        </button>
+
         <button onClick={handleSetCenter} className="my-3 py-2 px-4 border-none rounded-lg bg-[#5d438b]">
-          Posisikan Peta Sesuai Lokasi Saya
+          Lokasi Saya
         </button>
       </div>
 
@@ -77,13 +89,6 @@ const Home = () => {
           (HR. Muslim)
         </i>
       </div>
-
-      {/* <button
-        onClick={() => setShowAllInfo(!showAllInfo)}
-        className="my-2 py-2 px-4 border-none rounded-lg bg-blue-600 text-white cursor-pointer w-60"
-      >
-        {showAllInfo ? "Sembunyikan Semua Info" : "Tampilkan Semua Info"}
-      </button> */}
     </div>
   );
 };
