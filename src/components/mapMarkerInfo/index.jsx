@@ -1,23 +1,43 @@
 import React, { useEffect, useState } from "react";
-import { MarkerF, InfoWindow } from "@react-google-maps/api";
+import { MarkerF, OverlayView } from "@react-google-maps/api";
 import pinpoint from "assets/icons/pinpoint.png";
 import Swal from "sweetalert2";
 import "./style.scss";
 
-const MarkerInfo = ({ location, showAllInfo }) => (
-  <div className="marker-container">
-    <div className="marker-dot"></div>
-    <div className="marker-info" style={{ visibility: showAllInfo ? "visible" : "hidden" }}>
-      <strong>{location.topic}</strong>
-      <br />
-      {location.time_start} - {location.time_end}
-      <br />
-      {location.loc_name} - {location.speaker}
-      <br />
-      {location.notes}
+const MarkerInfo = ({ location, showAllInfo }) => {
+  const ShowNotes = () => {
+    if (location.notes && location.notes !== "Cp : -") {
+      return <div className="notes bg-[#9fcaf3] p-2">{location.notes}</div>;
+    } else {
+      return <></>;
+    }
+  };
+
+  return (
+    <div
+      className={`marker-info min-w-[300px] absolute -left-[130px] -bottom-[24px] flex flex-col text-sm text-gray-800 bg-white rounded-lg shadow-lg transform -translate-y-1/2 transition-opacity duration-300 overflow-hidden ${
+        showAllInfo ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
+      }`}
+    >
+      <div className="title font-semibold bg-[#87cefa] p-2">{location.topic}</div>
+      <div className="content bg-[#b3d9ff] p-2">
+        <div className="speaker">
+          <span className="font-semibold mr-1">Pemateri:</span>
+          {location.speaker}
+        </div>
+        <div className="time">
+          <span className="font-semibold mr-1">Waktu:</span>
+          {location.time_start} - {location.time_end}
+        </div>
+        <div className="location">
+          <span className="font-semibold mr-1">Tempat:</span>
+          {location.loc_name}
+        </div>
+      </div>
+      <ShowNotes />
     </div>
-  </div>
-);
+  );
+};
 
 // Custom Modal to show location details
 const ShowPopupInfo = ({ location, onClose }) => {
@@ -42,16 +62,7 @@ const ShowPopupInfo = ({ location, onClose }) => {
 };
 
 export const MarkerWithInfo = ({ location, showAllInfo }) => {
-  const [isInfoVisible, setIsInfoVisible] = useState(false);
-
-  // Effect for synchronizing InfoWindow visibility with showAllInfo
-  useEffect(() => {
-    if (!showAllInfo) {
-      setIsInfoVisible(false); // Close InfoWindow when showAllInfo is false
-    } else {
-      setIsInfoVisible(true); // Open InfoWindow when showAllInfo is true
-    }
-  }, [showAllInfo]);
+  console.log(location);
 
   return (
     <>
@@ -63,10 +74,13 @@ export const MarkerWithInfo = ({ location, showAllInfo }) => {
           scaledSize: new window.google.maps.Size(40, 40),
         }}
       >
-        {isInfoVisible && (
-          <InfoWindow position={{ lat: location.lat, lng: location.lng }} onCloseClick={() => setIsInfoVisible(false)}>
+        {showAllInfo && (
+          <OverlayView
+            position={{ lat: location.lat, lng: location.lng }}
+            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+          >
             <MarkerInfo location={location} showAllInfo={showAllInfo} />
-          </InfoWindow>
+          </OverlayView>
         )}
       </MarkerF>
     </>
