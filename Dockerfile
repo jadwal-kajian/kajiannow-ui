@@ -1,5 +1,5 @@
-# Use an official Node.js runtime as a parent image
-FROM node:14
+# Stage 1: Build the application
+FROM node:14-alpine AS builder
 
 # Set the working directory
 WORKDIR /app
@@ -16,18 +16,17 @@ ENV VITE_GOOGLE_MAPS_API_KEY=REDACTED_GOOGLE_MAPS_KEY
 # Copy the rest of the application code
 COPY . .
 
-# Ensure the environment variable is available during the build
+# Build the application
 RUN npm run build
 
-# Use an official Nginx image to serve the built application
+# Stage 2: Serve the application with nginx
 FROM nginx:alpine
 
-# Copy the built application from the previous stage
-# COPY --from=0 /app/build /usr/share/nginx/html
-COPY --from=build /app/dist /usr/share/nginx/html
+# Copy the build output to nginx's html directory
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Expose port 80
 EXPOSE 80
 
-# Start Nginx server
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
