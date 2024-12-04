@@ -1,32 +1,16 @@
-# Use an official Node.js runtime as a parent image
-FROM node:14
-
-# Set the working directory
+# Builder stage
+FROM node:22 AS builder
 WORKDIR /app
-
-# Copy package.json and package-lock.json
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Add environment variable for the API key
-ENV REACT_APP_MAP_API_KEY=AIzaSyDNqZZ2_C4JV42XokmXkPFME6eZRUjcZuU
-
-# Copy the rest of the application code
 COPY . .
-
-# Ensure the environment variable is available during the build
+RUN npm install
 RUN npm run build
+RUN ls -la /app
 
-# Use an official Nginx image to serve the built application
+# App stage
 FROM nginx:alpine
-
-# Copy the built application from the previous stage
-COPY --from=0 /app/build /usr/share/nginx/html
-
+COPY --from=builder /app/dist /usr/share/nginx/html
 # Expose port 80
 EXPOSE 80
 
-# Start Nginx server
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
