@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { MarkerF, OverlayView } from "@react-google-maps/api";
 import pinpoint from "assets/icons/pinpoint.png";
 import Swal from "sweetalert2";
@@ -88,7 +88,7 @@ const ShowPopupInfo = ({ location, group }) => {
   });
 };
 
-export const MarkerWithInfo = ({ location, showAllInfo, locations }) => {
+const MapMarker = ({ location, showAllInfo, locations }) => {
   const group = groupTopicsByLocation(location.lat, location.lng, locations);
 
   return (
@@ -113,3 +113,5 @@ export const MarkerWithInfo = ({ location, showAllInfo, locations }) => {
     </>
   );
 };
+
+export default MapMarker;

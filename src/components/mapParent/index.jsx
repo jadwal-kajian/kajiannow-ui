@@ -1,8 +1,8 @@
 import React, { forwardRef, useImperativeHandle, useRef } from "react";
 import { GoogleMap, LoadScript } from "@react-google-maps/api";
-import { MarkerWithInfo } from "components/mapMarkerInfo";
+import MapMarker from "components/mapMarker";
 
-const KajianMap = forwardRef(({ locations, center = { lat: -6.2088, lng: 106.8456 }, showAllInfo }, ref) => {
+const MapParent = forwardRef(({ locations, center = { lat: -6.2088, lng: 106.8456 }, showAllInfo }, ref) => {
   const mapInstance = useRef(null);
 
   // Menyediakan API untuk mengatur pusat peta dari komponen induk
@@ -27,7 +27,7 @@ const KajianMap = forwardRef(({ locations, center = { lat: -6.2088, lng: 106.845
         }}
       >
         {locations.map((location, index) => (
-          <MarkerWithInfo
+          <MapMarker
             key={location.id || `${location.lat}-${location.lng}-${index}`}
             location={location}
             locations={locations}
@@ -39,4 +39,4 @@ const KajianMap = forwardRef(({ locations, center = { lat: -6.2088, lng: 106.845
   );
 });
 
-export default KajianMap;
+export default MapParent;
