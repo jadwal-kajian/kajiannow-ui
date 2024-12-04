@@ -20,12 +20,12 @@ function Header() {
   };
 
   return (
-    <header className="mb-3 text-center">
+    <header className="mb-3 text-center md:text-[16px] text-sm">
       <div className="logo">
         <img src={logo} alt="kajiannow" className="mx-auto w-[50%] md:w-[20%]" />
       </div>
-      <div className="slogan mb-1 font-semibold text-sm md:text-[16px]">Jadwal Kajian Sunnah Terupdate Setiap Hari</div>
-      <div className="updated-info font-semibold">{lastUpdate}</div>
+      <div className="slogan font-semibold">Jadwal Terupdate Setiap Hari</div>
+      <div className="updated-info font-semibold">Kajian Sunnah {lastUpdate}</div>
     </header>
   );
 }
