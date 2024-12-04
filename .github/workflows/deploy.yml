@@ -17,7 +17,7 @@ jobs:
       uses: docker/setup-buildx-action@v1
 
     - name: Build Docker images
-      run: docker-compose build
+      run: docker compose build
 
     - name: Deploy to Production
       env:
@@ -27,7 +27,7 @@ jobs:
       run: |
         ssh -o StrictHostKeyChecking=no -i $SSH_PRIVATE_KEY $SSH_USERNAME@$SSH_HOST "
           cd /ws/kajiannow-ui &&
-          docker-compose stop &&
+          docker compose stop &&
           git pull &&
-          docker-compose up --build -d --remove-orphans
+          docker compose up --build -d --remove-orphans
         "
