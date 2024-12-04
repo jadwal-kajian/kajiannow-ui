@@ -1,29 +1,31 @@
 import React, { useEffect, useState } from "react";
+import { GET_LAST_UPDATE } from "services/api";
+import { convertDateTime } from "../../utils/helpers";
 import logo from "assets/images/logo.png";
 
 function Header() {
-  const [date, setDate] = useState("");
+  const [lastUpdate, setLastUpdate] = useState();
 
   useEffect(() => {
-    fetch('https://kajian-api.derrylab.com/last_update', {
-      headers: { 'accept': 'application/json' }
-    })
-      .then(response => response.json())
-      .then(data => {
-        const lastUpdate = new Date(data.last_update);
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        setDate(lastUpdate.toLocaleDateString('id-ID', options));
-      })
-      .catch(error => console.error('Error fetching date:', error));
+    fetchLastUpdate();
   }, []);
 
+  const fetchLastUpdate = async () => {
+    try {
+      const result = await GET_LAST_UPDATE();
+      setLastUpdate(convertDateTime(result));
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
   return (
-    <header className="mb-3 text-center">
+    <header className="mb-3 text-center md:text-[16px] text-sm">
       <div className="logo">
-        <img src={logo} alt="kajiannow" className="mx-auto w-[70%] md:w-[30%]" />
+        <img src={logo} alt="kajiannow" className="mx-auto w-[70%] md:w-[250px]" />
       </div>
-      <div className="slogan font-semibold text-sm md:text-[16px]">Jadwal Terupdate Setiap Hari</div>
-      <div className="slogan font-semibold text-sm md:text-[16px]">Kajian Sunnah Hari {date}</div>
+      <div className="slogan font-semibold">Jadwal Terupdate Setiap Hari</div>
+      <div className="updated-info font-semibold">Kajian Sunnah {lastUpdate}</div>
     </header>
   );
 }
