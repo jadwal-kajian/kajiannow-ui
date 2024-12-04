@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
-import KajianMap from "components/kajianMap";
+import MapParent from "components/mapParent";
 import { GET_ALL_KAJIAN } from "services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -56,7 +56,7 @@ const Home = () => {
 
   return (
     <div className="content">
-      <KajianMap locations={data} ref={mapRef} showAllInfo={showAllInfo} />
+      <MapParent locations={data} ref={mapRef} showAllInfo={showAllInfo} />
 
       <div className="action-area w-full flex justify-center items-center gap-2">
         <img src={info} alt="info" onClick={showInfo} className="w-[42px] cursor-pointer" />
