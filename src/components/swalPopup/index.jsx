@@ -72,10 +72,12 @@ function SwalPopup(data) {
                 {info.time_start} - {info.time_end}
               </span>
             </div>
-            <div className="notes">
-              <FontAwesomeIcon icon={faNoteSticky} />
-              <span className="label mx-2">{info.notes !== "Cp : -" && info.notes}</span>
-            </div>
+            {info.notes !== "Cp : -" && (
+              <div className="notes">
+                <FontAwesomeIcon icon={faNoteSticky} />
+                <span className="label mx-2">{info.notes}</span>
+              </div>
+            )}
           </div>
           <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
             <button
