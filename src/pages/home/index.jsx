@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faEyeSlash, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import MapParent from "components/mapParent";
 import { GET_ALL_KAJIAN } from "services/api";
 import Swal from "sweetalert2";
@@ -59,11 +59,20 @@ const Home = () => {
       <MapParent locations={data} ref={mapRef} showAllInfo={showAllInfo} />
 
       <div className="action-area w-full flex justify-center items-center gap-2">
-        <img src={info} alt="info" onClick={showInfo} className="w-[42px] cursor-pointer" />
+        {/* <img src={info} alt="info" onClick={showInfo} className="w-[42px] cursor-pointer" /> */}
+
+        <button
+          onClick={showInfo}
+          className="relative w-[36px] h-[36px] text-[40px] border-none rounded-full bg-[#545454] text-[#ffe7be] cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+        >
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <FontAwesomeIcon icon={faInfoCircle} />
+          </span>
+        </button>
 
         <button
           onClick={() => setShowAllInfo(!showAllInfo)}
-          className="relative w-[38px] h-[38px] text-xl p-2 border-none rounded-full bg-orange-600 text-white cursor-pointer overflow-hidden"
+          className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-[#ffe7be] text-[#545454] cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {showAllInfo ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
@@ -72,7 +81,7 @@ const Home = () => {
 
         <button
           onClick={handleSetCenter}
-          className="my-3 py-2 px-6 border-none rounded-full bg-[#5d438b] font-semibold"
+          className="my-3 py-2 px-6 border-none rounded-full bg-[#ffe7be] text-[#545454] font-semibold shadow-[inset_0_0_12px_-2px_#000]"
         >
           Lokasi Saya
         </button>

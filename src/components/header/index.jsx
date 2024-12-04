@@ -22,7 +22,7 @@ function Header() {
   return (
     <header className="mb-3 text-center md:text-[16px] text-sm">
       <div className="logo">
-        <img src={logo} alt="kajiannow" className="mx-auto w-[50%] md:w-[20%]" />
+        <img src={logo} alt="kajiannow" className="mx-auto w-[70%] md:w-[250px]" />
       </div>
       <div className="slogan font-semibold">Jadwal Terupdate Setiap Hari</div>
       <div className="updated-info font-semibold">Kajian Sunnah {lastUpdate}</div>
