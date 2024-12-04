@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import KajianMap from "components/kajianMap";
-import { fetchKajianData } from "services/api";
+import { GET_ALL_KAJIAN } from "services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import SwalPopup from "components/swalPopup";
@@ -18,7 +18,7 @@ const Home = () => {
 
   const fetchData = async () => {
     try {
-      const result = await fetchKajianData();
+      const result = await GET_ALL_KAJIAN();
       setData(result);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -70,7 +70,10 @@ const Home = () => {
           </span>
         </button>
 
-        <button onClick={handleSetCenter} className="my-3 py-2 px-4 border-none rounded-lg bg-[#5d438b]">
+        <button
+          onClick={handleSetCenter}
+          className="my-3 py-2 px-6 border-none rounded-full bg-[#5d438b] font-semibold"
+        >
           Lokasi Saya
         </button>
       </div>
