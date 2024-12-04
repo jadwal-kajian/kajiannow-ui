@@ -13,7 +13,7 @@ const KajianMap = forwardRef(({ locations, center = { lat: -6.2088, lng: 106.845
   return (
     <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
       <GoogleMap
-        mapContainerStyle={{ width: "100%", height: "500px", borderRadius: 12, marginBottom: 12 }}
+        mapContainerStyle={{ width: "100%", height: "calc(100vh - 300px)", borderRadius: 12, marginBottom: 12 }}
         center={center}
         zoom={12}
         onLoad={(map) => (mapInstance.current = map)}
