@@ -1,5 +1,17 @@
+import moment from 'moment-timezone';
 
-import moment from 'moment-timezone'
+export const convertDateTime = (value) => {
+  const daysInIndonesian = [
+    "Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"
+  ];
+
+  const dayIndex = moment(value.last_update).day();
+  const dayInIndonesian = daysInIndonesian[dayIndex];
+
+  const formattedDate = moment(value.last_update).format(`dddd, D MMMM YYYY`);
+  return formattedDate.replace(moment(value.last_update).format('dddd'), dayInIndonesian);
+}
+
 
 export const groupTopicsByLocation = (targetLat, targetLng, locations) => {
   // Filter location based on lat & lng
@@ -12,8 +24,3 @@ export const groupTopicsByLocation = (targetLat, targetLng, locations) => {
     return []; // no location matches
   }
 };
-
-export const convertDateTime = (value) => {
-  const formattedDate = moment.tz(value.last_update, "YYYY-MM-DD HH:mm:ss", "Asia/Jakarta").format("DD MMMM YYYY, HH:mm [WIB]");
-  return formattedDate;
-}
