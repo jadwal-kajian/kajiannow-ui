@@ -1,6 +1,7 @@
 import React from "react";
 import { MarkerF, OverlayView } from "@react-google-maps/api";
 import pinpoint from "assets/icons/pinpoint.png";
+import userpinpoint from "assets/icons/userpin.png";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import SwalPopup from "components/swalPopup";
@@ -88,6 +89,18 @@ const ShowPopupInfo = ({ location, group }) => {
   });
 };
 
+const UserMapMarker = ({ location }) => {
+  return (
+    <MarkerF
+      position={{ lat: location.lat, lng: location.lng }}
+      icon={{
+        url: userpinpoint,
+        scaledSize: new window.google.maps.Size(40, 40),
+      }}
+    />
+  );
+};
+
 const MapMarker = ({ location, showAllInfo, locations }) => {
   const group = groupTopicsByLocation(location.lat, location.lng, locations);
 
@@ -114,4 +127,4 @@ const MapMarker = ({ location, showAllInfo, locations }) => {
   );
 };
 
-export default MapMarker;
+export { MapMarker, UserMapMarker };
