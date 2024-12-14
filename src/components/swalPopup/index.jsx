@@ -1,10 +1,23 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBook, faCalendar, faInfoCircle, faMosque, faNoteSticky, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faBook, faCalendar, faInfoCircle, faMosque, faNoteSticky, faUser, faMapLocationDot } from "@fortawesome/free-solid-svg-icons";
 import "./style.scss";
 
 function SwalPopup(data) {
   const { type, info, group, close } = data;
+
+  const openGoogleMaps = (info) => {
+    if (info.gmaps_url) {
+      window.open(info.gmaps_url, "_blank");
+    } else if (info.lat && info.lng) {
+      window.open(`https://www.google.com/maps?q=${info.lat},${info.lng}`, "_blank");
+    } else
+    {
+      const placeName = info.loc_name;
+      const address = info.addr;
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeName + ' ' + address)}`, "_blank");
+    }
+  };
 
   if (type == "kajian") {
     if (group.length > 1) {
@@ -22,6 +35,10 @@ function SwalPopup(data) {
                   <FontAwesomeIcon icon={faMosque} />
                   <span className="label mx-2">{info.loc_name}</span>
                 </div>
+                <div className="address">
+                  <FontAwesomeIcon icon={faMapLocationDot} />
+                  <span className="label mx-2">{info.addr}</span>
+                </div>
                 <div className="time">
                   <FontAwesomeIcon icon={faCalendar} />
                   <span className="label mx-2">
@@ -36,7 +53,7 @@ function SwalPopup(data) {
               <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
                 <button
                   className="confirm p-2 px-4 rounded-full bg-[#edce93]"
-                  onClick={() => window.open(info.gmaps_url, "_blank")}
+                  onClick={() => openGoogleMaps(info)}
                 >
                   Buka di Google Maps
                 </button>
@@ -66,6 +83,10 @@ function SwalPopup(data) {
               <FontAwesomeIcon icon={faMosque} />
               <span className="label mx-2">{info.loc_name}</span>
             </div>
+            <div className="address">
+              <FontAwesomeIcon icon={faMapLocationDot} />
+              <span className="label mx-2">{info.addr}</span>
+            </div>
             <div className="time">
               <FontAwesomeIcon icon={faCalendar} />
               <span className="label mx-2">
@@ -82,7 +103,7 @@ function SwalPopup(data) {
           <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
             <button
               className="confirm p-2 px-4 rounded-full bg-[#edce93]"
-              onClick={() => window.open(info.gmaps_url, "_blank")}
+              onClick={() => openGoogleMaps(info)}
             >
               Buka di Google Maps
             </button>
