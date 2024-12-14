@@ -1,0 +1,36 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build Docker images
+      run: docker compose build
+
+    - name: Deploy to Production
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+        SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+      run: |
+        echo "$SSH_PRIVATE_KEY" > ssh_key
+        chmod 600 ssh_key
+        ssh -o StrictHostKeyChecking=no -i ssh_key $SSH_USERNAME@$SSH_HOST "
+          cd ./ws/kajiannow-ui &&
+          docker compose stop &&
+          git pull &&
+          docker compose up --build -d --remove-orphans
+        "
+        rm ssh_key

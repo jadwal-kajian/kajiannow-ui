@@ -1,13 +1,14 @@
-version: "3.9"
+# Use version 3 of the Docker Compose file format
+version: '3'
 services:
+  # Define the app service
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    # Build the Docker image from the current directory
+    build: .
+    # Map port 80 on the host to port 80 in the container
     ports:
-      - "3000:5173" # Map Vite dev server port to localhost
-    volumes:
-      - .:/app
-      - /app/node_modules
-    stdin_open: true
-    tty: true
+      - "9091:80"
+    restart: always
+    # Set environment variables for the container
+    environment:
+      - NODE_ENV=production
