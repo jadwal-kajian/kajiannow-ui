@@ -5,8 +5,8 @@ import {
   useState,
   useEffect,
 } from "react";
-import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
-import MapMarker from "components/mapMarker";
+import { GoogleMap, LoadScript } from "@react-google-maps/api";
+import {MapMarker, UserMapMarker} from "components/mapMarker";
 import PropTypes from "prop-types";
 
 const MapParent = forwardRef(({ locations, showAllInfo }, ref) => {
@@ -92,16 +92,9 @@ const MapParent = forwardRef(({ locations, showAllInfo }, ref) => {
         }}
       >
         {userLocation && (
-          <Marker
-            position={userLocation}
-            icon={{
-              path: window.google?.maps?.SymbolPath?.CIRCLE || 0,
-              scale: 7,
-              fillColor: "#4285F4",
-              fillOpacity: 1,
-              strokeColor: "#ffffff",
-              strokeWeight: 2,
-            }}
+          <UserMapMarker
+            key="user-location"
+            location={userLocation}
           />
         )}
         {locations.map((location, index) => (
