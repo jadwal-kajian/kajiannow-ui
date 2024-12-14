@@ -1,6 +1,6 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBook, faCalendar, faInfoCircle, faMosque, faNoteSticky, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faBook, faCalendar, faInfoCircle, faMosque, faNoteSticky, faUser, faMapLocationDot } from "@fortawesome/free-solid-svg-icons";
 import "./style.scss";
 
 function SwalPopup(data) {
@@ -14,7 +14,7 @@ function SwalPopup(data) {
     } else
     {
       const placeName = info.loc_name;
-      const address = info.address;
+      const address = info.addr;
       window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeName + ' ' + address)}`, "_blank");
     }
   };
@@ -34,6 +34,10 @@ function SwalPopup(data) {
                 <div className="place">
                   <FontAwesomeIcon icon={faMosque} />
                   <span className="label mx-2">{info.loc_name}</span>
+                </div>
+                <div className="address">
+                  <FontAwesomeIcon icon={faMapLocationDot} />
+                  <span className="label mx-2">{info.addr}</span>
                 </div>
                 <div className="time">
                   <FontAwesomeIcon icon={faCalendar} />
@@ -78,6 +82,10 @@ function SwalPopup(data) {
             <div className="place">
               <FontAwesomeIcon icon={faMosque} />
               <span className="label mx-2">{info.loc_name}</span>
+            </div>
+            <div className="address">
+              <FontAwesomeIcon icon={faMapLocationDot} />
+              <span className="label mx-2">{info.addr}</span>
             </div>
             <div className="time">
               <FontAwesomeIcon icon={faCalendar} />
