@@ -3,6 +3,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBook, faCalendar, faInfoCircle, faMosque, faNoteSticky, faUser, faMapLocationDot } from "@fortawesome/free-solid-svg-icons";
 import "./style.scss";
 
+const timeStartMapping = {
+  bada_subuh: "Ba'da Subuh",
+  bada_dzuhur: "Ba'da Dzuhur",
+  bada_ashar: "Ba'da Ashar",
+  bada_maghrib: "Ba'da Maghrib",
+  bada_isya: "Ba'da Isya'",
+  };
+
 function SwalPopup(data) {
   const { type, info, group, close } = data;
 
@@ -42,7 +50,7 @@ function SwalPopup(data) {
                 <div className="time">
                   <FontAwesomeIcon icon={faCalendar} />
                   <span className="label mx-2">
-                    {info.time_start} - {info.time_end}
+                  {timeStartMapping[info.time_start] || info.time_start} - {info.time_end}
                   </span>
                 </div>
                 <div className="notes">
@@ -90,7 +98,7 @@ function SwalPopup(data) {
             <div className="time">
               <FontAwesomeIcon icon={faCalendar} />
               <span className="label mx-2">
-                {info.time_start} - {info.time_end}
+                {timeStartMapping[info.time_start] || info.time_start} - {info.time_end}
               </span>
             </div>
             {info.notes !== "Cp : -" && (
