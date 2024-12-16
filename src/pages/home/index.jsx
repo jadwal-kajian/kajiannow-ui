@@ -1,21 +1,28 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEye,
   faEyeSlash,
   faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
-import MapParent from "components/mapParent";
-import { GET_ALL_KAJIAN } from "services/api";
+import MapParent from "components/mapParent/index";
+import FloatingFilterButton from "components/floatingFilterButton/FloatingFilterButton";
+import FilterModal from "components/floatingFilterButton/FilterModal";
+import { GET_ALL_KAJIAN } from "../../services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import SwalPopup from "components/swalPopup";
+import SwalPopup from "components/swalPopup/index";
 
 const Popup = withReactContent(Swal);
 
 const Home = () => {
   const [data, setData] = useState([]);
   const [showAllInfo, setShowAllInfo] = useState(false);
+  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [mapCenter, setMapCenter] = useState(null);
+  const [zoom, setZoom] = useState(12);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const mapRef = useRef(null);
 
   const fetchData = async () => {
@@ -29,40 +36,102 @@ const Home = () => {
 
   useEffect(() => {
     fetchData();
+    getUserLocation();
   }, []);
 
-  const handleSetCenter = () => {
+  const getUserLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          if (mapRef.current) {
-            mapRef.current.setCenter({ lat: latitude, lng: longitude });
-          }
+          const newLocation = { lat: latitude, lng: longitude };
+          setMapCenter(newLocation);
+          setZoom(15);
         },
         (error) => {
           console.error("Error getting location:", error);
+          const defaultLocation = { lat: -6.2088, lng: 106.8456 }; // Default to Jakarta
+          setMapCenter(defaultLocation);
+          setZoom(12);
         }
       );
     } else {
-      alert("Geolocation is not supported by this browser.");
+      console.error("Geolocation is not supported by this browser.");
+      const defaultLocation = { lat: -6.2088, lng: 106.8456 }; // Default to Jakarta
+      setMapCenter(defaultLocation);
+      setZoom(12);
     }
+  };
+
+  const cities = useMemo(() => {
+    const citySet = new Set();
+    return data
+      .filter((item) => {
+        if (!citySet.has(item.city)) {
+          citySet.add(item.city);
+          return true;
+        }
+        return false;
+      })
+      .map((item) => item.city)
+      .sort();
+  }, [data]);
+
+  const filteredData = useMemo(() => {
+    return data.filter((item) => {
+      const cityMatch = selectedCity ? item.city === selectedCity : true;
+      const itemTags = item.tags.split(',').map(tag => tag.trim());
+      const categoryMatch =
+        selectedCategories.length === 0 ||
+        selectedCategories.every(category => itemTags.includes(category));
+      return cityMatch && categoryMatch;
+    });
+  }, [data, selectedCity, selectedCategories]);
+
+  useEffect(() => {
+    if (filteredData.length > 0) {
+      if (selectedCity) {
+        // Only recenter the map when a specific city is selected
+        const sumLat = filteredData.reduce((sum, item) => sum + item.lat, 0);
+        const sumLng = filteredData.reduce((sum, item) => sum + item.lng, 0);
+        const centerLat = sumLat / filteredData.length;
+        const centerLng = sumLng / filteredData.length;
+        setMapCenter({ lat: centerLat, lng: centerLng });
+        setZoom(12);
+      }
+    }
+  }, [filteredData, selectedCity]);
+
+  const handleSetCenter = () => {
+    getUserLocation();
+    setSelectedCity(""); // Reset to "All Cities"
+    setSelectedCategories([]); // Reset categories
+  };
+
+  const handleCategoryChange = (categories) => {
+    setSelectedCategories(categories);
   };
 
   const showInfo = () => {
     Popup.fire({
-      html: <SwalPopup type={"petunjuk"} close={() => Popup.close()} />,
+      html: <SwalPopup type="petunjuk" close={() => Popup.close()} />,
       showConfirmButton: false,
     });
   };
 
   return (
     <div className="content">
-      <MapParent locations={data} ref={mapRef} showAllInfo={showAllInfo} />
+      {mapCenter && (
+        <MapParent
+          locations={filteredData}
+          ref={mapRef}
+          showAllInfo={showAllInfo}
+          center={mapCenter}
+          zoom={zoom}
+        />
+      )}
 
       <div className="action-area w-full flex justify-center items-center gap-2">
-        {/* <img src={info} alt="info" onClick={showInfo} className="w-[42px] cursor-pointer" /> */}
-
         <button
           onClick={showInfo}
           className="relative w-[36px] h-[36px] text-[40px] border-none rounded-full bg-[#545454] text-[#ffe7be] cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
@@ -100,6 +169,17 @@ const Home = () => {
           (HR. Muslim)
         </i>
       </div>
+
+      <FloatingFilterButton onClick={() => setIsFilterModalOpen(true)} />
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        cities={cities}
+        selectedCity={selectedCity}
+        onCityChange={setSelectedCity}
+        selectedCategories={selectedCategories}
+        onCategoryChange={handleCategoryChange}
+      />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBook, faCalendar, faInfoCircle, faMosque, faNoteSticky, faUser, faMapLocationDot } from "@fortawesome/free-solid-svg-icons";
+import { faBook, faCalendar, faInfoCircle, faMosque, faNoteSticky, faUser, faMapLocationDot, faPhone } from "@fortawesome/free-solid-svg-icons";
 import "./style.scss";
 
 const timeStartMapping = {
@@ -53,6 +53,10 @@ function SwalPopup(data) {
                   {timeStartMapping[info.time_start] || info.time_start} - {info.time_end}
                   </span>
                 </div>
+                <div className="contact">
+                  <FontAwesomeIcon icon={faPhone} />
+                  <span className="label mx-2">{info.contact}</span>
+                </div>
                 <div className="notes">
                   <FontAwesomeIcon icon={faNoteSticky} />
                   <span className="label mx-2">{info.notes !== "Cp : -" && info.notes}</span>
@@ -100,6 +104,10 @@ function SwalPopup(data) {
               <span className="label mx-2">
                 {timeStartMapping[info.time_start] || info.time_start} - {info.time_end}
               </span>
+            </div>
+            <div className="contact">
+              <FontAwesomeIcon icon={faPhone} />
+              <span className="label mx-2">{info.contact}</span>
             </div>
             {info.notes !== "Cp : -" && (
               <div className="notes">
