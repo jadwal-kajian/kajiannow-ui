@@ -6,10 +6,12 @@ const FloatingFilterButton = ({ onClick }) => {
   return (
     <button
       onClick={onClick}
-      className="fixed bottom-4 right-4 w-14 h-14 bg-primary text-red-700 bg-white rounded-full shadow-lg flex items-center justify-center z-50 hover:bg-primary-dark transition-colors"
+      className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
       aria-label="Open filters"
     >
-      <FontAwesomeIcon icon={faFilter} className="text-xl" />
+      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <FontAwesomeIcon icon={faFilter} className="text-sm" />
+      </span>
     </button>
   );
 };
