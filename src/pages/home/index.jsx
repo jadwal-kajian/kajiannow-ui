@@ -80,9 +80,10 @@ const Home = () => {
   const filteredData = useMemo(() => {
     return data.filter((item) => {
       const cityMatch = selectedCity ? item.city === selectedCity : true;
+      const itemTags = item.tags.split(',').map(tag => tag.trim());
       const categoryMatch =
         selectedCategories.length === 0 ||
-        selectedCategories.includes(item.tags);
+        selectedCategories.every(category => itemTags.includes(category));
       return cityMatch && categoryMatch;
     });
   }, [data, selectedCity, selectedCategories]);
