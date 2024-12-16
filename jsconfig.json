@@ -3,7 +3,8 @@
     "baseUrl": "src", // Menetapkan baseUrl ke direktori src
     "paths": {
       "components/*": ["src/components/*"],
-      "pages/*": ["src/pages/*"]
+      "pages/*": ["src/pages/*"],
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src/**/*"]
