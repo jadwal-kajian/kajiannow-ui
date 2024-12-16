@@ -2,113 +2,93 @@ import {
   forwardRef,
   useImperativeHandle,
   useRef,
-  useState,
   useEffect,
+  useState,
 } from "react";
 import { GoogleMap, LoadScript } from "@react-google-maps/api";
-import {MapMarker, UserMapMarker} from "components/mapMarker";
+import { MapMarker, UserMapMarker } from "components/mapMarker";
 import PropTypes from "prop-types";
 
-const MapParent = forwardRef(({ locations, showAllInfo }, ref) => {
-  const mapInstance = useRef(null);
-  const [center, setCenter] = useState({ lat: -6.2088, lng: 106.8456 });
-  const [zoom, setZoom] = useState(12);
-  const [userLocation, setUserLocation] = useState(null);
+const MapParent = forwardRef(
+  ({ locations, showAllInfo, center, zoom }, ref) => {
+    const mapInstance = useRef(null);
+    const [userLocation, setUserLocation] = useState(null);
 
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const newLocation = { lat: latitude, lng: longitude };
-          setCenter(newLocation);
-          setUserLocation(newLocation);
-        },
-        (error) => {
-          console.error("Error getting current location:", error);
-          handleLocationError(error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    } else {
-      console.error("Geolocation is not supported by this browser.");
-      alert("Geolocation is not supported by this browser.");
-    }
-  }, []);
-
-  const handleLocationError = (error) => {
-    let message = "An error occurred while trying to get your location.";
-    switch (error.code) {
-      case error.PERMISSION_DENIED:
-        message = "Please enable location services in your browser settings.";
-        break;
-      case error.POSITION_UNAVAILABLE:
-        message = "Location information is unavailable. Please try again.";
-        break;
-      case error.TIMEOUT:
-        message =
-          "The request to get your location timed out. Please try again.";
-        break;
-    }
-    alert(message);
-  };
-
-  useImperativeHandle(ref, () => ({
-    setCenter: (coords) => {
-      setCenter(coords);
-      setZoom(15);
-      setUserLocation(coords);
+    useEffect(() => {
       if (mapInstance.current) {
-        mapInstance.current.panTo(coords);
-        mapInstance.current.setZoom(15);
+        mapInstance.current.panTo(center);
+        mapInstance.current.setZoom(zoom);
       }
-    },
-  }));
+    }, [center, zoom]);
 
-  return (
-    <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-      <GoogleMap
-        mapContainerStyle={{
-          width: "100%",
-          height: "calc(100vh - 250px)",
-          borderRadius: 12,
-          marginBottom: 12,
-        }}
-        center={center}
-        zoom={zoom}
-        onLoad={(map) => (mapInstance.current = map)}
-        onUnmount={() => (mapInstance.current = null)}
-        options={{
-          mapId: "4504f8b37365c3d0",
-          disableDefaultUI: false,
-          mapTypeControl: false,
-          zoomControl: true,
-          streetViewControl: false,
-          gestureHandling: "greedy",
-        }}
-      >
-        {userLocation && (
-          <UserMapMarker
-            key="user-location"
-            location={userLocation}
-          />
-        )}
-        {locations.map((location, index) => (
-          <MapMarker
-            key={location.id || `${location.lat}-${location.lng}-${index}`}
-            location={location}
-            locations={locations}
-            showAllInfo={showAllInfo}
-          />
-        ))}
-      </GoogleMap>
-    </LoadScript>
-  );
-});
+    useEffect(() => {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            setUserLocation({ lat: latitude, lng: longitude });
+          },
+          (error) => {
+            console.error("Error getting current location:", error);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0,
+          }
+        );
+      } else {
+        console.error("Geolocation is not supported by this browser.");
+      }
+    }, []);
+
+    useImperativeHandle(ref, () => ({
+      setCenter: (coords) => {
+        if (mapInstance.current) {
+          mapInstance.current.panTo(coords);
+          mapInstance.current.setZoom(15);
+        }
+      },
+    }));
+
+    return (
+      <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+        <GoogleMap
+          mapContainerStyle={{
+            width: "100%",
+            height: "calc(80vh - 250px)",
+            borderRadius: 12,
+            marginBottom: 12,
+          }}
+          center={center}
+          zoom={zoom}
+          onLoad={(map) => (mapInstance.current = map)}
+          onUnmount={() => (mapInstance.current = null)}
+          options={{
+            mapId: "4504f8b37365c3d0",
+            disableDefaultUI: false,
+            mapTypeControl: false,
+            zoomControl: true,
+            streetViewControl: false,
+            gestureHandling: "greedy",
+          }}
+        >
+          {userLocation && (
+            <UserMapMarker key="user-location" location={userLocation} />
+          )}
+          {locations.map((location, index) => (
+            <MapMarker
+              key={location.id || `${location.lat}-${location.lng}-${index}`}
+              location={location}
+              locations={locations}
+              showAllInfo={showAllInfo}
+            />
+          ))}
+        </GoogleMap>
+      </LoadScript>
+    );
+  }
+);
 
 MapParent.displayName = "MapParent";
 
@@ -118,9 +98,15 @@ MapParent.propTypes = {
       id: PropTypes.string,
       lat: PropTypes.number.isRequired,
       lng: PropTypes.number.isRequired,
+      city: PropTypes.string.isRequired,
     })
   ).isRequired,
   showAllInfo: PropTypes.bool,
+  center: PropTypes.shape({
+    lat: PropTypes.number.isRequired,
+    lng: PropTypes.number.isRequired,
+  }).isRequired,
+  zoom: PropTypes.number.isRequired,
 };
 
 export default MapParent;
