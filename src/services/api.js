@@ -6,7 +6,7 @@ export const GET_ALL_KAJIAN = async () => {
     const response = await axiosInstance.get(
       `/schedule?timestamp=${new Date().getTime()}`
     );
-    console.log(`all kajian`, response.data);
+    // console.log(`all kajian`, response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching data:", error);
