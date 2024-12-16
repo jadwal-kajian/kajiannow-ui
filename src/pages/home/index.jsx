@@ -80,10 +80,10 @@ const Home = () => {
   const filteredData = useMemo(() => {
     return data.filter((item) => {
       const cityMatch = selectedCity ? item.city === selectedCity : true;
-      const itemTags = item.tags.split(',').map(tag => tag.trim());
+      const itemTags = item.tags.split(",").map((tag) => tag.trim());
       const categoryMatch =
         selectedCategories.length === 0 ||
-        selectedCategories.every(category => itemTags.includes(category));
+        selectedCategories.every((category) => itemTags.includes(category));
       return cityMatch && categoryMatch;
     });
   }, [data, selectedCity, selectedCategories]);
@@ -134,7 +134,7 @@ const Home = () => {
       <div className="action-area w-full flex justify-center items-center gap-2">
         <button
           onClick={showInfo}
-          className="relative w-[36px] h-[36px] text-[40px] border-none rounded-full bg-[#545454] text-[#ffe7be] cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          className="relative w-[36px] h-[36px] text-[40px] border-none rounded-full bg-custom-gray-1 text-custom-yellow-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faInfoCircle} />
@@ -143,7 +143,7 @@ const Home = () => {
 
         <button
           onClick={() => setShowAllInfo(!showAllInfo)}
-          className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-[#ffe7be] text-[#545454] cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {showAllInfo ? (
@@ -154,15 +154,16 @@ const Home = () => {
           </span>
         </button>
 
+        <FloatingFilterButton onClick={() => setIsFilterModalOpen(true)} />
         <button
           onClick={handleSetCenter}
-          className="my-3 py-2 px-6 border-none rounded-full bg-[#ffe7be] text-[#545454] font-semibold shadow-[inset_0_0_12px_-2px_#000]"
+          className="my-3 py-2 px-6 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 font-semibold shadow-[inset_0_0_12px_-2px_#000]"
         >
           Lokasi Saya
         </button>
       </div>
 
-      <div className="quotes text-center my-6 md:mt-12 mb-8 text-[12px] md:text-base">
+      <div className="quotes text-center my-6 md:mt-12 mb-8 text-[12px] md:text-base text-custom-yellow-1">
         <i>
           Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, <br />
           maka Allah akan memudahkan baginya jalan menuju surga. <br />
@@ -170,7 +171,6 @@ const Home = () => {
         </i>
       </div>
 
-      <FloatingFilterButton onClick={() => setIsFilterModalOpen(true)} />
       <FilterModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
