@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFilter } from "@fortawesome/free-solid-svg-icons";
 
-const FloatingFilterButton = ({ onClick }) => {
+const FilterButton = ({ onClick }) => {
   return (
     <button
       onClick={onClick}
@@ -16,8 +16,8 @@ const FloatingFilterButton = ({ onClick }) => {
   );
 };
 
-FloatingFilterButton.propTypes = {
+FilterButton.propTypes = {
   onClick: PropTypes.func.isRequired,
 };
 
-export default FloatingFilterButton;
+export default FilterButton;

@@ -6,8 +6,8 @@ import {
   faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import MapParent from "components/mapParent/index";
-import FloatingFilterButton from "components/floatingFilterButton/FloatingFilterButton";
-import FilterModal from "components/floatingFilterButton/FilterModal";
+import FilterButton from "components/filterButton/FilterButton";
+import FilterModal from "components/filterButton/FilterModal";
 import { GET_ALL_KAJIAN } from "../../services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -154,7 +154,7 @@ const Home = () => {
           </span>
         </button>
 
-        <FloatingFilterButton onClick={() => setIsFilterModalOpen(true)} />
+        <FilterButton onClick={() => setIsFilterModalOpen(true)} />
         <button
           onClick={handleSetCenter}
           className="my-3 py-2 px-6 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 font-semibold shadow-[inset_0_0_12px_-2px_#000]"
@@ -163,7 +163,7 @@ const Home = () => {
         </button>
       </div>
 
-      <div className="quotes text-center my-6 md:mt-12 mb-8 text-[12px] md:text-base text-custom-yellow-1">
+      <div className="quotes text-center my-6 md:mt-12 mb-8 text-[12px] md:text-base">
         <i>
           Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, <br />
           maka Allah akan memudahkan baginya jalan menuju surga. <br />

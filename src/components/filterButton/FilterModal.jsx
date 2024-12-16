@@ -18,7 +18,7 @@ const FilterModal = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-custom-yellow-1 text-custom-gray-1 rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto shadow-[inset_0_0_20px_-2px_#000]">
-        <div className="p-4 border-b flex justify-between items-center">
+        <div className="p-4 flex justify-between items-center">
           <h2 className="text-lg font-semibold">Filters</h2>
           <button
             onClick={onClose}
@@ -38,7 +38,7 @@ const FilterModal = ({
             onCategoryChange={onCategoryChange}
           />
         </div>
-        <div className="p-4 border-t flex justify-end">
+        <div className="p-4 flex justify-end">
           <button
             onClick={onClose}
             className="px-4 py-2 bg-primary bg-custom-yellow-2 font-bold rounded-full hover:bg-primary-dark transition-colors"
