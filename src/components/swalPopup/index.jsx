@@ -8,6 +8,7 @@ import {
   faUser,
   faMapLocationDot,
   faPhone,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import "./style.scss";
 
@@ -42,10 +43,20 @@ function SwalPopup(data) {
     }
   };
 
+  const CloseButton = () => (
+    <button
+      className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
+      onClick={close}
+    >
+      <FontAwesomeIcon icon={faTimes} size="lg" />
+    </button>
+  );
+
   if (type == "kajian") {
     if (group.length > 1) {
       return (
         <div className="relative max-h-[500px] overflow-y-auto flex flex-col text-center text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
+          <CloseButton />
           {group.map((info, i) => (
             <div key={i} className="group-item mx-2">
               <div className="title pb-2 font-semibold p-3">{info.topic}</div>
@@ -105,6 +116,7 @@ function SwalPopup(data) {
     } else {
       return (
         <div className="relative flex flex-col text-center text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
+          <CloseButton />
           <div className="title pb-2 font-semibold p-3">{info.topic}</div>
           <div className="content p-3">
             <div className="speaker">
