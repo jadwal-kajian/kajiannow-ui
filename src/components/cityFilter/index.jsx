@@ -14,7 +14,7 @@ const CityFilter = ({ cities, selectedCity, onCityChange }) => {
         onChange={(e) => onCityChange(e.target.value)}
         className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
       >
-        <option value="">All Cities</option>
+        <option value="">Semua Kota</option>
         {cities.map((city) => (
           <option key={city} value={city}>
             {city}
