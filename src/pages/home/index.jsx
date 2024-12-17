@@ -6,8 +6,8 @@ import {
   faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import MapParent from "components/mapParent/index";
-import FloatingFilterButton from "components/floatingFilterButton/FloatingFilterButton";
-import FilterModal from "components/floatingFilterButton/FilterModal";
+import FilterButton from "components/filterButton/FilterButton";
+import FilterModal from "components/filterButton/FilterModal";
 import { GET_ALL_KAJIAN } from "../../services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -80,10 +80,10 @@ const Home = () => {
   const filteredData = useMemo(() => {
     return data.filter((item) => {
       const cityMatch = selectedCity ? item.city === selectedCity : true;
-      const itemTags = item.tags.split(',').map(tag => tag.trim());
+      const itemTags = item.tags.split(",").map((tag) => tag.trim());
       const categoryMatch =
         selectedCategories.length === 0 ||
-        selectedCategories.every(category => itemTags.includes(category));
+        selectedCategories.every((category) => itemTags.includes(category));
       return cityMatch && categoryMatch;
     });
   }, [data, selectedCity, selectedCategories]);
@@ -134,7 +134,7 @@ const Home = () => {
       <div className="action-area w-full flex justify-center items-center gap-2">
         <button
           onClick={showInfo}
-          className="relative w-[36px] h-[36px] text-[40px] border-none rounded-full bg-[#545454] text-[#ffe7be] cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          className="relative w-[36px] h-[36px] text-[40px] border-none rounded-full bg-custom-gray-1 text-custom-yellow-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faInfoCircle} />
@@ -143,7 +143,7 @@ const Home = () => {
 
         <button
           onClick={() => setShowAllInfo(!showAllInfo)}
-          className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-[#ffe7be] text-[#545454] cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {showAllInfo ? (
@@ -154,9 +154,10 @@ const Home = () => {
           </span>
         </button>
 
+        <FilterButton onClick={() => setIsFilterModalOpen(true)} />
         <button
           onClick={handleSetCenter}
-          className="my-3 py-2 px-6 border-none rounded-full bg-[#ffe7be] text-[#545454] font-semibold shadow-[inset_0_0_12px_-2px_#000]"
+          className="my-3 py-2 px-6 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 font-semibold shadow-[inset_0_0_12px_-2px_#000]"
         >
           Lokasi Saya
         </button>
@@ -170,7 +171,6 @@ const Home = () => {
         </i>
       </div>
 
-      <FloatingFilterButton onClick={() => setIsFilterModalOpen(true)} />
       <FilterModal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
