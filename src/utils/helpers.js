@@ -25,7 +25,6 @@ export const convertDateTime = (value) => {
   return formattedDate;
 }
 
-
 export const groupTopicsByLocation = (targetLat, targetLng, locations) => {
   // Filter location based on lat & lng
   const sameLocations = locations.filter((location) => location.lat === targetLat && location.lng === targetLng);
@@ -36,4 +35,13 @@ export const groupTopicsByLocation = (targetLat, targetLng, locations) => {
   } else {
     return []; // no location matches
   }
+};
+
+export const serialize = (obj) => {
+  var str = [];
+  for (var p in obj)
+    if (obj.hasOwnProperty(p)) {
+      str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+    }
+  return str.join("&");
 };
