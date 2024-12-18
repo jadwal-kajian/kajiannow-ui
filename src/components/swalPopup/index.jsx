@@ -173,7 +173,7 @@ function SwalPopup(data) {
           <FontAwesomeIcon icon={faInfoCircle} />
           <span className="label mx-2">Petunjuk</span>
         </div>
-        <div className="content p-3 max-w-[90%] md:max-w-full mx-auto flex flex-col gap-2 text-sm md:text-base">
+        <div className="content p-3 max-w-[90%] md:max-w-full mx-auto flex flex-col gap-2 text-[13px] md:text-base">
           <div className="item-info">
             <FontAwesomeIcon icon={faBook} />
             <span className="desc mx-2">
