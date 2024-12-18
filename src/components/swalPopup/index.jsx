@@ -23,6 +23,8 @@ const timeStartMapping = {
 function SwalPopup(data) {
   const { type, info, group, close } = data;
 
+  console.log(`dikasi info`, data);
+
   const openGoogleMaps = (info) => {
     if (info.gmaps_url) {
       window.open(info.gmaps_url, "_blank");
