@@ -7,7 +7,7 @@ const CityFilter = ({ cities, selectedCity, onCityChange }) => {
         htmlFor="category-select"
         className="block text-sm font-medium text-gray-700 mb-1"
       >
-        Pilih Kota:
+        Pilih Kota
       </label>
       <select
         value={selectedCity}
