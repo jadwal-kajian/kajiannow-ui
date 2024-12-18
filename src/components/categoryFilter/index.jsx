@@ -27,7 +27,7 @@ const CategoryFilter = ({ selectedCategories, onCategoryChange }) => {
   return (
     <div className="mb-4">
       <h3 className="block text-sm font-medium text-gray-700 mb-2">
-        Pilih Kategori:
+        Pilih Kategori
       </h3>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
         {categories.map((category) => (
