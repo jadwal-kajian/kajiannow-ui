@@ -8,6 +8,7 @@ import {
 import MapParent from "components/mapParent/index";
 import FilterButton from "components/filterButton/FilterButton";
 import FilterModal from "components/filterButton/FilterModal";
+import DateSelector from "components/dateSelector/index";
 import { GET_ALL_KAJIAN } from "../../services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -23,11 +24,13 @@ const Home = () => {
   const [mapCenter, setMapCenter] = useState(null);
   const [zoom, setZoom] = useState(12);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const mapRef = useRef(null);
 
   const fetchData = async () => {
     try {
-      const result = await GET_ALL_KAJIAN();
+      const formattedDate = selectedDate.toISOString().split("T")[0];
+      const result = await GET_ALL_KAJIAN(formattedDate);
       setData(result);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -37,7 +40,7 @@ const Home = () => {
   useEffect(() => {
     fetchData();
     getUserLocation();
-  }, []);
+  }, [selectedDate]);
 
   const getUserLocation = () => {
     if (navigator.geolocation) {
@@ -91,7 +94,6 @@ const Home = () => {
   useEffect(() => {
     if (filteredData.length > 0) {
       if (selectedCity) {
-        // Only recenter the map when a specific city is selected
         const sumLat = filteredData.reduce((sum, item) => sum + item.lat, 0);
         const sumLng = filteredData.reduce((sum, item) => sum + item.lng, 0);
         const centerLat = sumLat / filteredData.length;
@@ -104,12 +106,16 @@ const Home = () => {
 
   const handleSetCenter = () => {
     getUserLocation();
-    setSelectedCity(""); // Reset to "All Cities"
-    setSelectedCategories([]); // Reset categories
+    setSelectedCity("");
+    setSelectedCategories([]);
   };
 
   const handleCategoryChange = (categories) => {
     setSelectedCategories(categories);
+  };
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
   };
 
   const showInfo = () => {
@@ -121,6 +127,9 @@ const Home = () => {
 
   return (
     <div className="content">
+      <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
+        <DateSelector selectedDate={selectedDate} onChange={handleDateChange} />
+      </div>
       {mapCenter && (
         <MapParent
           locations={filteredData}
@@ -131,7 +140,7 @@ const Home = () => {
         />
       )}
 
-      <div className="action-area w-full flex justify-center items-center gap-2">
+      <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
         <button
           onClick={showInfo}
           className="relative w-[36px] h-[36px] text-[40px] border-none rounded-full bg-custom-gray-1 text-custom-yellow-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
