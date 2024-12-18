@@ -1,5 +1,5 @@
-import BASE_URL from "./axiosInstance";
-import { serialize } from 'utils/helpers';
+import BASE_URL from "./config";
+import { serialize } from '../utils/helpers';
 
 export const GET_ALL_KAJIAN = async (date) => {
   try {
@@ -22,9 +22,8 @@ export const GET_LAST_UPDATE = async () => {
 };
 
 export const GET_KAJIAN_QUERY = async (query) => {
-  const setQuery = serialize(query);
   try {
-    const response = await BASE_URL.get(`/schedule?${setQuery}`);
+    const response = await BASE_URL.get(`/query_schedules?${serialize(query)}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching data:", error);

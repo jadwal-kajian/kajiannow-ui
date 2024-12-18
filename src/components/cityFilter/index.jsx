@@ -1,12 +1,12 @@
 import PropTypes from "prop-types";
+import Select from "react-select";
 
 const CityFilter = ({ cities, selectedCity, onCityChange }) => {
+  console.log(cities, selectedCity);
+
   return (
     <div className="mb-4">
-      <label
-        htmlFor="category-select"
-        className="block text-sm font-medium text-gray-700 mb-1"
-      >
+      <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-1">
         Pilih Kota
       </label>
       <select
@@ -21,6 +21,16 @@ const CityFilter = ({ cities, selectedCity, onCityChange }) => {
           </option>
         ))}
       </select>
+
+      {/* <Select
+        className="basic-select"
+        name="city"
+        options={cities}
+        value={selectedCity}
+        onChange={(e) => {
+          onCityChange(e.city);
+        }}
+      /> */}
     </div>
   );
 };
