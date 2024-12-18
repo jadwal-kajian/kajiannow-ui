@@ -5,11 +5,24 @@ export const convertDateTime = (value) => {
     "Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"
   ];
 
+  const monthsInIndonesian = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+
   const dayIndex = moment(value.last_update).day();
   const dayInIndonesian = daysInIndonesian[dayIndex];
 
-  const formattedDate = moment(value.last_update).format(`dddd, D MMMM YYYY`);
-  return formattedDate.replace(moment(value.last_update).format('dddd'), dayInIndonesian);
+  const dateObject = moment(value.last_update);
+  const day = dateObject.date(); // Tanggal
+  const monthIndex = dateObject.month(); // Indeks bulan (0-11)
+  const year = dateObject.year(); // Tahun
+
+  const monthInIndonesian = monthsInIndonesian[monthIndex];
+
+  // Format tanggal
+  const formattedDate = `${dayInIndonesian}, ${day} ${monthInIndonesian} ${year}`;
+  return formattedDate;
 }
 
 

@@ -10,6 +10,8 @@ export default {
         "custom-yellow": {
           1: "#ffe7be",
           2: "#edce93",
+          3: "#f1dcb7",
+          4: "#e1cca6"
         },
       },
     },

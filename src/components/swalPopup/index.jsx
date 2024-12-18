@@ -27,139 +27,121 @@ function SwalPopup(data) {
     if (info.gmaps_url) {
       window.open(info.gmaps_url, "_blank");
     } else if (info.lat && info.lng) {
-      window.open(
-        `https://www.google.com/maps?q=${info.lat},${info.lng}`,
-        "_blank"
-      );
+      window.open(`https://www.google.com/maps?q=${info.lat},${info.lng}`, "_blank");
     } else {
       const placeName = info.loc_name;
       const address = info.addr;
       window.open(
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          placeName + " " + address
-        )}`,
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeName + " " + address)}`,
         "_blank"
       );
     }
   };
 
-  const CloseButton = () => (
-    <button
-      className="absolute top-2 right-2 text-gray-600 hover:text-gray-800"
-      onClick={close}
-    >
-      <FontAwesomeIcon icon={faTimes} size="lg" />
-    </button>
-  );
-
   if (type == "kajian") {
     if (group.length > 1) {
       return (
         <div className="relative max-h-[500px] overflow-y-auto flex flex-col text-center text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
-          <CloseButton />
+          <button
+            className="sticky top-3 right-6 ml-auto px-2 p-[6px] bg-custom-yellow-4 text-gray-600 hover:text-gray-800 rounded-full flex items-center justify-center z-10"
+            onClick={close}
+          >
+            <FontAwesomeIcon icon={faTimes} size="lg" />
+          </button>
+
           {group.map((info, i) => (
-            <div key={i} className="group-item mx-2">
-              <div className="title pb-2 font-semibold p-3">{info.topic}</div>
-              <div className="content p-3">
-                <div className="speaker">
-                  <FontAwesomeIcon icon={faUser} />
-                  <span className="label mx-2">{info.speaker}</span>
+            <div key={i} className="group-item mx-3 mb-4">
+              <div className="relative md:mx-6 px-3 py-[45px] pb-[50px] bg-custom-yellow-3 rounded-xl overflow-hidden">
+                <div className="title absolute left-0 top-0 w-full text-sm font-semibold px-1 py-2 bg-custom-yellow-3">
+                  {info.topic}
                 </div>
-                <div className="place">
-                  <FontAwesomeIcon icon={faMosque} />
-                  <span className="label mx-2">{info.loc_name}</span>
+
+                <div className="content flex flex-col gap-[5px]">
+                  <div className="flex gap-3 items-center">
+                    <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                    <span className="text-[13px] text-left text-gray-800">{info.speaker}</span>
+                  </div>
+                  <div className="flex gap-3 items-center">
+                    <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                    <span className="text-[13px] text-left text-gray-800">{info.loc_name}</span>
+                  </div>
+                  <div className="flex gap-3 items-center">
+                    <FontAwesomeIcon icon={faCalendar} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                    <span className="text-[13px] text-left text-gray-800">
+                      {timeStartMapping[info.time_start] || info.time_start} - {info.time_end || "Selesai"}
+                    </span>
+                  </div>
+                  {info.contact !== "" && info.contact !== "-" && (
+                    <div className="flex gap-3 items-center">
+                      <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                      <span className="text-[13px] text-left text-gray-800">{info.contact}</span>
+                    </div>
+                  )}
+                  <div className="flex gap-3 items-center">
+                    <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                    <span className="text-[13px] text-left text-gray-800 leading-5">{info.addr}</span>
+                  </div>
+                  {info.notes !== "" && (
+                    <div className="flex gap-3 items-center">
+                      <FontAwesomeIcon icon={faNoteSticky} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                      <span className="text-[13px] text-left text-gray-800">{info.notes}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="address">
-                  <FontAwesomeIcon icon={faMapLocationDot} />
-                  <span className="label mx-2">{info.addr}</span>
-                </div>
-                <div className="time">
-                  <FontAwesomeIcon icon={faCalendar} />
-                  <span className="label mx-2">
-                    {timeStartMapping[info.time_start] || info.time_start} -{" "}
-                    {info.time_end}
-                  </span>
-                </div>
-                <div className="contact">
-                  <FontAwesomeIcon icon={faPhone} />
-                  <span className="label mx-2">{info.contact}</span>
-                </div>
-                <div className="notes">
-                  <FontAwesomeIcon icon={faNoteSticky} />
-                  <span className="label mx-2">
-                    {info.notes !== "Cp : -" && info.notes}
-                  </span>
-                </div>
-              </div>
-              <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
+
                 <button
-                  className="confirm p-2 px-4 rounded-full bg-custom-yellow-2"
+                  className="open-gmap absolute left-0 bottom-0 w-full text-[12px] font-semibold p-1 bg-custom-yellow-2"
                   onClick={() => openGoogleMaps(info)}
                 >
                   Buka di Google Maps
                 </button>
               </div>
-              <div
-                className={`divider h-[1px] w-[95%] mx-auto bg-[burlywood]`}
-              ></div>
             </div>
           ))}
-
-          <button
-            className="cancel w-[100px] mx-auto my-4 p-2 px-4 rounded-full bg-custom-yellow-1 text-sm font-semibold"
-            onClick={close}
-          >
-            Tutup
-          </button>
         </div>
       );
     } else {
       return (
-        <div className="relative flex flex-col text-center text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
-          <CloseButton />
-          <div className="title pb-2 font-semibold p-3">{info.topic}</div>
-          <div className="content p-3">
-            <div className="speaker">
-              <FontAwesomeIcon icon={faUser} />
-              <span className="label mx-2">{info.speaker}</span>
+        <div className="relative flex flex-col text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
+          <div className="title font-semibold p-3 pl-4 pb-2 text-sm md:text-base">{info.topic}</div>
+          <div className="content mx-3 space-y-2 md:mx-6 p-3 bg-custom-yellow-3 rounded-xl">
+            <div className="flex gap-3 items-center">
+              <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+              <span className="text-sm text-left text-gray-800">{info.speaker}</span>
             </div>
-            <div className="place">
-              <FontAwesomeIcon icon={faMosque} />
-              <span className="label mx-2">{info.loc_name}</span>
+            <div className="flex gap-3 items-center">
+              <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+              <span className="text-sm text-left text-gray-800">{info.loc_name}</span>
             </div>
-            <div className="address">
-              <FontAwesomeIcon icon={faMapLocationDot} />
-              <span className="label mx-2">{info.addr}</span>
-            </div>
-            <div className="time">
-              <FontAwesomeIcon icon={faCalendar} />
-              <span className="label mx-2">
-                {timeStartMapping[info.time_start] || info.time_start} -{" "}
-                {info.time_end}
+            <div className="flex gap-3 items-center">
+              <FontAwesomeIcon icon={faCalendar} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+              <span className="text-sm text-left text-gray-800">
+                {timeStartMapping[info.time_start] || info.time_start} - {info.time_end || "Selesai"}
               </span>
             </div>
-            <div className="contact">
-              <FontAwesomeIcon icon={faPhone} />
-              <span className="label mx-2">{info.contact}</span>
+            {info.contact !== "" && info.contact !== "-" && (
+              <div className="flex gap-3 items-center">
+                <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                <span className="text-sm text-left text-gray-800">{info.contact}</span>
+              </div>
+            )}
+            <div className="flex gap-3 items-center">
+              <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+              <span className="text-sm text-left text-gray-800">{info.addr}</span>
             </div>
-            {info.notes !== "Cp : -" && (
-              <div className="notes">
-                <FontAwesomeIcon icon={faNoteSticky} />
-                <span className="label mx-2">{info.notes}</span>
+            {info.notes !== "" && (
+              <div className="flex gap-3 items-center">
+                <FontAwesomeIcon icon={faNoteSticky} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                <span className="text-sm text-left text-gray-800">{info.notes}</span>
               </div>
             )}
           </div>
+
           <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
-            <button
-              className="confirm p-2 px-4 rounded-full bg-[#edce93]"
-              onClick={() => openGoogleMaps(info)}
-            >
+            <button className="confirm p-2 px-4 rounded-full bg-[#edce93]" onClick={() => openGoogleMaps(info)}>
               Buka di Google Maps
             </button>
-            <button
-              className="cancel p-2 px-4 rounded-full bg-[#efd8ad] text-sm font-semibold"
-              onClick={close}
-            >
+            <button className="cancel p-2 px-4 rounded-full bg-custom-yellow-3 text-sm font-semibold" onClick={close}>
               Tutup
             </button>
           </div>
@@ -173,25 +155,18 @@ function SwalPopup(data) {
           <FontAwesomeIcon icon={faInfoCircle} />
           <span className="label mx-2">Petunjuk</span>
         </div>
-        <div className="content p-3 max-w-[90%] md:max-w-full mx-auto flex flex-col gap-2 text-sm md:text-base">
+        <div className="content p-3 max-w-[90%] md:max-w-full mx-auto flex flex-col gap-2 text-[13px] md:text-base">
           <div className="item-info">
             <FontAwesomeIcon icon={faBook} />
-            <span className="desc mx-2">
-              Pinpoint merah menunjukkan lokasi kajian
-            </span>
+            <span className="desc mx-2">Pinpoint merah menunjukkan lokasi kajian</span>
           </div>
           <div className="item-info">
             <FontAwesomeIcon icon={faBook} />
-            <span className="desc mx-2">
-              Klik pinpoint untuk melihat detail info kajian
-            </span>
+            <span className="desc mx-2">Klik pinpoint untuk melihat detail info kajian</span>
           </div>
         </div>
         <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
-          <button
-            className="cancel p-2 px-4 rounded-full bg-[#efd8ad] text-sm font-semibold"
-            onClick={close}
-          >
+          <button className="cancel p-2 px-4 rounded-full bg-[#efd8ad] text-sm font-semibold" onClick={close}>
             Tutup
           </button>
         </div>
