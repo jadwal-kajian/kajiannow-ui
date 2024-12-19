@@ -9,6 +9,7 @@ import {
   faUser,
   faMapLocationDot,
   faPhone,
+  faEnvelopeCircleCheck,
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import "./style.scss";
@@ -20,6 +21,8 @@ const timeStartMapping = {
   bada_maghrib: "Ba'da Maghrib",
   bada_isya: "Ba'da Isya'",
 };
+
+const BASE_API_URL = "http://kajian-api.derrylab.com/";
 
 function formatDate(dateString) {
   const options = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -90,15 +93,37 @@ function SwalPopup(data) {
                   <FontAwesomeIcon icon={faCalendarDay} />
                   <span className="label mx-2">{formatDate(info.date)}</span>
                 </div>
-                <div className="contact">
-                  <FontAwesomeIcon icon={faPhone} />
-                  <span className="label mx-2">{info.contact}</span>
-                </div>
-                <div className="notes">
-                  <FontAwesomeIcon icon={faNoteSticky} />
+                {info.contact && (
+                  <div className="contact">
+                    <FontAwesomeIcon icon={faPhone} />
+                    <span className="label mx-2">{info.contact}</span>
+                  </div>
+                )}
+                {info.notes && (
+                  <div className="notes">
+                    <FontAwesomeIcon icon={faNoteSticky} />
+                    <span className="label mx-2">{info.notes}</span>
+                  </div>
+                )}
+                <div className="source">
+                  <FontAwesomeIcon icon={faEnvelopeCircleCheck} />
                   <span className="label mx-2">
-                    {info.notes !== "Cp : -" && info.notes}
+                    {info.src_text && info.src_text !== "" ? (
+                      <a href={`${BASE_API_URL}${info.src_text}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>
+                        Teks
+                      </a>
+                    ) : (
+                      ""
+                    )}
+                    {info.src_image && info.src_image !== "" ? (
+                      <a href={`${BASE_API_URL}${info.src_image}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>
+                        Gambar
+                      </a>
+                    ) : (
+                      ""
+                    )}
                   </span>
+                  dari {info.src_sender_name} ({info.src_sender_contact}) via {info.src_platform}
                 </div>
               </div>
               <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
@@ -152,16 +177,38 @@ function SwalPopup(data) {
               <FontAwesomeIcon icon={faCalendarDay} />
               <span className="label mx-2">{formatDate(info.date)}</span>
             </div>
-            <div className="contact">
-              <FontAwesomeIcon icon={faPhone} />
-              <span className="label mx-2">{info.contact}</span>
-            </div>
-            {info.notes !== "Cp : -" && (
+            {info.contact && (
+              <div className="contact">
+                <FontAwesomeIcon icon={faPhone} />
+                <span className="label mx-2">{info.contact}</span>
+              </div>
+            )}
+            {info.notes && (
               <div className="notes">
                 <FontAwesomeIcon icon={faNoteSticky} />
                 <span className="label mx-2">{info.notes}</span>
               </div>
             )}
+            <div className="source">
+              <FontAwesomeIcon icon={faEnvelopeCircleCheck} />
+              <span className="label mx-2">
+                {info.src_text && info.src_text !== "" ? (
+                  <a href={`${BASE_API_URL}${info.src_text}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>
+                    Teks
+                  </a>
+                ) : (
+                  ""
+                )}
+                {info.src_image && info.src_image !== "" ? (
+                  <a href={`${BASE_API_URL}${info.src_image}`} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>
+                    Gambar
+                  </a>
+                ) : (
+                  ""
+                )}
+              </span>
+              dari {info.src_sender_name} ({info.src_sender_contact}) via {info.src_platform}
+            </div>
           </div>
           <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
             <button
