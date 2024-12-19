@@ -9,6 +9,7 @@ import { GET_ALL_KAJIAN } from "../../services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import SwalPopup from "components/swalPopup/index";
+import moment from "moment";
 
 const Popup = withReactContent(Swal);
 
@@ -25,7 +26,7 @@ const Home = () => {
 
   const fetchData = async () => {
     try {
-      const formattedDate = selectedDate.toISOString().split("T")[0];
+      const formattedDate = moment(selectedDate).format("YYYY-MM-DD");
       const result = await GET_ALL_KAJIAN(formattedDate);
       setData(result);
     } catch (error) {
