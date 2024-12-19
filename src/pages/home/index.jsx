@@ -1,6 +1,10 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
+import {
+  faEye,
+  faEyeSlash,
+  faInfoCircle,
+} from "@fortawesome/free-solid-svg-icons";
 import MapParent from "components/mapParent/index";
 import FilterButton from "components/filterButton/FilterButton";
 import FilterModal from "components/filterButton/FilterModal";
@@ -9,6 +13,7 @@ import { GET_ALL_KAJIAN } from "../../services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import SwalPopup from "components/swalPopup/index";
+import { convertToYYYYMMDD } from "../../utils/helpers";
 
 const Popup = withReactContent(Swal);
 
@@ -25,7 +30,7 @@ const Home = () => {
 
   const fetchData = async () => {
     try {
-      const formattedDate = selectedDate.toISOString().split("T")[0];
+      const formattedDate = convertToYYYYMMDD(selectedDate);
       const result = await GET_ALL_KAJIAN(formattedDate);
       setData(result);
     } catch (error) {
@@ -81,7 +86,8 @@ const Home = () => {
       const cityMatch = selectedCity ? item.city === selectedCity : true;
       const itemTags = item.tags.split(",").map((tag) => tag.trim());
       const categoryMatch =
-        selectedCategories.length === 0 || selectedCategories.every((category) => itemTags.includes(category));
+        selectedCategories.length === 0 ||
+        selectedCategories.every((category) => itemTags.includes(category));
       return cityMatch && categoryMatch;
     });
   }, [data, selectedCity, selectedCategories]);
@@ -126,7 +132,13 @@ const Home = () => {
         <DateSelector selectedDate={selectedDate} onChange={handleDateChange} />
       </div>
       {mapCenter && (
-        <MapParent locations={filteredData} ref={mapRef} showAllInfo={showAllInfo} center={mapCenter} zoom={zoom} />
+        <MapParent
+          locations={filteredData}
+          ref={mapRef}
+          showAllInfo={showAllInfo}
+          center={mapCenter}
+          zoom={zoom}
+        />
       )}
 
       <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
@@ -144,7 +156,11 @@ const Home = () => {
           className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            {showAllInfo ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
+            {showAllInfo ? (
+              <FontAwesomeIcon icon={faEyeSlash} />
+            ) : (
+              <FontAwesomeIcon icon={faEye} />
+            )}
           </span>
         </button>
 
@@ -159,8 +175,8 @@ const Home = () => {
 
       <div className="quotes text-center my-4 md:mt-12 mb-8 text-[12px] md:text-base">
         <i>
-          Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju
-          surga. (HR. Muslim)
+          Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, maka Allah
+          akan memudahkan baginya jalan menuju surga. (HR. Muslim)
         </i>
       </div>
 
