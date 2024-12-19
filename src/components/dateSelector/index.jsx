@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
+import moment from "moment";
 
 const DateSelector = ({ selectedDate, onChange }) => {
   const [displayDate, setDisplayDate] = useState("");
@@ -25,7 +26,7 @@ const DateSelector = ({ selectedDate, onChange }) => {
     <div className="date-selector mb-2 relative">
       <input
         type="date"
-        value={selectedDate.toISOString().split("T")[0]}
+        value={moment(selectedDate).format("YYYY-MM-DD")}
         onChange={handleChange}
         className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
         aria-label="Select date"
