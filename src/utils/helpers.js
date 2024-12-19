@@ -2,7 +2,7 @@ import moment from "moment";
 
 export const convertDateTime = (value) => {
   const daysInIndonesian = [
-    "Minggu",
+    "Ahad",
     "Senin",
     "Selasa",
     "Rabu",
