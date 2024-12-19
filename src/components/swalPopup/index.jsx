@@ -1,7 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBook,
-  faCalendar,
+  faCalendarDay,
+  faClock,
   faInfoCircle,
   faMosque,
   faNoteSticky,
@@ -19,6 +20,11 @@ const timeStartMapping = {
   bada_maghrib: "Ba'da Maghrib",
   bada_isya: "Ba'da Isya'",
 };
+
+function formatDate(dateString) {
+  const options = { day: 'numeric', month: 'long', year: 'numeric' };
+  return new Date(dateString).toLocaleDateString('id-ID', options);
+}
 
 function SwalPopup(data) {
   const { type, info, group, close } = data;
@@ -74,11 +80,15 @@ function SwalPopup(data) {
                   <span className="label mx-2">{info.addr}</span>
                 </div>
                 <div className="time">
-                  <FontAwesomeIcon icon={faCalendar} />
+                  <FontAwesomeIcon icon={faClock} />
                   <span className="label mx-2">
                     {timeStartMapping[info.time_start] || info.time_start} -{" "}
                     {info.time_end}
                   </span>
+                </div>
+                <div className="date">
+                  <FontAwesomeIcon icon={faCalendarDay} />
+                  <span className="label mx-2">{formatDate(info.date)}</span>
                 </div>
                 <div className="contact">
                   <FontAwesomeIcon icon={faPhone} />
@@ -132,11 +142,15 @@ function SwalPopup(data) {
               <span className="label mx-2">{info.addr}</span>
             </div>
             <div className="time">
-              <FontAwesomeIcon icon={faCalendar} />
+              <FontAwesomeIcon icon={faClock} />
               <span className="label mx-2">
                 {timeStartMapping[info.time_start] || info.time_start} -{" "}
                 {info.time_end}
               </span>
+            </div>
+            <div className="date">
+              <FontAwesomeIcon icon={faCalendarDay} />
+              <span className="label mx-2">{formatDate(info.date)}</span>
             </div>
             <div className="contact">
               <FontAwesomeIcon icon={faPhone} />

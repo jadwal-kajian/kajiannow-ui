@@ -2,7 +2,7 @@ import moment from 'moment-timezone';
 
 export const convertDateTime = (value) => {
   const daysInIndonesian = [
-    "Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"
+    "Ahad", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"
   ];
 
   const dayIndex = moment(value.last_update).day();
