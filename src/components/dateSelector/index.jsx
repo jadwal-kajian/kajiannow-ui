@@ -1,32 +1,26 @@
 import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
 import moment from "moment";
+import { convertToDDMMYYYY, convertToYYYYMMDD } from "../../utils/helpers";
 
 const DateSelector = ({ selectedDate, onChange }) => {
   const [displayDate, setDisplayDate] = useState("");
 
-  const formatDate = (date) => {
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
-
   useEffect(() => {
-    setDisplayDate(formatDate(selectedDate));
+    setDisplayDate(convertToDDMMYYYY(selectedDate));
   }, [selectedDate]);
 
   const handleChange = (e) => {
-    const newDate = new Date(e.target.value);
+    const newDate = moment(e.target.value).toDate();
     onChange(newDate);
-    setDisplayDate(formatDate(newDate));
+    setDisplayDate(convertToDDMMYYYY(newDate));
   };
 
   return (
     <div className="date-selector mb-2 relative">
       <input
         type="date"
-        value={moment(selectedDate).format("YYYY-MM-DD")}
+        value={convertToYYYYMMDD(selectedDate)}
         onChange={handleChange}
         className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
         aria-label="Select date"
