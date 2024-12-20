@@ -1,33 +1,44 @@
-import moment from 'moment-timezone';
+import moment from "moment";
 
 export const convertDateTime = (value) => {
   const daysInIndonesian = [
-    "Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jum'at", "Sabtu"
-  ];
-
-  const monthsInIndonesian = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    "Ahad",
+    "Senin",
+    "Selasa",
+    "Rabu",
+    "Kamis",
+    "Jum'at",
+    "Sabtu",
   ];
 
   const dayIndex = moment(value.last_update).day();
   const dayInIndonesian = daysInIndonesian[dayIndex];
 
-  const dateObject = moment(value.last_update);
-  const day = dateObject.date(); // Tanggal
-  const monthIndex = dateObject.month(); // Indeks bulan (0-11)
-  const year = dateObject.year(); // Tahun
+  const formattedDate = moment(value.last_update).format(`dddd, D MMMM YYYY`);
+  return formattedDate.replace(
+    moment(value.last_update).format("dddd"),
+    dayInIndonesian
+  );
+};
 
-  const monthInIndonesian = monthsInIndonesian[monthIndex];
-
-  // Format tanggal
-  const formattedDate = `${dayInIndonesian}, ${day} ${monthInIndonesian} ${year}`;
-  return formattedDate;
+export const formatDate = (dateString) => {
+  const options = { day: "numeric", month: "long", year: "numeric" };
+  return new Date(dateString).toLocaleDateString("id-ID", options);
 }
+
+export const convertToDDMMYYYY = (date) => {
+  return moment(date).format("DD-MM-YYYY");
+};
+
+export const convertToYYYYMMDD = (date) => {
+  return moment(date).format("YYYY-MM-DD");
+};
 
 export const groupTopicsByLocation = (targetLat, targetLng, locations) => {
   // Filter location based on lat & lng
-  const sameLocations = locations.filter((location) => location.lat === targetLat && location.lng === targetLng);
+  const sameLocations = locations.filter(
+    (location) => location.lat === targetLat && location.lng === targetLng
+  );
 
   // if found the same location, grab the topic
   if (sameLocations.length > 0) {
