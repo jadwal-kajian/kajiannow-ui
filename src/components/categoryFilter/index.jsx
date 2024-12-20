@@ -22,7 +22,7 @@ const CategoryFilter = ({ onCategoryChange }) => {
 
   useEffect(() => {
     const filter = JSON.parse(localStorage.getItem("filter")) || null;
-    if (filter) setSelectedCategories(filter.selectedCategories);
+    if (filter) setSelectedCategories(filter.categories);
   }, []);
 
   useEffect(() => {

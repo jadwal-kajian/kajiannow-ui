@@ -10,16 +10,9 @@ import {
   faEnvelopeCircleCheck,
   faTimes,
   faCalendar,
+  faCity,
 } from "@fortawesome/free-solid-svg-icons";
-import { formatDate } from "../../../utils/helpers";
-
-const timeStartMapping = {
-  bada_subuh: "Ba'da Subuh",
-  bada_dzuhur: "Ba'da Dzuhur",
-  bada_ashar: "Ba'da Ashar",
-  bada_maghrib: "Ba'da Maghrib",
-  bada_isya: "Ba'da Isya'",
-};
+import { formatDate, timeStartMapping } from "../../../utils/helpers";
 
 function KajianPopup({ info, group, close }) {
   const openGoogleMaps = (info) => {
@@ -53,6 +46,15 @@ function KajianPopup({ info, group, close }) {
               <div className="title text-sm font-semibold p-2">{info.topic}</div>
 
               <div className="content flex flex-col gap-[5px]">
+                {info.src_image && (
+                  <div className="flex gap-3 items-center">
+                    <img
+                      src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`}
+                      alt="poster"
+                      className="rounded-xl"
+                    />
+                  </div>
+                )}
                 <div className="flex gap-3 items-center">
                   <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-700 flex-shrink-0" />
                   <span className="text-[13px] text-left text-gray-800">{info.speaker}</span>
@@ -60,6 +62,10 @@ function KajianPopup({ info, group, close }) {
                 <div className="flex gap-3 items-center">
                   <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-gray-700 flex-shrink-0" />
                   <span className="text-[13px] text-left text-gray-800">{info.loc_name}</span>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                  <span className="text-sm text-left text-gray-800">{info.city}</span>
                 </div>
                 <div className="flex gap-3 items-center">
                   <FontAwesomeIcon icon={faCalendar} className="w-4 h-4 text-gray-700 flex-shrink-0" />
@@ -129,12 +135,15 @@ function KajianPopup({ info, group, close }) {
       </div>
     );
   } else {
-    console.log(info.tags);
-
     return (
       <div className="relative flex flex-col text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
         <div className="title font-semibold p-3 pl-4 pb-2 text-sm md:text-base">{info.topic}</div>
-        <div className="content mx-3 space-y-2 md:mx-6 p-3 bg-custom-yellow-3 rounded-xl">
+        <div className="content max-h-[50vh] overflow-y-auto mx-3 space-y-2 md:mx-6 p-3 bg-custom-yellow-3 rounded-xl">
+          {info.src_image && (
+            <div className="flex gap-3 items-center">
+              <img src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`} alt="poster" className="rounded-xl" />
+            </div>
+          )}
           <div className="flex gap-3 items-center">
             <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-700 flex-shrink-0" />
             <span className="text-sm text-left text-gray-800">{info.speaker}</span>
@@ -142,6 +151,10 @@ function KajianPopup({ info, group, close }) {
           <div className="flex gap-3 items-center">
             <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-gray-700 flex-shrink-0" />
             <span className="text-sm text-left text-gray-800">{info.loc_name}</span>
+          </div>
+          <div className="flex gap-3 items-center">
+            <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+            <span className="text-sm text-left text-gray-800">{info.city}</span>
           </div>
           <div className="flex gap-3 items-center">
             <FontAwesomeIcon icon={faCalendar} className="w-4 h-4 text-gray-700 flex-shrink-0" />

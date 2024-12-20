@@ -1,21 +1,24 @@
 import React, { useState } from "react";
 import CityFilter from "components/cityFilter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faFilter, faTimes } from "@fortawesome/free-solid-svg-icons";
 import CategoryFilter from "components/categoryFilter";
+import DateSelector from "components/dateSelector";
 
 function FilterPopup({ close, filter, submit }) {
   const [selectedCity, setSelectedCity] = useState("none");
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [dateSelected, setDateSelected] = useState(filter.selectedDate);
 
   const applyFilter = () => {
     let currentCity = "";
-    const filter = JSON.parse(localStorage.getItem("filter")) || null;
-    if (filter) currentCity = filter.selectedCity;
+    const localFilter = JSON.parse(localStorage.getItem("filter")) || null;
+    if (localFilter) currentCity = localFilter.city;
 
     const dataSubmit = {
-      selectedCity: selectedCity == "none" ? currentCity : selectedCity,
-      selectedCategories,
+      city: selectedCity == "none" ? currentCity : selectedCity,
+      categories: selectedCategories,
+      date: dateSelected,
     };
 
     localStorage.setItem("filter", JSON.stringify(dataSubmit));
@@ -23,20 +26,25 @@ function FilterPopup({ close, filter, submit }) {
   };
 
   return (
-    <div className="relative h-[60vh] overflow-y-auto flex flex-col text-center text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
+    <div className="relative h-[65vh] overflow-y-auto flex flex-col text-center text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
       <button
         className="sticky top-3 right-6 ml-auto px-2 p-[6px] bg-custom-yellow-4 text-gray-600 hover:text-gray-800 rounded-full flex items-center justify-center z-10 shadow-[0_0_8px_-4px_#000]"
         onClick={close}
       >
         <FontAwesomeIcon icon={faTimes} size="lg" />
       </button>
-      <div className="content h-[80%] mt-4 p-3 px-6 w-full mx-auto text-left text-[13px] md:text-base">
-        <CityFilter cities={filter.cities} onCityChange={setSelectedCity} />
+      <div className="content h-[80%] p-3 px-6 w-full mx-auto text-left text-[13px] overflow-y-auto md:text-base">
+        <DateSelector selectedDate={dateSelected} setDateSelected={setDateSelected} />
+        <CityFilter cities={filter.cities} setSelectedCity={setSelectedCity} />
         <CategoryFilter onCategoryChange={setSelectedCategories} />
       </div>
 
       <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
-        <button className="cancel p-2 px-4 rounded-full bg-[#efd8ad] text-sm font-semibold" onClick={applyFilter}>
+        <button
+          className="cancel p-2 px-6 rounded-full bg-[#7a5530] text-[#f1dcb7] text-sm font-semibold"
+          onClick={applyFilter}
+        >
+          <FontAwesomeIcon icon={faFilter} className="text-sm mr-2" />
           Terapkan Filter
         </button>
       </div>
