@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { useEffect, useState } from "react";
 
 const categories = [
   "tematik",
@@ -16,32 +17,44 @@ const categories = [
   "khusus_akhwat",
 ];
 
-const CategoryFilter = ({ selectedCategories, onCategoryChange }) => {
-  const handleChange = (category) => {
-    const updatedCategories = selectedCategories.includes(category)
-      ? selectedCategories.filter((c) => c !== category)
-      : [...selectedCategories, category];
-    onCategoryChange(updatedCategories);
+const CategoryFilter = ({ onCategoryChange }) => {
+  const [selectedCategories, setSelectedCategories] = useState([]);
+
+  useEffect(() => {
+    const filter = JSON.parse(localStorage.getItem("filter")) || null;
+    if (filter) setSelectedCategories(filter.selectedCategories);
+  }, []);
+
+  useEffect(() => {
+    onCategoryChange(selectedCategories);
+  }, [selectedCategories]);
+
+  const handleCheckboxChange = (category) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category) ? prev.filter((item) => item !== category) : [...prev, category]
+    );
   };
 
   return (
-    <div className="mb-4">
-      <h3 className="block text-sm font-medium text-gray-700 mb-2">
-        Pilih Kategori
-      </h3>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+    <div className="category-area my-3">
+      <div className="flex items-center gap-4 my-4">
+        <div className="flex-grow border-t border-custom-yellow-4"></div>
+        <div className="label text-sm text-[#917951]">Pilih Kategori</div>
+        <div className="flex-grow border-t border-custom-yellow-4"></div>
+      </div>
+      <div className="flex flex-wrap gap-2 justify-center text-[13px]">
         {categories.map((category) => (
-          <label key={category} className="inline-flex items-center">
-            <input
-              type="checkbox"
-              className="form-checkbox h-5 w-5 text-indigo-600"
-              checked={selectedCategories.includes(category)}
-              onChange={() => handleChange(category)}
-            />
-            <span className="ml-2 text-sm text-gray-700">
-              {category.replace("_", " ")}
-            </span>
-          </label>
+          <div
+            key={category}
+            className={`px-[10px] py-[2px] rounded-full cursor-pointer transition-all ${
+              selectedCategories.includes(category)
+                ? "bg-[#795548] text-white" // Warna chip aktif
+                : "bg-[#ebd7b4] text-[#7A5530]" // Warna chip tidak aktif
+            }`}
+            onClick={() => handleCheckboxChange(category)}
+          >
+            {category.replace("_", " ")}
+          </div>
         ))}
       </div>
     </div>
@@ -49,7 +62,6 @@ const CategoryFilter = ({ selectedCategories, onCategoryChange }) => {
 };
 
 CategoryFilter.propTypes = {
-  selectedCategories: PropTypes.arrayOf(PropTypes.string).isRequired,
   onCategoryChange: PropTypes.func.isRequired,
 };
 
