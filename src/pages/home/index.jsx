@@ -2,13 +2,12 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash, faFilter, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import MapParent from "components/mapParent/index";
-import FilterButton from "components/filterButton/FilterButton";
-import FilterModal from "components/filterButton/FilterModal";
 import DateSelector from "components/dateSelector/index";
 import { GET_ALL_KAJIAN, GET_KAJIAN_QUERY } from "../../services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import SwalPopup from "components/swalPopup/index";
+import { convertToYYYYMMDD } from "../../utils/helpers";
 
 const Popup = withReactContent(Swal);
 
@@ -19,19 +18,22 @@ const Home = () => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [mapCenter, setMapCenter] = useState(null);
   const [zoom, setZoom] = useState(12);
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const mapRef = useRef(null);
 
   const fetchData = async () => {
     try {
-      const formattedDate = selectedDate.toISOString().split("T")[0];
+      const formattedDate = convertToYYYYMMDD(selectedDate);
       const result = await GET_ALL_KAJIAN(formattedDate);
       setData(result);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
+
+  useEffect(() => {
+    localStorage.clear();
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -86,15 +88,6 @@ const Home = () => {
     });
   }, [data, selectedCity, selectedCategories]);
 
-  // useEffect(() => {
-  //   const query = {
-  //     city: "surabaya",
-  //   };
-  //   GET_KAJIAN_QUERY(query).then((res) => {
-  //     console.log(res);
-  //   });
-  // }, []);
-
   useEffect(() => {
     if (filteredData.length > 0) {
       if (selectedCity) {
@@ -114,10 +107,6 @@ const Home = () => {
     setSelectedCategories([]);
   };
 
-  const handleCategoryChange = (categories) => {
-    setSelectedCategories(categories);
-  };
-
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
@@ -132,11 +121,21 @@ const Home = () => {
   const showFilter = () => {
     const filterProps = {
       cities,
-      selectedCity,
       onCityChange: setSelectedCity,
     };
     Popup.fire({
-      html: <SwalPopup type="filter" filter={filterProps} close={() => Popup.close()} />,
+      html: (
+        <SwalPopup
+          type="filter"
+          filter={filterProps}
+          close={() => Popup.close()}
+          submit={(res) => {
+            setSelectedCity(res.selectedCity);
+            setSelectedCategories(res.selectedCategories);
+            Swal.close();
+          }}
+        />
+      ),
       showConfirmButton: false,
     });
   };
@@ -193,16 +192,6 @@ const Home = () => {
           surga. (HR. Muslim)
         </i>
       </div>
-
-      <FilterModal
-        isOpen={isFilterModalOpen}
-        onClose={() => setIsFilterModalOpen(false)}
-        cities={cities}
-        selectedCity={selectedCity}
-        onCityChange={setSelectedCity}
-        selectedCategories={selectedCategories}
-        onCategoryChange={handleCategoryChange}
-      />
     </div>
   );
 };
