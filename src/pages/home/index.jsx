@@ -1,31 +1,25 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faEye,
-  faEyeSlash,
-  faInfoCircle,
-} from "@fortawesome/free-solid-svg-icons";
+import { faEye, faEyeSlash, faFilter, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import MapParent from "components/mapParent/index";
-import FilterButton from "components/filterButton/FilterButton";
-import FilterModal from "components/filterButton/FilterModal";
-import DateSelector from "components/dateSelector/index";
-import { GET_ALL_KAJIAN } from "../../services/api";
+import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import SwalPopup from "components/swalPopup/index";
-import { convertToYYYYMMDD } from "../../utils/helpers";
+import { convertToYYYYMMDD, ID_FormattedDate } from "../../utils/helpers";
 
 const Popup = withReactContent(Swal);
 
 const Home = () => {
   const [data, setData] = useState([]);
+  const [lastUpdate, setLastUpdate] = useState();
   const [showAllInfo, setShowAllInfo] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDate, setShowDate] = useState("");
   const [mapCenter, setMapCenter] = useState(null);
   const [zoom, setZoom] = useState(12);
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
   const mapRef = useRef(null);
 
   const fetchData = async () => {
@@ -38,9 +32,25 @@ const Home = () => {
     }
   };
 
+  const fetchLastUpdate = async () => {
+    try {
+      const getDate = await GET_LAST_UPDATE();
+      const date = new Date(getDate.last_update.replace(" ", "T"));
+      setLastUpdate(ID_FormattedDate(date));
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLastUpdate();
+    localStorage.clear();
+  }, []);
+
   useEffect(() => {
     fetchData();
     getUserLocation();
+    setShowDate(ID_FormattedDate(selectedDate));
   }, [selectedDate]);
 
   const getUserLocation = () => {
@@ -50,7 +60,7 @@ const Home = () => {
           const { latitude, longitude } = position.coords;
           const newLocation = { lat: latitude, lng: longitude };
           setMapCenter(newLocation);
-          setZoom(15);
+          setZoom(12);
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -86,8 +96,7 @@ const Home = () => {
       const cityMatch = selectedCity ? item.city === selectedCity : true;
       const itemTags = item.tags.split(",").map((tag) => tag.trim());
       const categoryMatch =
-        selectedCategories.length === 0 ||
-        selectedCategories.every((category) => itemTags.includes(category));
+        selectedCategories.length === 0 || selectedCategories.every((category) => itemTags.includes(category));
       return cityMatch && categoryMatch;
     });
   }, [data, selectedCity, selectedCategories]);
@@ -111,14 +120,6 @@ const Home = () => {
     setSelectedCategories([]);
   };
 
-  const handleCategoryChange = (categories) => {
-    setSelectedCategories(categories);
-  };
-
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-  };
-
   const showInfo = () => {
     Popup.fire({
       html: <SwalPopup type="petunjuk" close={() => Popup.close()} />,
@@ -126,20 +127,39 @@ const Home = () => {
     });
   };
 
+  const showFilter = () => {
+    const filterProps = {
+      cities,
+      selectedDate,
+    };
+    Popup.fire({
+      html: (
+        <SwalPopup
+          type="filter"
+          filter={filterProps}
+          close={() => Popup.close()}
+          submit={(res) => {
+            setSelectedCity(res.city);
+            setSelectedCategories(res.categories);
+            setSelectedDate(res.date);
+            Swal.close();
+          }}
+        />
+      ),
+      showConfirmButton: false,
+    });
+  };
+
   return (
     <div className="content">
-      <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
-        <DateSelector selectedDate={selectedDate} onChange={handleDateChange} />
+      <div className="title-text mb-3 text-center text-base font-semibold">
+        Kajian Sunnah <span>{showDate}</span>
       </div>
+
       {mapCenter && (
-        <MapParent
-          locations={filteredData}
-          ref={mapRef}
-          showAllInfo={showAllInfo}
-          center={mapCenter}
-          zoom={zoom}
-        />
+        <MapParent locations={filteredData} ref={mapRef} showAllInfo={showAllInfo} center={mapCenter} zoom={zoom} />
       )}
+      <div className="last-update text-sm text-center text-[#f1dcb7]">Terakhir Update: {lastUpdate}</div>
 
       <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
         <button
@@ -156,15 +176,20 @@ const Home = () => {
           className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            {showAllInfo ? (
-              <FontAwesomeIcon icon={faEyeSlash} />
-            ) : (
-              <FontAwesomeIcon icon={faEye} />
-            )}
+            {showAllInfo ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
           </span>
         </button>
 
-        <FilterButton onClick={() => setIsFilterModalOpen(true)} />
+        <button
+          onClick={showFilter}
+          className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          aria-label="Open filters"
+        >
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <FontAwesomeIcon icon={faFilter} className="text-sm" />
+          </span>
+        </button>
+
         <button
           onClick={handleSetCenter}
           className="my-3 py-2 px-6 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 font-semibold shadow-[inset_0_0_12px_-2px_#000]"
@@ -175,20 +200,10 @@ const Home = () => {
 
       <div className="quotes text-center my-4 md:mt-12 mb-8 text-[12px] md:text-base">
         <i>
-          Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, maka Allah
-          akan memudahkan baginya jalan menuju surga. (HR. Muslim)
+          Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju
+          surga. (HR. Muslim)
         </i>
       </div>
-
-      <FilterModal
-        isOpen={isFilterModalOpen}
-        onClose={() => setIsFilterModalOpen(false)}
-        cities={cities}
-        selectedCity={selectedCity}
-        onCityChange={setSelectedCity}
-        selectedCategories={selectedCategories}
-        onCategoryChange={handleCategoryChange}
-      />
     </div>
   );
 };
