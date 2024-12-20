@@ -9,6 +9,8 @@ import pinpoint from "assets/icons/pinpoint.png";
 export const MapMarker = ({ location, showAllInfo, locations }) => {
   const group = groupTopicsByLocation(location.lat, location.lng, locations);
 
+  if (!location.lat && !location.lng) return <></>;
+
   return (
     <MarkerF
       onClick={() => ShowPopupInfo({ location, group })}
@@ -19,15 +21,8 @@ export const MapMarker = ({ location, showAllInfo, locations }) => {
       }}
     >
       {showAllInfo && (
-        <OverlayView
-          position={{ lat: location.lat, lng: location.lng }}
-          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-        >
-          <MarkerInfo
-            group={group}
-            location={location}
-            showAllInfo={showAllInfo}
-          />
+        <OverlayView position={{ lat: location.lat, lng: location.lng }} mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}>
+          <MarkerInfo group={group} location={location} showAllInfo={showAllInfo} />
         </OverlayView>
       )}
     </MarkerF>
