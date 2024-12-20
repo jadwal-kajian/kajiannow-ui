@@ -63,6 +63,8 @@ export const customIdLocale = {
 
 export const timeStartMapping = {
   bada_subuh: "Ba'da Subuh",
+  bada_shubuh: "Ba'da Subuh",
+  bada_dhuhur: "Ba'da Dzuhur",
   bada_dzuhur: "Ba'da Dzuhur",
   bada_ashar: "Ba'da Ashar",
   bada_maghrib: "Ba'da Maghrib",
