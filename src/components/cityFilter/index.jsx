@@ -10,10 +10,16 @@ const CityFilter = ({ cities, setSelectedCity }) => {
     if (filter) setChosenCity(filter.city);
   }, []);
 
-  const cityOptions = cities.map((city) => ({
-    value: city || "",
-    label: city || "Semua Kota",
-  }));
+  const cityOptions = [
+    {
+      value: "",
+      label: "Semua Kota",
+    },
+    ...cities.map((city) => ({
+      value: city,
+      label: city,
+    })),
+  ];
 
   const customStyles = {
     control: (provided, state) => ({
