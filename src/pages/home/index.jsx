@@ -60,7 +60,7 @@ const Home = () => {
           const { latitude, longitude } = position.coords;
           const newLocation = { lat: latitude, lng: longitude };
           setMapCenter(newLocation);
-          setZoom(6);
+          setZoom(12);
         },
         (error) => {
           console.error("Error getting location:", error);
