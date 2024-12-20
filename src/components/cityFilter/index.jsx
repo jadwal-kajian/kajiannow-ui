@@ -19,7 +19,7 @@ const CityFilter = ({ cities, setSelectedCity }) => {
       value: city,
       label: city,
     })),
-  ];
+  ].filter((option) => option.value !== "" || option.label !== "");
 
   const customStyles = {
     control: (provided, state) => ({
