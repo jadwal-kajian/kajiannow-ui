@@ -1,51 +1,66 @@
 import PropTypes from "prop-types";
 import { useState, useEffect } from "react";
-import moment from "moment";
-import { convertToDDMMYYYY, convertToYYYYMMDD } from "../../utils/helpers";
+import DatePicker, { registerLocale } from "react-datepicker";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCalendar } from "@fortawesome/free-regular-svg-icons";
+import { customIdLocale, ID_FormattedDate } from "../../utils/helpers";
 
-const DateSelector = ({ selectedDate, onChange }) => {
+import "react-datepicker/dist/react-datepicker.css";
+import "./style.scss";
+
+registerLocale("custom-id", customIdLocale);
+
+const DateSelector = ({ selectedDate, setDateSelected }) => {
+  const [chosenDate, setChosenDate] = useState(new Date());
   const [displayDate, setDisplayDate] = useState("");
 
   useEffect(() => {
-    setDisplayDate(convertToDDMMYYYY(selectedDate));
+    setDisplayDate(ID_FormattedDate(selectedDate));
+    setChosenDate(selectedDate);
   }, [selectedDate]);
 
   const handleChange = (e) => {
-    const newDate = moment(e.target.value).toDate();
-    onChange(newDate);
-    setDisplayDate(convertToDDMMYYYY(newDate));
+    setChosenDate(e);
+    setDateSelected(e);
+    setDisplayDate(ID_FormattedDate(e));
   };
 
   return (
-    <div className="date-selector mb-2 relative">
-      <input
-        type="date"
-        value={convertToYYYYMMDD(selectedDate)}
-        onChange={handleChange}
-        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-        aria-label="Select date"
-      />
-      <div
-        className="bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-custom-yellow-1"
-        style={{
-          WebkitAppearance: "none",
-          MozAppearance: "none",
-          appearance: "none",
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E")`,
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "right 8px center",
-          paddingRight: "32px",
-        }}
-      >
-        {displayDate}
+    <div className="select-date relative mb-6 text-sm">
+      <div className="flex items-center gap-4 my-2">
+        <div className="flex-grow border-t border-custom-yellow-4"></div>
+        <div className="label text-sm text-[#917951]">Pilih Tanggal</div>
+        <div className="flex-grow border-t border-custom-yellow-4"></div>
       </div>
+      <DatePicker
+        showIcon
+        selected={chosenDate}
+        onChange={handleChange}
+        wrapperClassName="w-full"
+        calendarClassName="custom-datepicker-popup"
+        locale="custom-id" // Use the custom locale
+        customInput={
+          <div className="relative text-sm">
+            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#7a5530]">
+              <FontAwesomeIcon icon={faCalendar} />
+            </div>
+            <input
+              type="text"
+              className="w-full py-2 h-[38px] !px-4 rounded-lg bg-[#f1dcb7] text-[#7a5530] font-semibold placeholder-[#7a5530] shadow-[0_0_8px_-2px_#b7a484] focus:outline-none"
+              placeholder="Pilih Tanggal"
+              onChange={handleChange}
+              value={displayDate}
+            />
+          </div>
+        }
+      />
     </div>
   );
 };
 
 DateSelector.propTypes = {
   selectedDate: PropTypes.instanceOf(Date).isRequired,
-  onChange: PropTypes.func.isRequired,
+  setDateSelected: PropTypes.func.isRequired,
 };
 
 export default DateSelector;

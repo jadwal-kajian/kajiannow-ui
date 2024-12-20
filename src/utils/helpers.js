@@ -1,25 +1,20 @@
 import moment from "moment";
+import { id } from "date-fns/locale";
 
-export const convertDateTime = (value) => {
-  const daysInIndonesian = [
-    "Ahad",
-    "Senin",
-    "Selasa",
-    "Rabu",
-    "Kamis",
-    "Jum'at",
-    "Sabtu",
-  ];
+export const ID_FormattedDate = (date) => {
+  const options = {
+    weekday: 'long', // Full weekday name (e.g., "Minggu")
+    year: 'numeric', // Full year (e.g., 2024)
+    month: 'long', // Full month name (e.g., "November")
+    day: 'numeric' // Day as a number (e.g., 12)
+  };
 
-  const dayIndex = moment(value.last_update).day();
-  const dayInIndonesian = daysInIndonesian[dayIndex];
+  // Get the date formatted in the Indonesian locale
+  let formattedDate = new Date(date).toLocaleDateString("id-ID", options);
 
-  const formattedDate = moment(value.last_update).format(`dddd, D MMMM YYYY`);
-  return formattedDate.replace(
-    moment(value.last_update).format("dddd"),
-    dayInIndonesian
-  );
-};
+  // Replace "Minggu" with "Ahad"
+  return formattedDate.replace('Minggu', 'Ahad');
+}
 
 export const formatDate = (dateString) => {
   const options = { day: "numeric", month: "long", year: "numeric" };
@@ -55,4 +50,21 @@ export const serialize = (obj) => {
       str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
     }
   return str.join("&");
+};
+
+
+export const customIdLocale = {
+  ...id,
+  localize: {
+    ...id.localize,
+    day: (n) => ["Aha", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"][n], // Customize weekday abbreviations
+  },
+};
+
+export const timeStartMapping = {
+  bada_subuh: "Ba'da Subuh",
+  bada_dzuhur: "Ba'da Dzuhur",
+  bada_ashar: "Ba'da Ashar",
+  bada_maghrib: "Ba'da Maghrib",
+  bada_isya: "Ba'da Isya'",
 };

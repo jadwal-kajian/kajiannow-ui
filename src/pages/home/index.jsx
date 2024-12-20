@@ -2,23 +2,24 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash, faFilter, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import MapParent from "components/mapParent/index";
-import DateSelector from "components/dateSelector/index";
-import { GET_ALL_KAJIAN, GET_KAJIAN_QUERY } from "../../services/api";
+import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import SwalPopup from "components/swalPopup/index";
-import { convertToYYYYMMDD } from "../../utils/helpers";
+import { convertToYYYYMMDD, ID_FormattedDate } from "../../utils/helpers";
 
 const Popup = withReactContent(Swal);
 
 const Home = () => {
   const [data, setData] = useState([]);
+  const [lastUpdate, setLastUpdate] = useState();
   const [showAllInfo, setShowAllInfo] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDate, setShowDate] = useState("");
   const [mapCenter, setMapCenter] = useState(null);
   const [zoom, setZoom] = useState(12);
-  const [selectedDate, setSelectedDate] = useState(new Date());
   const mapRef = useRef(null);
 
   const fetchData = async () => {
@@ -31,13 +32,25 @@ const Home = () => {
     }
   };
 
+  const fetchLastUpdate = async () => {
+    try {
+      const getDate = await GET_LAST_UPDATE();
+      const date = new Date(getDate.last_update.replace(" ", "T"));
+      setLastUpdate(ID_FormattedDate(date));
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
   useEffect(() => {
+    fetchLastUpdate();
     localStorage.clear();
   }, []);
 
   useEffect(() => {
     fetchData();
     getUserLocation();
+    setShowDate(ID_FormattedDate(selectedDate));
   }, [selectedDate]);
 
   const getUserLocation = () => {
@@ -47,7 +60,7 @@ const Home = () => {
           const { latitude, longitude } = position.coords;
           const newLocation = { lat: latitude, lng: longitude };
           setMapCenter(newLocation);
-          setZoom(15);
+          setZoom(6);
         },
         (error) => {
           console.error("Error getting location:", error);
@@ -107,10 +120,6 @@ const Home = () => {
     setSelectedCategories([]);
   };
 
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-  };
-
   const showInfo = () => {
     Popup.fire({
       html: <SwalPopup type="petunjuk" close={() => Popup.close()} />,
@@ -121,7 +130,7 @@ const Home = () => {
   const showFilter = () => {
     const filterProps = {
       cities,
-      onCityChange: setSelectedCity,
+      selectedDate,
     };
     Popup.fire({
       html: (
@@ -130,8 +139,9 @@ const Home = () => {
           filter={filterProps}
           close={() => Popup.close()}
           submit={(res) => {
-            setSelectedCity(res.selectedCity);
-            setSelectedCategories(res.selectedCategories);
+            setSelectedCity(res.city);
+            setSelectedCategories(res.categories);
+            setSelectedDate(res.date);
             Swal.close();
           }}
         />
@@ -142,12 +152,14 @@ const Home = () => {
 
   return (
     <div className="content">
-      <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
-        <DateSelector selectedDate={selectedDate} onChange={handleDateChange} />
+      <div className="title-text mb-3 text-center text-base font-semibold">
+        Kajian Sunnah <span>{showDate}</span>
       </div>
+
       {mapCenter && (
         <MapParent locations={filteredData} ref={mapRef} showAllInfo={showAllInfo} center={mapCenter} zoom={zoom} />
       )}
+      <div className="last-update text-sm text-center text-[#f1dcb7]">Terakhir Update: {lastUpdate}</div>
 
       <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
         <button
