@@ -1,4 +1,7 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClock, faUser, faMosque, faCity } from "@fortawesome/free-solid-svg-icons";
 import PropTypes from "prop-types";
+import { timeStartMapping } from "../../utils/helpers";
 
 export const MarkerInfo = ({ group, location, showAllInfo }) => {
   const ShowNotes = () => {
@@ -19,25 +22,29 @@ export const MarkerInfo = ({ group, location, showAllInfo }) => {
             <div
               key={i}
               className={`marker-info relative ${x_position} ${y_position} min-w-[300px] flex flex-col mb-2 text-sm text-gray-800 bg-[#ffe7be] shadow-[inset_0_0_20px_-8px_#000] rounded-lg overflow-hidden ${
-                showAllInfo
-                  ? "opacity-100 scale-100 visible"
-                  : "opacity-0 scale-95 invisible"
+                showAllInfo ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
               }`}
             >
-              <div className="title font-semibold p-2">{info.topic}</div>
-              <div className="content p-2">
-                <div className="speaker">
-                  <span className="font-semibold mr-1">Pemateri:</span>
-                  {info.speaker}
+              <div className="title font-semibold p-3">{info.topic}</div>
+              <div className="content px-3 pb-3">
+                <div className="flex gap-3 items-center">
+                  <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                  {location.speaker}
                 </div>
-                <div className="location">
-                  <span className="font-semibold mr-1">Tempat:</span>
-                  {info.loc_name}
+                <div className="flex gap-3 items-center">
+                  <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                  {location.loc_name}
                 </div>
-                <div className="time">
-                  <span className="font-semibold mr-1">Waktu:</span>
-                  {info.time_start} - {info.time_end}
+                <div className="flex gap-3 items-center">
+                  <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                  {location.city}
                 </div>
+                {location.time_start && (
+                  <div className="flex gap-3 items-center">
+                    <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                    {timeStartMapping[location.time_start] || location.time_start} - {location.time_end || "selesai"}
+                  </div>
+                )}
               </div>
               <ShowNotes />
             </div>
@@ -50,25 +57,29 @@ export const MarkerInfo = ({ group, location, showAllInfo }) => {
   return (
     <div
       className={`marker-info min-w-[300px] absolute -left-[130px] -bottom-[24px] flex flex-col text-sm text-gray-800 bg-[#ffe7be] shadow-[inset_0_0_20px_-8px_#000] rounded-lg transform -translate-y-1/2 transition-opacity duration-300 overflow-hidden ${
-        showAllInfo
-          ? "opacity-100 scale-100 visible"
-          : "opacity-0 scale-95 invisible"
+        showAllInfo ? "opacity-100 scale-100 visible" : "opacity-0 scale-95 invisible"
       }`}
     >
-      <div className="title font-semibold p-2">{location.topic}</div>
-      <div className="content p-2">
-        <div className="speaker">
-          <span className="font-semibold mr-1">Pemateri:</span>
+      <div className="title font-semibold p-3">{location.topic}</div>
+      <div className="content px-3 pb-3">
+        <div className="flex gap-3 items-center">
+          <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-700 flex-shrink-0" />
           {location.speaker}
         </div>
-        <div className="location">
-          <span className="font-semibold mr-1">Tempat:</span>
+        <div className="flex gap-3 items-center">
+          <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-gray-700 flex-shrink-0" />
           {location.loc_name}
         </div>
-        <div className="time">
-          <span className="font-semibold mr-1">Waktu:</span>
-          {location.time_start} - {location.time_end}
+        <div className="flex gap-3 items-center">
+          <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+          {location.city}
         </div>
+        {location.time_start && (
+          <div className="flex gap-3 items-center">
+            <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+            {timeStartMapping[location.time_start] || location.time_start} - {location.time_end || "selesai"}
+          </div>
+        )}
       </div>
       <ShowNotes />
     </div>
