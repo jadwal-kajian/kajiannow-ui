@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash, faFilter, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
-import MapParent from "components/mapParent/index";
-import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import SwalPopup from "components/swalPopup/index";
-import { convertToYYYYMMDD, ID_FormattedDate } from "../../utils/helpers";
+import MapParent from "../../components/mapParent";
+import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
+import SwalPopup from "../../components/swalPopup/index";
+import { convertToYYYYMMDD, getDynamicCategory, ID_FormattedDate } from "../../utils/helpers";
 
 const Popup = withReactContent(Swal);
 
@@ -111,6 +111,7 @@ const Home = () => {
         setMapCenter({ lat: centerLat, lng: centerLng });
         setZoom(12);
       }
+      getDynamicCategory(filteredData);
     }
   }, [filteredData, selectedCity]);
 
@@ -129,6 +130,7 @@ const Home = () => {
 
   const showFilter = () => {
     const filterProps = {
+      filteredData,
       cities,
       selectedDate,
     };
@@ -152,9 +154,7 @@ const Home = () => {
 
   return (
     <div className="content">
-      <div className="title-text mb-3 text-center text-base font-semibold">
-        Kajian Sunnah <span>{showDate}</span>
-      </div>
+      <div className="title-text mb-3 text-center text-custom-yellow-1 font-semibold text-sm md:text-base">{showDate}</div>
 
       {mapCenter && (
         <MapParent locations={filteredData} ref={mapRef} showAllInfo={showAllInfo} center={mapCenter} zoom={zoom} />
