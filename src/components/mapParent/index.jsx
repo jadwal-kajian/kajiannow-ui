@@ -49,7 +49,7 @@ const MapParent = forwardRef(({ locations, showAllInfo, center, zoom }, ref) => 
       <GoogleMap
         mapContainerStyle={{
           width: "100%",
-          height: "calc(80vh - 250px)",
+          height: "calc(80vh - 185px)",
           borderRadius: 12,
           marginBottom: 12,
         }}
@@ -61,8 +61,9 @@ const MapParent = forwardRef(({ locations, showAllInfo, center, zoom }, ref) => 
           mapId: "4504f8b37365c3d0",
           disableDefaultUI: false,
           mapTypeControl: false,
-          zoomControl: true,
+          zoomControl: false,
           streetViewControl: false,
+          fullscreenControl: false,
           gestureHandling: "greedy",
         }}
       >
