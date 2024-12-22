@@ -1,28 +1,17 @@
 import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
+import { getDynamicCategory } from "../../utils/helpers";
 
-const categories = [
-  "tematik",
-  "rutin",
-  "kitab",
-  "anak",
-  "dauroh",
-  "tabligh_akbar",
-  "tahsin",
-  "tafsir",
-  "rumah_tangga",
-  "aqidah",
-  "fiqih",
-  "bahasa_arab",
-  "khusus_akhwat",
-];
-
-const CategoryFilter = ({ onCategoryChange }) => {
+const CategoryFilter = ({ onCategoryChange, data }) => {
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     const filter = JSON.parse(localStorage.getItem("filter")) || null;
     if (filter) setSelectedCategories(filter.categories);
+
+    const getCategories = getDynamicCategory(data);
+    setCategories(getCategories);
   }, []);
 
   useEffect(() => {

@@ -11,6 +11,7 @@ import {
   faTimes,
   faCalendar,
   faCity,
+  faTags,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatDate, timeStartMapping } from "../../../utils/helpers";
 
@@ -121,6 +122,10 @@ function KajianPopup({ info, group, close }) {
                     </span>
                   </span>
                 </div>
+                <div className="flex gap-3 items-center">
+                  <FontAwesomeIcon icon={faTags} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                  <span className="text-sm text-left text-gray-800">{info.tags}</span>
+                </div>
               </div>
 
               <button
@@ -152,10 +157,12 @@ function KajianPopup({ info, group, close }) {
             <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-gray-700 flex-shrink-0" />
             <span className="text-sm text-left text-gray-800">{info.loc_name}</span>
           </div>
-          <div className="flex gap-3 items-center">
-            <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-            <span className="text-sm text-left text-gray-800">{info.city}</span>
-          </div>
+          {info.city && (
+            <div className="flex gap-3 items-center">
+              <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+              <span className="text-sm text-left text-gray-800">{info.city}</span>
+            </div>
+          )}
           <div className="flex gap-3 items-center">
             <FontAwesomeIcon icon={faCalendar} className="w-4 h-4 text-gray-700 flex-shrink-0" />
             <span className="text-[13px] text-left text-gray-800">{formatDate(info.date)}</span>
@@ -209,6 +216,10 @@ function KajianPopup({ info, group, close }) {
                 dari {info.src_sender_name} ({info.src_sender_contact}) via {info.src_platform}
               </span>
             </span>
+          </div>
+          <div className="flex gap-3 items-center">
+            <FontAwesomeIcon icon={faTags} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+            <span className="text-sm text-left text-gray-800">{info.tags}</span>
           </div>
         </div>
 

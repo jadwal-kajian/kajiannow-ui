@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import CityFilter from "components/cityFilter";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFilter, faTimes } from "@fortawesome/free-solid-svg-icons";
-import CategoryFilter from "components/categoryFilter";
-import DateSelector from "components/dateSelector";
+import DateSelector from "../../dateSelector";
+import CityFilter from "../../cityFilter";
+import CategoryFilter from "../../categoryFilter";
 
 function FilterPopup({ close, filter, submit }) {
   const [selectedCity, setSelectedCity] = useState("none");
@@ -36,7 +36,7 @@ function FilterPopup({ close, filter, submit }) {
       <div className="content h-[80%] p-3 px-6 w-full mx-auto text-left text-[13px] overflow-y-auto md:text-base">
         <DateSelector selectedDate={dateSelected} setDateSelected={setDateSelected} />
         <CityFilter cities={filter.cities} setSelectedCity={setSelectedCity} />
-        <CategoryFilter onCategoryChange={setSelectedCategories} />
+        <CategoryFilter data={filter.filteredData} onCategoryChange={setSelectedCategories} />
       </div>
 
       <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
