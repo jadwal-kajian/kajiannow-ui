@@ -52,6 +52,15 @@ export const serialize = (obj) => {
   return str.join("&");
 };
 
+export const getDynamicCategory = (data) => {
+  const alltags = [];
+  data.forEach(el => {
+    const itemTags = el.tags.split(",").map((tag) => tag.trim());
+    alltags.push(...itemTags)
+  });
+  const tags = [...new Set(alltags)];
+  return tags;
+}
 
 export const customIdLocale = {
   ...id,
@@ -67,6 +76,7 @@ export const timeStartMapping = {
   bada_dhuhur: "Ba'da Dzuhur",
   bada_dzuhur: "Ba'da Dzuhur",
   bada_ashar: "Ba'da Ashar",
+  bada_asar: "Ba'da Ashar",
   bada_maghrib: "Ba'da Maghrib",
   bada_isya: "Ba'da Isya'",
 };
