@@ -6,6 +6,8 @@ import { ShowPopupInfo } from "./ShowPopupInfo";
 
 import pinpoint from "assets/icons/pinpoint.png";
 import { groupTopicsByLocation } from "../../utils/helpers";
+import { MarkerInfo } from "./MarkerInfo";
+import { useEffect, useRef } from "react";
 
 const icon = new Icon({
   iconUrl: pinpoint,
@@ -14,19 +16,33 @@ const icon = new Icon({
 });
 
 const KajianMarker = ({ location, locations, showAllInfo }) => {
+  const markerRef = useRef(null);
   const group = groupTopicsByLocation(location.lat, location.lng, locations);
+
+  useEffect(() => {
+    if (markerRef.current) {
+      if (showAllInfo) {
+        markerRef.current.openPopup();
+        return;
+      }
+      markerRef.current.closePopup();
+    }
+  }, [showAllInfo]);
 
   if (!location.lat && !location.lng) return null;
 
   return (
     <Marker
+      ref={markerRef}
       position={[location.lat, location.lng]}
       icon={icon}
       eventHandlers={{
         click: () => ShowPopupInfo({ location, group }),
       }}
     >
-      {showAllInfo && <Popup>Hallo</Popup>}
+      <Popup autoPan={false} closeButton={false} offset={[0, -20]} autoClose={false} className="custom-leaflet-popup">
+        {showAllInfo && <MarkerInfo group={group} location={location} showAllInfo={showAllInfo} />}
+      </Popup>
     </Marker>
   );
 };

@@ -11,8 +11,6 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center }, ref) => {
   const mapInstance = useRef(null);
   const [userLocation, setUserLocation] = useState(null);
 
-  console.log("KajianMap center:", center);
-
   useEffect(() => {
     if (mapInstance.current) {
       mapInstance.current.flyTo(center, 12);
