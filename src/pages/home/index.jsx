@@ -3,10 +3,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash, faFilter, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import MapParent from "../../components/mapParent";
 import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
 import SwalPopup from "../../components/swalPopup/index";
 import { convertToYYYYMMDD, getDynamicCategory, ID_FormattedDate } from "../../utils/helpers";
+import KajianMap from "components/kajianMap";
 
 const Popup = withReactContent(Swal);
 
@@ -95,8 +95,7 @@ const Home = () => {
     return data.filter((item) => {
       const cityMatch = selectedCity ? item.city === selectedCity : true;
       const itemTags = item.tags.split(",").map((tag) => tag.trim());
-      const categoryMatch =
-        selectedCategories.length === 0 || selectedCategories.every((category) => itemTags.includes(category));
+      const categoryMatch = selectedCategories.length === 0 || selectedCategories.every((category) => itemTags.includes(category));
       return cityMatch && categoryMatch;
     });
   }, [data, selectedCity, selectedCategories]);
@@ -157,7 +156,7 @@ const Home = () => {
       <div className="title-text mb-3 text-center text-custom-yellow-1 font-semibold text-sm md:text-base">{showDate}</div>
 
       {mapCenter && (
-        <MapParent locations={filteredData} ref={mapRef} showAllInfo={showAllInfo} center={mapCenter} zoom={zoom} />
+        <KajianMap locations={filteredData} ref={mapRef} showAllInfo={showAllInfo} center={[mapCenter.lat, mapCenter.lng]} zoom={zoom} />
       )}
       <div className="last-update text-sm text-center text-[#f1dcb7]">Terakhir Update: {lastUpdate}</div>
 
@@ -199,10 +198,7 @@ const Home = () => {
       </div>
 
       <div className="quotes text-center my-4 md:mt-12 mb-8 text-[12px] md:text-base">
-        <i>
-          Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju
-          surga. (HR. Muslim)
-        </i>
+        <i>Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju surga. (HR. Muslim)</i>
       </div>
     </div>
   );
