@@ -71,6 +71,7 @@ const CityFilter = ({ cities, setSelectedCity }) => {
           setChosenCity(selectedOption.value);
           setSelectedCity(selectedOption.value);
         }}
+        isSearchable={false}
         className="select-city mb-4 text-sm"
         styles={customStyles}
       />
