@@ -52,38 +52,36 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center }, ref) => {
   );
 
   return (
-    <div>
-      <MapContainer
-        ref={mapInstance}
-        style={{
-          width: "100%",
-          height: "calc(80vh - 185px)",
-          borderRadius: 12,
-          marginBottom: 12,
-        }}
-        center={center}
-        zoom={12}
-        scrollWheelZoom={false}
-        eventHandlers={{
-          locationfound: (e) => {
-            setUserLocation([e.latlng.lat, e.latlng.lng]);
-          },
-          locationerror: (e) => {
-            console.error("Error getting user location:", e);
-          },
-        }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {userLocation && <UserMarker position={userLocation} />}
+    <MapContainer
+      ref={mapInstance}
+      style={{
+        width: "100%",
+        height: "calc(80vh - 185px)",
+        borderRadius: 12,
+        marginBottom: 12,
+      }}
+      center={center}
+      zoom={12}
+      scrollWheelZoom={true}
+      eventHandlers={{
+        locationfound: (e) => {
+          setUserLocation([e.latlng.lat, e.latlng.lng]);
+        },
+        locationerror: (e) => {
+          console.error("Error getting user location:", e);
+        },
+      }}
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      {userLocation && <UserMarker position={userLocation} />}
 
-        {locations.map((location) => (
-          <KajianMarker key={location.id} location={location} locations={locations} showAllInfo={showAllInfo} />
-        ))}
-      </MapContainer>
-    </div>
+      {locations.map((location) => (
+        <KajianMarker key={location.id} location={location} locations={locations} showAllInfo={showAllInfo} />
+      ))}
+    </MapContainer>
   );
 });
 
