@@ -56,7 +56,7 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center }, ref) => {
       ref={mapInstance}
       style={{
         width: "100%",
-        height: "calc(80vh - 185px)",
+        height: "calc(83vh - 185px)",
         borderRadius: 12,
         marginBottom: 12,
       }}
