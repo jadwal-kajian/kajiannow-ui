@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash, faFilter, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faEyeSlash, faFilter, faInfoCircle, faExclamationTriangle, faCommentDots } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
@@ -9,6 +9,7 @@ import { convertToYYYYMMDD, getDynamicCategory, ID_FormattedDate } from "../../u
 import KajianMap from "components/kajianMap";
 import LocationErrorPopup from "../../components/swalPopup/contents/locationError";
 import LocationLoadingPopup from "../../components/swalPopup/contents/locationLoading";
+import LaporPopup from "../../components/swalPopup/contents/lapor";
 
 const Popup = withReactContent(Swal);
 
@@ -192,6 +193,13 @@ const Home = () => {
     });
   };
 
+  const showReport = () => {
+    Popup.fire({
+      html: <LaporPopup close={() => Popup.close()} />,
+      showConfirmButton: false,
+    });
+  };
+
   return (
     <div className="content">
       <div className="title-text mb-3 text-center text-custom-yellow-1 font-semibold text-sm md:text-base">{showDate}</div>
@@ -227,6 +235,16 @@ const Home = () => {
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faFilter} className="text-sm" />
+          </span>
+        </button>
+
+        <button
+          onClick={showReport}
+          className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          aria-label="Report issue"
+        >
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <FontAwesomeIcon icon={faCommentDots} className="text-sm" />
           </span>
         </button>
 
