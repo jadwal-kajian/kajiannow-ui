@@ -8,6 +8,7 @@ import SwalPopup from "../../components/swalPopup/index";
 import { convertToYYYYMMDD, getDynamicCategory, ID_FormattedDate } from "../../utils/helpers";
 import KajianMap from "components/kajianMap";
 import LocationErrorPopup from "../../components/swalPopup/contents/locationError";
+import LocationLoadingPopup from "../../components/swalPopup/contents/locationLoading";
 
 const Popup = withReactContent(Swal);
 
@@ -56,12 +57,12 @@ const Home = () => {
 
   const getUserLocation = () => {
     Popup.fire({
-      title: 'Mencari Lokasi',
-      text: 'Sedang mencari lokasi Anda...',
+      html: <LocationLoadingPopup />,
+      showConfirmButton: false,
       allowOutsideClick: false,
       allowEscapeKey: false,
     });
-
+  
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
