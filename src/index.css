@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  padding: 0;
+  color: #072635;
+  font-size: 14px;
+  font-family: "Manrope", sans-serif;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px #ffe7be;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 100px; /* roundness of the scroll thumb */
+  border: 3px solid rgb(146, 122, 77); /* creates padding around scroll thumb */
+}
+
+.custom-leaflet-popup .leaflet-popup-content-wrapper {
+  background: transparent;
+  box-shadow: none;
+}
+.custom-leaflet-popup .leaflet-popup-content {
+  margin: 0;
+}
+.custom-leaflet-popup .leaflet-popup-tip {
+  background: transparent;
+  box-shadow: none;
+}
