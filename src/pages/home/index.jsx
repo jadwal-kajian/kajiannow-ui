@@ -7,6 +7,7 @@ import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
 import SwalPopup from "../../components/swalPopup/index";
 import { convertToYYYYMMDD, getDynamicCategory, ID_FormattedDate } from "../../utils/helpers";
 import KajianMap from "components/kajianMap";
+import LocationErrorPopup from "../../components/swalPopup/contents/locationError";
 
 const Popup = withReactContent(Swal);
 
@@ -54,27 +55,66 @@ const Home = () => {
   }, [selectedDate]);
 
   const getUserLocation = () => {
+    Popup.fire({
+      title: 'Mencari Lokasi',
+      text: 'Sedang mencari lokasi Anda...',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+    });
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          // Success: Close spinner and handle location
+          Popup.close();
           const { latitude, longitude } = position.coords;
           const newLocation = { lat: latitude, lng: longitude };
           setMapCenter(newLocation);
           setZoom(12);
         },
         (error) => {
-          console.error("Error getting location:", error);
-          const defaultLocation = { lat: -6.2088, lng: 106.8456 }; // Default to Jakarta
-          setMapCenter(defaultLocation);
-          setZoom(12);
+          // Error: Handle and close spinner
+          handleGeolocationError(error);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 10000,
+          maximumAge: 60000,
         }
       );
     } else {
-      console.error("Geolocation is not supported by this browser.");
-      const defaultLocation = { lat: -6.2088, lng: 106.8456 }; // Default to Jakarta
-      setMapCenter(defaultLocation);
-      setZoom(12);
+      // Geolocation not supported
+      handleGeolocationError({ code: -1, message: 'Geolocation not supported' });
     }
+  };
+
+  // Handle geolocation errors in a single function
+  const handleGeolocationError = (error) => {
+    // Always close the spinner first
+    Popup.close();
+    console.error("Error getting location:", error);
+
+    // Show error message to the user
+    Popup.fire({
+      html: (
+        <LocationErrorPopup
+          message={
+            error.code === -1
+              ? 'Perangkat Anda tidak mendukung akses lokasi.'
+              : 'Mohon izinkan akses lokasi Anda di perangkat dan browser/aplikasi Anda agar kami bisa mengarahkan peta ke lokasi Anda.'
+          }
+          onRetry={() => window.location.reload()}
+          onClose={() => Popup.close()}
+        />
+      ),
+      showConfirmButton: false,
+      allowOutsideClick: false,
+    });
+
+    // Fallback to the default location
+    const defaultLocation = { lat: -6.2088, lng: 106.8456 }; // Default to Jakarta
+    setMapCenter(defaultLocation);
+    setZoom(12);
   };
 
   const cities = useMemo(() => {
