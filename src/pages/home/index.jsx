@@ -104,7 +104,12 @@ const Home = () => {
 
     // Cancel any pending location request
     if (locationRequestRef.current) {
-      clearTimeout(locationRequestRef.current);
+      if (typeof locationRequestRef.current === 'number') {
+        clearTimeout(locationRequestRef.current);
+      }
+      if (locationRequestRef.current.watchId) {
+        navigator.geolocation.clearWatch(locationRequestRef.current.watchId);
+      }
     }
 
     Popup.fire({
@@ -120,12 +125,26 @@ const Home = () => {
       return;
     }
 
+    let hasResult = false;
+    let watchId = null;
+
+    // Cleanup function
+    const cleanup = () => {
+      if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+      if (locationRequestRef.current?.timeoutId) {
+        clearTimeout(locationRequestRef.current.timeoutId);
+      }
+      locationRequestRef.current = null;
+    };
+
     // Helper function to handle successful location
     const onSuccess = (position) => {
-      if (locationRequestRef.current) {
-        clearTimeout(locationRequestRef.current);
-        locationRequestRef.current = null;
-      }
+      if (hasResult) return;
+      hasResult = true;
+      cleanup();
       setIsLocating(false);
       
       // Success: Close spinner and handle location
@@ -142,66 +161,63 @@ const Home = () => {
       setZoom(12);
     };
 
-    // Try with low accuracy first (faster, more reliable)
-    // Then try high accuracy as enhancement
-    let hasResult = false;
+    const onError = (error) => {
+      if (hasResult) return;
+      hasResult = true;
+      cleanup();
+      setIsLocating(false);
+      handleGeolocationError(error);
+    };
 
     // Set up overall timeout fallback
     const overallTimeoutId = setTimeout(() => {
       if (!hasResult) {
-        hasResult = true;
-        setIsLocating(false);
-        handleGeolocationError({ code: 3, message: 'Location request timed out' });
+        console.log("Overall timeout reached, falling back to default location");
+        onError({ code: 3, message: 'Location request timed out' });
       }
-    }, 30000); // 30 second overall timeout
+    }, 45000); // 45 second overall timeout (longer for Chrome)
 
-    locationRequestRef.current = overallTimeoutId;
+    locationRequestRef.current = { timeoutId: overallTimeoutId, watchId: null };
 
-    // First attempt: Low accuracy (fast, usually works)
-    navigator.geolocation.getCurrentPosition(
+    // Use watchPosition - works better in Chrome than getCurrentPosition
+    // It will fire as soon as ANY position is available
+    watchId = navigator.geolocation.watchPosition(
       (position) => {
-        if (!hasResult) {
-          hasResult = true;
-          onSuccess(position);
-        }
+        console.log("watchPosition success:", position.coords.accuracy, "meters accuracy");
+        onSuccess(position);
       },
       (error) => {
-        console.log("Low accuracy attempt failed:", error.message);
-        // Don't give up yet, high accuracy attempt might still work
-        // Only fail if both attempts fail
-        setTimeout(() => {
-          if (!hasResult) {
-            hasResult = true;
-            clearTimeout(overallTimeoutId);
-            locationRequestRef.current = null;
-            setIsLocating(false);
-            handleGeolocationError(error);
-          }
-        }, 10000); // Wait 10s more for high accuracy attempt
+        console.log("watchPosition error:", error.message);
+        // Don't fail immediately, give getCurrentPosition a chance
       },
       {
         enableHighAccuracy: false,
-        timeout: 10000, // 10 second timeout
-        maximumAge: 600000, // Accept cached position up to 10 minutes old
+        timeout: 30000,
+        maximumAge: 600000, // Accept 10 minute old cache
       }
     );
 
-    // Second attempt: High accuracy (slower but more precise)
+    locationRequestRef.current.watchId = watchId;
+
+    // Also try getCurrentPosition as backup (sometimes works when watch doesn't)
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        if (!hasResult) {
-          hasResult = true;
-          onSuccess(position);
-        }
+        console.log("getCurrentPosition success");
+        onSuccess(position);
       },
       (error) => {
-        console.log("High accuracy attempt failed:", error.message);
-        // Error handled by low accuracy callback or overall timeout
+        console.log("getCurrentPosition failed:", error.message);
+        // Wait a bit more for watchPosition before giving up
+        setTimeout(() => {
+          if (!hasResult) {
+            onError(error);
+          }
+        }, 15000);
       },
       {
-        enableHighAccuracy: true,
-        timeout: 20000, // 20 second timeout for high accuracy
-        maximumAge: 60000, // Accept cached position up to 1 minute old
+        enableHighAccuracy: false,
+        timeout: 20000,
+        maximumAge: Infinity, // Accept ANY cached position
       }
     );
   }, [isLocating]);
