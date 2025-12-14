@@ -85,7 +85,7 @@ const Home = () => {
     setShowDate(ID_FormattedDate(selectedDate));
   }, [selectedDate]);
 
-  const getUserLocation = useCallback((forceRefresh = false) => {
+  const getUserLocation = useCallback((forceRefresh = false, requestHighAccuracy = false) => {
     // Prevent duplicate requests
     if (isLocating) {
       return;
@@ -127,6 +127,8 @@ const Home = () => {
 
     let hasResult = false;
     let watchId = null;
+    let highAccuracyWatchId = null;
+    let bestPosition = null;
 
     // Cleanup function
     const cleanup = () => {
@@ -134,31 +136,42 @@ const Home = () => {
         navigator.geolocation.clearWatch(watchId);
         watchId = null;
       }
+      if (highAccuracyWatchId) {
+        navigator.geolocation.clearWatch(highAccuracyWatchId);
+        highAccuracyWatchId = null;
+      }
       if (locationRequestRef.current?.timeoutId) {
         clearTimeout(locationRequestRef.current.timeoutId);
+      }
+      if (locationRequestRef.current?.accuracyTimeoutId) {
+        clearTimeout(locationRequestRef.current.accuracyTimeoutId);
       }
       locationRequestRef.current = null;
     };
 
     // Helper function to handle successful location
-    const onSuccess = (position) => {
-      if (hasResult) return;
-      hasResult = true;
-      cleanup();
-      setIsLocating(false);
+    const onSuccess = (position, isFinal = true) => {
+      if (hasResult && isFinal) return;
       
-      // Success: Close spinner and handle location
-      Popup.close();
       const { latitude, longitude } = position.coords;
       const newLocation = { lat: latitude, lng: longitude };
       
-      // Cache the location
-      locationCache.set(newLocation);
+      if (isFinal) {
+        hasResult = true;
+        cleanup();
+        setIsLocating(false);
+        Popup.close();
+        
+        // Cache the location
+        locationCache.set(newLocation);
+      }
       
       // Update both user location and map center
       setUserLocation(newLocation);
       setMapCenter(newLocation);
       setZoom(12);
+      
+      console.log(`Location ${isFinal ? 'final' : 'update'}:`, position.coords.accuracy, "meters accuracy");
     };
 
     const onError = (error) => {
@@ -172,44 +185,113 @@ const Home = () => {
     // Set up overall timeout fallback
     const overallTimeoutId = setTimeout(() => {
       if (!hasResult) {
-        console.log("Overall timeout reached, falling back to default location");
-        onError({ code: 3, message: 'Location request timed out' });
+        // If we have any position, use it
+        if (bestPosition) {
+          console.log("Timeout reached, using best available position");
+          onSuccess(bestPosition, true);
+        } else {
+          console.log("Overall timeout reached, falling back to default location");
+          onError({ code: 3, message: 'Location request timed out' });
+        }
       }
-    }, 45000); // 45 second overall timeout (longer for Chrome)
+    }, requestHighAccuracy ? 60000 : 45000); // Longer timeout when high accuracy requested
 
     locationRequestRef.current = { timeoutId: overallTimeoutId, watchId: null };
 
-    // Use watchPosition - works better in Chrome than getCurrentPosition
-    // It will fire as soon as ANY position is available
+    // Use watchPosition for quick initial position (low accuracy)
     watchId = navigator.geolocation.watchPosition(
       (position) => {
-        console.log("watchPosition success:", position.coords.accuracy, "meters accuracy");
-        onSuccess(position);
+        console.log("watchPosition (low) success:", position.coords.accuracy, "meters accuracy");
+        bestPosition = position;
+        
+        if (!requestHighAccuracy) {
+          // If not requesting high accuracy, accept immediately
+          onSuccess(position, true);
+        } else {
+          // Show the position immediately but keep trying for better accuracy
+          onSuccess(position, false);
+        }
       },
       (error) => {
-        console.log("watchPosition error:", error.message);
-        // Don't fail immediately, give getCurrentPosition a chance
+        console.log("watchPosition (low) error:", error.message);
       },
       {
         enableHighAccuracy: false,
         timeout: 30000,
-        maximumAge: 600000, // Accept 10 minute old cache
+        maximumAge: requestHighAccuracy ? 60000 : 600000, // Shorter cache when high accuracy requested
       }
     );
 
     locationRequestRef.current.watchId = watchId;
 
+    // If high accuracy requested (user clicked "Lokasi Saya"), try to get GPS position
+    if (requestHighAccuracy) {
+      // Give low accuracy a head start, then try high accuracy
+      setTimeout(() => {
+        if (hasResult) return;
+        
+        console.log("Attempting high accuracy location...");
+        
+        highAccuracyWatchId = navigator.geolocation.watchPosition(
+          (position) => {
+            console.log("watchPosition (high) success:", position.coords.accuracy, "meters accuracy");
+            
+            // Accept if accuracy is good (under 100 meters) or better than current
+            if (position.coords.accuracy < 100 || !bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
+              bestPosition = position;
+              onSuccess(position, position.coords.accuracy < 100); // Final if good accuracy
+            }
+          },
+          (error) => {
+            console.log("watchPosition (high) error:", error.message);
+            // High accuracy failed, use whatever we have after a delay
+            setTimeout(() => {
+              if (!hasResult && bestPosition) {
+                console.log("High accuracy failed, using best available position");
+                onSuccess(bestPosition, true);
+              }
+            }, 5000);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 30000,
+            maximumAge: 0, // Always get fresh position for high accuracy
+          }
+        );
+        
+        locationRequestRef.current.highAccuracyWatchId = highAccuracyWatchId;
+        
+        // Set a timeout to accept best position if high accuracy is taking too long
+        const accuracyTimeoutId = setTimeout(() => {
+          if (!hasResult && bestPosition) {
+            console.log("High accuracy timeout, using best available position");
+            onSuccess(bestPosition, true);
+          }
+        }, 15000); // Wait 15 seconds for high accuracy
+        
+        locationRequestRef.current.accuracyTimeoutId = accuracyTimeoutId;
+        
+      }, 2000); // Wait 2 seconds for low accuracy first
+    }
+
     // Also try getCurrentPosition as backup (sometimes works when watch doesn't)
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        console.log("getCurrentPosition success");
-        onSuccess(position);
+        console.log("getCurrentPosition success:", position.coords.accuracy, "meters");
+        if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
+          bestPosition = position;
+        }
+        if (!requestHighAccuracy) {
+          onSuccess(position, true);
+        } else {
+          onSuccess(position, false);
+        }
       },
       (error) => {
         console.log("getCurrentPosition failed:", error.message);
         // Wait a bit more for watchPosition before giving up
         setTimeout(() => {
-          if (!hasResult) {
+          if (!hasResult && !bestPosition) {
             onError(error);
           }
         }, 15000);
@@ -217,7 +299,7 @@ const Home = () => {
       {
         enableHighAccuracy: false,
         timeout: 20000,
-        maximumAge: Infinity, // Accept ANY cached position
+        maximumAge: requestHighAccuracy ? 60000 : Infinity,
       }
     );
   }, [isLocating]);
@@ -289,9 +371,9 @@ const Home = () => {
   }, [filteredData, selectedCity]);
 
   const handleSetCenter = () => {
-    // Force refresh location when user clicks "Lokasi Saya"
+    // Force refresh location with high accuracy when user clicks "Lokasi Saya"
     locationCache.clear();
-    getUserLocation(true);
+    getUserLocation(true, true); // forceRefresh=true, requestHighAccuracy=true
     setSelectedCity("");
     setSelectedCategories([]);
   };
