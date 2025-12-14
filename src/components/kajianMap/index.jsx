@@ -5,38 +5,17 @@ import "leaflet/dist/leaflet.css";
 
 import UserMarker from "./UserMarker";
 import KajianMarker from "./KajianMarker";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
-const KajianMap = forwardRef(({ locations, showAllInfo, center }, ref) => {
+// Use userLocation prop from parent to avoid duplicate geolocation calls
+const KajianMap = forwardRef(({ locations, showAllInfo, center, userLocation }, ref) => {
   const mapInstance = useRef(null);
-  const [userLocation, setUserLocation] = useState(null);
 
   useEffect(() => {
     if (mapInstance.current) {
       mapInstance.current.flyTo(center, 12);
     }
   }, [center]);
-
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation([latitude, longitude]);
-        },
-        (error) => {
-          console.error("Error getting current location:", error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        }
-      );
-    } else {
-      console.error("Geolocation is not supported by this browser.");
-    }
-  }, []);
 
   useImperativeHandle(
     ref,
@@ -98,6 +77,7 @@ KajianMap.propTypes = {
   ).isRequired,
   showAllInfo: PropTypes.bool,
   center: PropTypes.arrayOf(PropTypes.number).isRequired,
+  userLocation: PropTypes.arrayOf(PropTypes.number),
 };
 
 export default KajianMap;

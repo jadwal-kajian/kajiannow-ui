@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash, faFilter, faInfoCircle, faExclamationTriangle, faCommentDots } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
@@ -13,6 +13,27 @@ import LaporPopup from "../../components/swalPopup/contents/lapor";
 
 const Popup = withReactContent(Swal);
 
+// Cache for user location to avoid repeated geolocation calls
+const locationCache = {
+  coords: null,
+  timestamp: null,
+  CACHE_DURATION: 5 * 60 * 1000, // 5 minutes cache
+  isValid() {
+    return this.coords && this.timestamp && (Date.now() - this.timestamp < this.CACHE_DURATION);
+  },
+  set(coords) {
+    this.coords = coords;
+    this.timestamp = Date.now();
+  },
+  get() {
+    return this.coords;
+  },
+  clear() {
+    this.coords = null;
+    this.timestamp = null;
+  }
+};
+
 const Home = () => {
   const [data, setData] = useState([]);
   const [lastUpdate, setLastUpdate] = useState();
@@ -22,8 +43,11 @@ const Home = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDate, setShowDate] = useState("");
   const [mapCenter, setMapCenter] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
   const [zoom, setZoom] = useState(12);
+  const [isLocating, setIsLocating] = useState(false);
   const mapRef = useRef(null);
+  const locationRequestRef = useRef(null);
 
   const fetchData = async () => {
     try {
@@ -50,13 +74,39 @@ const Home = () => {
     localStorage.clear();
   }, []);
 
+  // Initial location fetch - only once on mount
+  useEffect(() => {
+    getUserLocation();
+  }, []);
+
+  // Fetch data when date changes
   useEffect(() => {
     fetchData();
-    getUserLocation();
     setShowDate(ID_FormattedDate(selectedDate));
   }, [selectedDate]);
 
-  const getUserLocation = () => {
+  const getUserLocation = useCallback((forceRefresh = false) => {
+    // Prevent duplicate requests
+    if (isLocating) {
+      return;
+    }
+
+    // Check cache first (unless force refresh)
+    if (!forceRefresh && locationCache.isValid()) {
+      const cachedLocation = locationCache.get();
+      setUserLocation(cachedLocation);
+      setMapCenter(cachedLocation);
+      setZoom(12);
+      return;
+    }
+
+    setIsLocating(true);
+
+    // Cancel any pending location request
+    if (locationRequestRef.current) {
+      clearTimeout(locationRequestRef.current);
+    }
+
     Popup.fire({
       html: <LocationLoadingPopup />,
       showConfirmButton: false,
@@ -64,31 +114,54 @@ const Home = () => {
       allowEscapeKey: false,
     });
   
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          // Success: Close spinner and handle location
-          Popup.close();
-          const { latitude, longitude } = position.coords;
-          const newLocation = { lat: latitude, lng: longitude };
-          setMapCenter(newLocation);
-          setZoom(12);
-        },
-        (error) => {
-          // Error: Handle and close spinner
-          handleGeolocationError(error);
-        },
-        {
-          enableHighAccuracy: false,
-          timeout: 10000,
-          maximumAge: 60000,
-        }
-      );
-    } else {
-      // Geolocation not supported
+    if (!navigator.geolocation) {
+      setIsLocating(false);
       handleGeolocationError({ code: -1, message: 'Geolocation not supported' });
+      return;
     }
-  };
+
+    // Set up a manual timeout as a fallback
+    const timeoutId = setTimeout(() => {
+      setIsLocating(false);
+      handleGeolocationError({ code: 3, message: 'Location request timed out' });
+    }, 20000); // 20 second overall timeout
+
+    locationRequestRef.current = timeoutId;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        clearTimeout(timeoutId);
+        locationRequestRef.current = null;
+        setIsLocating(false);
+        
+        // Success: Close spinner and handle location
+        Popup.close();
+        const { latitude, longitude } = position.coords;
+        const newLocation = { lat: latitude, lng: longitude };
+        
+        // Cache the location
+        locationCache.set(newLocation);
+        
+        // Update both user location and map center
+        setUserLocation(newLocation);
+        setMapCenter(newLocation);
+        setZoom(12);
+      },
+      (error) => {
+        clearTimeout(timeoutId);
+        locationRequestRef.current = null;
+        setIsLocating(false);
+        
+        // Error: Handle and close spinner
+        handleGeolocationError(error);
+      },
+      {
+        enableHighAccuracy: true, // Try high accuracy first
+        timeout: 15000, // 15 second timeout for the API call
+        maximumAge: 300000, // Accept cached position up to 5 minutes old
+      }
+    );
+  }, [isLocating]);
 
   // Handle geolocation errors in a single function
   const handleGeolocationError = (error) => {
@@ -157,7 +230,9 @@ const Home = () => {
   }, [filteredData, selectedCity]);
 
   const handleSetCenter = () => {
-    getUserLocation();
+    // Force refresh location when user clicks "Lokasi Saya"
+    locationCache.clear();
+    getUserLocation(true);
     setSelectedCity("");
     setSelectedCategories([]);
   };
@@ -205,7 +280,14 @@ const Home = () => {
       <div className="title-text mb-3 text-center text-custom-yellow-1 font-semibold text-sm md:text-base">{showDate}</div>
 
       {mapCenter && (
-        <KajianMap locations={filteredData} ref={mapRef} showAllInfo={showAllInfo} center={[mapCenter.lat, mapCenter.lng]} zoom={zoom} />
+        <KajianMap 
+          locations={filteredData} 
+          ref={mapRef} 
+          showAllInfo={showAllInfo} 
+          center={[mapCenter.lat, mapCenter.lng]} 
+          zoom={zoom}
+          userLocation={userLocation ? [userLocation.lat, userLocation.lng] : null}
+        />
       )}
       <div className="last-update text-sm text-center text-[#f1dcb7]">Terakhir Update: {lastUpdate}</div>
 
