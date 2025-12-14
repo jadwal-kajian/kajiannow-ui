@@ -120,45 +120,88 @@ const Home = () => {
       return;
     }
 
-    // Set up a manual timeout as a fallback
-    const timeoutId = setTimeout(() => {
+    // Helper function to handle successful location
+    const onSuccess = (position) => {
+      if (locationRequestRef.current) {
+        clearTimeout(locationRequestRef.current);
+        locationRequestRef.current = null;
+      }
       setIsLocating(false);
-      handleGeolocationError({ code: 3, message: 'Location request timed out' });
-    }, 20000); // 20 second overall timeout
+      
+      // Success: Close spinner and handle location
+      Popup.close();
+      const { latitude, longitude } = position.coords;
+      const newLocation = { lat: latitude, lng: longitude };
+      
+      // Cache the location
+      locationCache.set(newLocation);
+      
+      // Update both user location and map center
+      setUserLocation(newLocation);
+      setMapCenter(newLocation);
+      setZoom(12);
+    };
 
-    locationRequestRef.current = timeoutId;
+    // Try with low accuracy first (faster, more reliable)
+    // Then try high accuracy as enhancement
+    let hasResult = false;
 
+    // Set up overall timeout fallback
+    const overallTimeoutId = setTimeout(() => {
+      if (!hasResult) {
+        hasResult = true;
+        setIsLocating(false);
+        handleGeolocationError({ code: 3, message: 'Location request timed out' });
+      }
+    }, 30000); // 30 second overall timeout
+
+    locationRequestRef.current = overallTimeoutId;
+
+    // First attempt: Low accuracy (fast, usually works)
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        clearTimeout(timeoutId);
-        locationRequestRef.current = null;
-        setIsLocating(false);
-        
-        // Success: Close spinner and handle location
-        Popup.close();
-        const { latitude, longitude } = position.coords;
-        const newLocation = { lat: latitude, lng: longitude };
-        
-        // Cache the location
-        locationCache.set(newLocation);
-        
-        // Update both user location and map center
-        setUserLocation(newLocation);
-        setMapCenter(newLocation);
-        setZoom(12);
+        if (!hasResult) {
+          hasResult = true;
+          onSuccess(position);
+        }
       },
       (error) => {
-        clearTimeout(timeoutId);
-        locationRequestRef.current = null;
-        setIsLocating(false);
-        
-        // Error: Handle and close spinner
-        handleGeolocationError(error);
+        console.log("Low accuracy attempt failed:", error.message);
+        // Don't give up yet, high accuracy attempt might still work
+        // Only fail if both attempts fail
+        setTimeout(() => {
+          if (!hasResult) {
+            hasResult = true;
+            clearTimeout(overallTimeoutId);
+            locationRequestRef.current = null;
+            setIsLocating(false);
+            handleGeolocationError(error);
+          }
+        }, 10000); // Wait 10s more for high accuracy attempt
       },
       {
-        enableHighAccuracy: true, // Try high accuracy first
-        timeout: 15000, // 15 second timeout for the API call
-        maximumAge: 300000, // Accept cached position up to 5 minutes old
+        enableHighAccuracy: false,
+        timeout: 10000, // 10 second timeout
+        maximumAge: 600000, // Accept cached position up to 10 minutes old
+      }
+    );
+
+    // Second attempt: High accuracy (slower but more precise)
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (!hasResult) {
+          hasResult = true;
+          onSuccess(position);
+        }
+      },
+      (error) => {
+        console.log("High accuracy attempt failed:", error.message);
+        // Error handled by low accuracy callback or overall timeout
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000, // 20 second timeout for high accuracy
+        maximumAge: 60000, // Accept cached position up to 1 minute old
       }
     );
   }, [isLocating]);
