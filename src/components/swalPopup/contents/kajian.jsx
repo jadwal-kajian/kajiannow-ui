@@ -189,14 +189,16 @@ function KajianPopup({ info, group, close }) {
 
         {/* Scroll indicator */}
         {showScrollHint && (
-          <button 
-            onClick={handleScrollDown}
-            className="absolute left-1/2 -translate-x-1/2 bottom-16 z-10 flex flex-col items-center animate-bounce"
-            aria-label="Scroll untuk lihat lebih"
-          >
-            <span className="text-xs text-gray-600 bg-custom-yellow-2/90 px-2 py-1 rounded-full shadow-sm">Geser ke bawah</span>
-            <FontAwesomeIcon icon={faChevronDown} className="text-gray-600" />
-          </button>
+          <div className="absolute inset-x-0 bottom-16 z-10 flex justify-center pointer-events-none">
+            <button 
+              onClick={handleScrollDown}
+              className="flex flex-col items-center animate-bounce pointer-events-auto"
+              aria-label="Scroll untuk lihat lebih"
+            >
+              <span className="text-xs text-gray-600 bg-custom-yellow-2/90 px-2 py-1 rounded-full shadow-sm">Geser ke bawah</span>
+              <FontAwesomeIcon icon={faChevronDown} className="text-gray-600" />
+            </button>
+          </div>
         )}
 
         {/* Fixed close button at bottom */}
@@ -305,14 +307,16 @@ function KajianPopup({ info, group, close }) {
 
         {/* Scroll indicator */}
         {showScrollHint && (
-          <button 
-            onClick={handleScrollDown}
-            className="absolute left-1/2 -translate-x-1/2 bottom-16 z-10 flex flex-col items-center animate-bounce"
-            aria-label="Scroll untuk lihat lebih"
-          >
-            <span className="text-xs text-gray-600 bg-custom-yellow-2/90 px-2 py-1 rounded-full shadow-sm">Geser ke bawah</span>
-            <FontAwesomeIcon icon={faChevronDown} className="text-gray-600" />
-          </button>
+          <div className="absolute inset-x-0 bottom-16 z-10 flex justify-center pointer-events-none">
+            <button 
+              onClick={handleScrollDown}
+              className="flex flex-col items-center animate-bounce pointer-events-auto"
+              aria-label="Scroll untuk lihat lebih"
+            >
+              <span className="text-xs text-gray-600 bg-custom-yellow-2/90 px-2 py-1 rounded-full shadow-sm">Geser ke bawah</span>
+              <FontAwesomeIcon icon={faChevronDown} className="text-gray-600" />
+            </button>
+          </div>
         )}
 
         <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
