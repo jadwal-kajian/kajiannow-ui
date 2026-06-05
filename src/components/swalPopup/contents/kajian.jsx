@@ -16,6 +16,63 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { formatDate, timeStartMapping } from "../../../utils/helpers";
 
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+// Treat null/empty/"undefined" (string) as missing.
+const isBlank = (v) => v == null || String(v).trim() === "" || String(v).trim().toLowerCase() === "undefined";
+
+// Drop "undefined" tokens that leaked into the source data (e.g. "undefined/undefined/Name").
+const cleanText = (v) =>
+  isBlank(v)
+    ? ""
+    : String(v)
+        .split("/")
+        .map((part) => part.trim())
+        .filter((part) => part && part.toLowerCase() !== "undefined")
+        .join("/")
+        .trim();
+
+// Renders the "Teks · Gambar dari NAME (CONTACT) via PLATFORM" attribution line,
+// omitting any piece that is missing and separating the source links.
+function SourceInfo({ info }) {
+  const name = cleanText(info.src_sender_name);
+  const contact = isBlank(info.src_sender_contact) ? "" : String(info.src_sender_contact).trim();
+  const platform = isBlank(info.src_platform) ? "" : String(info.src_platform).trim();
+
+  const links = [];
+  if (info.src_text) {
+    links.push(
+      <a key="teks" href={`${BASE_URL}/${info.src_text}`} target="_blank" rel="noopener noreferrer" className="underline">
+        Teks
+      </a>
+    );
+  }
+  if (info.src_image) {
+    links.push(
+      <a key="gambar" href={`${BASE_URL}/${info.src_image}`} target="_blank" rel="noopener noreferrer" className="underline">
+        Gambar
+      </a>
+    );
+  }
+
+  const who = [name, contact ? `(${contact})` : ""].filter(Boolean).join(" ");
+  const credit = [who ? `dari ${who}` : "", platform ? `via ${platform}` : ""].filter(Boolean).join(" ");
+
+  if (links.length === 0 && !credit) return null;
+
+  return (
+    <span className="text-sm text-left text-gray-800">
+      {links.map((link, i) => (
+        <React.Fragment key={link.key}>
+          {i > 0 && <span className="mx-1">·</span>}
+          {link}
+        </React.Fragment>
+      ))}
+      {credit && <span className="mx-1">{credit}</span>}
+    </span>
+  );
+}
+
 function KajianPopup({ info, group, close }) {
   // Hooks must be at top level - used for single item scroll indicator
   const scrollRef = useRef(null);
@@ -95,7 +152,7 @@ function KajianPopup({ info, group, close }) {
                       <img 
                         src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`} 
                         alt="poster" 
-                        className="w-full object-cover max-h-[25vh]"
+                        className="w-full object-contain max-h-[25vh]"
                       />
                       <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-custom-yellow-3 to-transparent pointer-events-none" />
                     </div>
@@ -142,31 +199,7 @@ function KajianPopup({ info, group, close }) {
                     )}
                     <div className="flex gap-3 items-center">
                       <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                      <span className="text-sm text-left text-gray-800">
-                        {info.src_text && (
-                          <a
-                            href={`${import.meta.env.VITE_BASE_URL}/${info.src_text}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline"
-                          >
-                            Teks
-                          </a>
-                        )}
-                        {info.src_image && (
-                          <a
-                            href={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline"
-                          >
-                            Gambar
-                          </a>
-                        )}
-                        <span className="mx-1">
-                          dari {info.src_sender_name} ({info.src_sender_contact}) via {info.src_platform}
-                        </span>
-                      </span>
+                      <SourceInfo info={info} />
                     </div>
                     <div className="flex gap-3 items-center">
                       <FontAwesomeIcon icon={faTags} className="w-4 h-4 text-gray-700 flex-shrink-0" />
@@ -221,7 +254,7 @@ function KajianPopup({ info, group, close }) {
               <img 
                 src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`} 
                 alt="poster" 
-                className="rounded-t-xl w-full object-cover max-h-[35vh]" 
+                className="rounded-t-xl w-full object-contain max-h-[35vh]"
               />
               {/* Gradient overlay to hint there's content below */}
               <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-custom-yellow-3 to-transparent pointer-events-none" />
@@ -272,31 +305,7 @@ function KajianPopup({ info, group, close }) {
             )}
             <div className="flex gap-3 items-center">
               <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-              <span className="text-sm text-left text-gray-800">
-                {info.src_text && (
-                  <a
-                    href={`${import.meta.env.VITE_BASE_URL}/${info.src_text}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline"
-                  >
-                    Teks
-                  </a>
-                )}
-                {info.src_image && (
-                  <a
-                    href={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline"
-                  >
-                    Gambar
-                  </a>
-                )}
-                <span className="mx-1">
-                  dari {info.src_sender_name} ({info.src_sender_contact}) via {info.src_platform}
-                </span>
-              </span>
+              <SourceInfo info={info} />
             </div>
             <div className="flex gap-3 items-center">
               <FontAwesomeIcon icon={faTags} className="w-4 h-4 text-gray-700 flex-shrink-0" />
