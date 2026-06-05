@@ -1,5 +1,6 @@
 import moment from "moment-timezone";
 import { Coordinates, CalculationMethod, PrayerTimes } from "adhan";
+import { timeStartMapping } from "./helpers";
 
 // Kajian schedules are in Western Indonesia time (Jawa Barat = WIB).
 const TZ = "Asia/Jakarta";
@@ -84,6 +85,33 @@ const endMoment = (item, start) => {
   const end = hhmm ? clockMoment(item.date, hhmm) : start.clone().add(DEFAULT_DURATION_MIN, "minutes");
   if (end.isBefore(start)) end.add(1, "day"); // crossed midnight
   return end;
+};
+
+// True when the start time is prayer-relative ("ba'da ...").
+export const isPrayerStart = (item) =>
+  !!BADA_PRAYER[String(item?.time_start || "").toLowerCase().trim()];
+
+/**
+ * Resolved clock time of a kajian's start in WIB ("HH:mm"), or null.
+ * For "ba'da <prayer>" events this is the real computed prayer time for the
+ * kajian's location/date — useful to show users when it actually begins.
+ */
+export const getResolvedStartClock = (item) => {
+  if (!item || !item.date) return null;
+  const start = startMoment(item);
+  return start && start.isValid() ? start.clone().tz(TZ).format("HH:mm") : null;
+};
+
+/**
+ * Human "start - end" label. For "ba'da <prayer>" starts it appends the real
+ * computed clock time, e.g. "Ba'da Maghrib (17:41) - selesai".
+ */
+export const formatTimeRange = (item, { endFallback = "selesai" } = {}) => {
+  if (!item || !item.time_start) return "";
+  const human = timeStartMapping[item.time_start] || item.time_start;
+  const resolved = isPrayerStart(item) ? getResolvedStartClock(item) : null;
+  const startLabel = resolved ? `${human} (${resolved})` : human;
+  return `${startLabel} - ${item.time_end || endFallback}`;
 };
 
 /**

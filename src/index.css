@@ -35,21 +35,16 @@ body {
   box-shadow: none;
 }
 
-/* Status-colored kajian pins (divIcon) — remove leaflet's default white box. */
-.leaflet-div-icon.kajian-pin {
-  background: transparent;
-  border: none;
+/* Tint the book-pin image by schedule status (red base ≈ hue 0°). */
+.kajian-pin-ongoing {
+  /* green — happening now */
+  filter: hue-rotate(108deg) saturate(1.5) drop-shadow(0 0 4px rgba(22, 163, 74, 0.7));
 }
-.kajian-pin-inner {
-  width: 40px;
-  height: 40px;
-  transform-origin: 50% 100%;
+.kajian-pin-upcoming {
+  /* blue — will start later */
+  filter: hue-rotate(212deg) saturate(1.55) brightness(0.98);
 }
-/* Gently pulse markers for kajian happening right now. */
-.kajian-pin-ongoing .kajian-pin-inner {
-  animation: kajian-pulse 1.6s ease-in-out infinite;
-}
-@keyframes kajian-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+.kajian-pin-passed {
+  /* gray — already finished */
+  filter: grayscale(1) brightness(1.05) opacity(0.6);
 }

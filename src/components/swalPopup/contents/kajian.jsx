@@ -14,7 +14,8 @@ import {
   faTags,
   faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
-import { formatDate, timeStartMapping } from "../../../utils/helpers";
+import { formatDate } from "../../../utils/helpers";
+import { formatTimeRange } from "../../../utils/kajianStatus";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -178,7 +179,7 @@ function KajianPopup({ info, group, close }) {
                     <div className="flex gap-3 items-center">
                       <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-gray-700 flex-shrink-0" />
                       <span className="text-[13px] text-left text-gray-800">
-                        {timeStartMapping[info.time_start] || info.time_start} - {info.time_end || "Selesai"}
+                        {formatTimeRange(info, { endFallback: "Selesai" })}
                       </span>
                     </div>
                     {info.contact !== "" && info.contact !== "-" && (
@@ -284,7 +285,7 @@ function KajianPopup({ info, group, close }) {
             <div className="flex gap-3 items-center">
               <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-gray-700 flex-shrink-0" />
               <span className="text-sm text-left text-gray-800">
-                {timeStartMapping[info.time_start] || info.time_start} - {info.time_end || "Selesai"}
+                {formatTimeRange(info, { endFallback: "Selesai" })}
               </span>
             </div>
             {info.contact !== "" && info.contact !== "-" && (
