@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClock, faUser, faMosque, faCity } from "@fortawesome/free-solid-svg-icons";
 import PropTypes from "prop-types";
-import { timeStartMapping } from "../../utils/helpers";
+import { formatTimeRange } from "../../utils/kajianStatus";
 
 export const MarkerInfo = ({ group, location, showAllInfo }) => {
   const ShowNotes = () => {
@@ -36,10 +36,10 @@ export const MarkerInfo = ({ group, location, showAllInfo }) => {
                   <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-gray-700 flex-shrink-0" />
                   {location.city}
                 </div>
-                {location.time_start && (
+                {info.time_start && (
                   <div className="flex gap-3 items-center">
                     <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                    {timeStartMapping[location.time_start] || location.time_start} - {location.time_end || "selesai"}
+                    {formatTimeRange(info)}
                   </div>
                 )}
               </div>
@@ -74,7 +74,7 @@ export const MarkerInfo = ({ group, location, showAllInfo }) => {
         {location.time_start && (
           <div className="flex gap-3 items-center">
             <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-            {timeStartMapping[location.time_start] || location.time_start} - {location.time_end || "selesai"}
+            {formatTimeRange(location)}
           </div>
         )}
       </div>
