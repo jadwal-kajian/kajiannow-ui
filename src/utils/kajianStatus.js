@@ -14,28 +14,34 @@ const BADA_OFFSET_MIN = 0;
 // Indonesia's Kemenag parameters ≈ adhan's Singapore method (Fajr 20°, Isha 18°).
 const calcParams = CalculationMethod.Singapore();
 
-// "ba'da <prayer>" start times -> the corresponding adhan prayer.
-const BADA_PRAYER = {
-  bada_subuh: "fajr",
-  bada_shubuh: "fajr",
-  bada_dhuhur: "dhuhr",
-  bada_dzuhur: "dhuhr",
-  bada_ashar: "asr",
-  bada_asar: "asr",
-  bada_maghrib: "maghrib",
-  bada_isya: "isha",
-};
+// Map a "ba'da <prayer>" start to an adhan prayer by keyword, tolerating the many
+// Indonesian spellings (zuhur/zhuhur/dzuhur/dhuhur/luhur, ashar/asar, isya/isha…).
+const PRAYER_KEYWORDS = [
+  { prayer: "fajr", words: ["subuh", "shubuh", "fajar", "fajr"] },
+  { prayer: "dhuhr", words: ["dzuhur", "dhuhur", "zhuhur", "zuhur", "dzuhr", "zuhr", "dhuhr", "luhur", "lohor", "dohor"] },
+  { prayer: "asr", words: ["ashar", "asar", "ashr", "asr"] },
+  { prayer: "maghrib", words: ["maghrib", "magrib"] },
+  { prayer: "isha", words: ["isya", "isyak", "isha", "isa"] },
+];
 
-// Rough WIB fallbacks, used only when a kajian has no usable coordinates.
-const BADA_TIME_APPROX = {
-  bada_subuh: "05:00",
-  bada_shubuh: "05:00",
-  bada_dhuhur: "12:30",
-  bada_dzuhur: "12:30",
-  bada_ashar: "15:30",
-  bada_asar: "15:30",
-  bada_maghrib: "18:30",
-  bada_isya: "19:30",
+// Human labels and rough WIB fallback times keyed by adhan prayer.
+const PRAYER_LABEL = {
+  fajr: "Ba'da Subuh",
+  dhuhr: "Ba'da Dzuhur",
+  asr: "Ba'da Ashar",
+  maghrib: "Ba'da Maghrib",
+  isha: "Ba'da Isya'",
+};
+const PRAYER_APPROX = { fajr: "05:00", dhuhr: "12:30", asr: "15:30", maghrib: "18:30", isha: "19:30" };
+
+// Returns the adhan prayer name for a prayer-relative start ("ba'da …"), or null.
+const prayerOf = (raw) => {
+  const key = String(raw || "").toLowerCase().trim();
+  if (!/ba'?da|bakda|ba'?do/.test(key)) return null; // not prayer-relative
+  for (const { prayer, words } of PRAYER_KEYWORDS) {
+    if (words.some((w) => key.includes(w))) return prayer;
+  }
+  return null;
 };
 
 const clockMoment = (date, hhmm) =>
@@ -66,17 +72,13 @@ const prayerMoment = (item, prayerName) => {
 const startMoment = (item) => {
   const raw = item.time_start;
   if (!raw) return null;
-  const key = String(raw).toLowerCase().trim();
 
-  const prayer = BADA_PRAYER[key];
+  const prayer = prayerOf(raw);
   if (prayer) {
-    return (
-      prayerMoment(item, prayer) ||
-      (BADA_TIME_APPROX[key] ? clockMoment(item.date, BADA_TIME_APPROX[key]) : null)
-    );
+    return prayerMoment(item, prayer) || clockMoment(item.date, PRAYER_APPROX[prayer]);
   }
 
-  const hhmm = parseClock(key);
+  const hhmm = parseClock(raw);
   return hhmm ? clockMoment(item.date, hhmm) : null;
 };
 
@@ -88,8 +90,7 @@ const endMoment = (item, start) => {
 };
 
 // True when the start time is prayer-relative ("ba'da ...").
-export const isPrayerStart = (item) =>
-  !!BADA_PRAYER[String(item?.time_start || "").toLowerCase().trim()];
+export const isPrayerStart = (item) => !!prayerOf(item?.time_start);
 
 /**
  * Resolved clock time of a kajian's start in WIB ("HH:mm"), or null.
@@ -108,8 +109,11 @@ export const getResolvedStartClock = (item) => {
  */
 export const formatTimeRange = (item, { endFallback = "selesai" } = {}) => {
   if (!item || !item.time_start) return "";
-  const human = timeStartMapping[item.time_start] || item.time_start;
-  const resolved = isPrayerStart(item) ? getResolvedStartClock(item) : null;
+  const prayer = prayerOf(item.time_start);
+  const human = prayer
+    ? PRAYER_LABEL[prayer]
+    : timeStartMapping[item.time_start] || item.time_start;
+  const resolved = prayer ? getResolvedStartClock(item) : null;
   const startLabel = resolved ? `${human} (${resolved})` : human;
   return `${startLabel} - ${item.time_end || endFallback}`;
 };
