@@ -34,3 +34,22 @@ body {
   background: transparent;
   box-shadow: none;
 }
+
+/* Status-colored kajian pins (divIcon) — remove leaflet's default white box. */
+.leaflet-div-icon.kajian-pin {
+  background: transparent;
+  border: none;
+}
+.kajian-pin-inner {
+  width: 40px;
+  height: 40px;
+  transform-origin: 50% 100%;
+}
+/* Gently pulse markers for kajian happening right now. */
+.kajian-pin-ongoing .kajian-pin-inner {
+  animation: kajian-pulse 1.6s ease-in-out infinite;
+}
+@keyframes kajian-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
