@@ -7,6 +7,26 @@ import UserMarker from "./UserMarker";
 import KajianMarker from "./KajianMarker";
 import { useEffect } from "react";
 
+// Marker status legend (colors mirror STATUS_COLORS in KajianMarker).
+const LEGEND_ITEMS = [
+  { color: "#16a34a", label: "Berlangsung" },
+  { color: "#2563eb", label: "Akan datang" },
+  { color: "#9ca3af", label: "Selesai" },
+];
+
+function StatusLegend() {
+  return (
+    <div className="absolute bottom-3 left-3 z-[1000] rounded-lg bg-white/85 px-2.5 py-2 shadow-md text-[11px] leading-tight text-gray-800 pointer-events-none">
+      {LEGEND_ITEMS.map((item) => (
+        <div key={item.label} className="flex items-center gap-1.5 my-0.5">
+          <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+          <span>{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Use userLocation prop from parent to avoid duplicate geolocation calls
 const KajianMap = forwardRef(({ locations, showAllInfo, center, userLocation }, ref) => {
   const mapInstance = useRef(null);
@@ -31,13 +51,13 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, userLocation }, 
   );
 
   return (
+    <div style={{ position: "relative", marginBottom: 12 }}>
     <MapContainer
       ref={mapInstance}
       style={{
         width: "100%",
         height: "calc(83vh - 185px)",
         borderRadius: 12,
-        marginBottom: 12,
       }}
       center={center}
       zoom={12}
@@ -61,6 +81,8 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, userLocation }, 
         <KajianMarker key={location.id} location={location} locations={locations} showAllInfo={showAllInfo} />
       ))}
     </MapContainer>
+    <StatusLegend />
+    </div>
   );
 });
 
