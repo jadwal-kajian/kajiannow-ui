@@ -94,7 +94,7 @@ export async function installGeoMock(page, scenario = {}) {
         value: scn.unsupported ? undefined : mock,
         configurable: true,
       });
-    } catch (e) {
+    } catch {
       navigator.geolocation = scn.unsupported ? undefined : mock;
     }
   }, scenario);
