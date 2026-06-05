@@ -10,8 +10,11 @@ import KajianMap from "components/kajianMap";
 import LocationErrorPopup from "../../components/swalPopup/contents/locationError";
 import LocationLoadingPopup from "../../components/swalPopup/contents/locationLoading";
 import LaporPopup from "../../components/swalPopup/contents/lapor";
+import { useGeolocation, isInAppBrowser } from "../../hooks/useGeolocation";
 
 const Popup = withReactContent(Swal);
+
+const DEFAULT_LOCATION = { lat: -6.2088, lng: 106.8456 }; // Jakarta
 
 // Cache for user location to avoid repeated geolocation calls
 const locationCache = {
@@ -47,7 +50,14 @@ const Home = () => {
   const [zoom, setZoom] = useState(12);
   const [isLocating, setIsLocating] = useState(false);
   const mapRef = useRef(null);
-  const locationRequestRef = useRef(null);
+  const locatingRef = useRef(false); // synchronous guard against overlapping requests
+  const { locate } = useGeolocation();
+
+  const applyLocation = useCallback((location) => {
+    setUserLocation(location);
+    setMapCenter(location);
+    setZoom(12);
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -86,31 +96,20 @@ const Home = () => {
   }, [selectedDate]);
 
   const getUserLocation = useCallback((forceRefresh = false, requestHighAccuracy = false) => {
-    // Prevent duplicate requests
-    if (isLocating) {
+    // Prevent duplicate requests (ref is synchronous — guards rapid double-clicks
+    // that the isLocating state update would be too slow to catch).
+    if (locatingRef.current) {
       return;
     }
 
     // Check cache first (unless force refresh)
     if (!forceRefresh && locationCache.isValid()) {
-      const cachedLocation = locationCache.get();
-      setUserLocation(cachedLocation);
-      setMapCenter(cachedLocation);
-      setZoom(12);
+      applyLocation(locationCache.get());
       return;
     }
 
+    locatingRef.current = true;
     setIsLocating(true);
-
-    // Cancel any pending location request
-    if (locationRequestRef.current) {
-      if (typeof locationRequestRef.current === 'number') {
-        clearTimeout(locationRequestRef.current);
-      }
-      if (locationRequestRef.current.watchId) {
-        navigator.geolocation.clearWatch(locationRequestRef.current.watchId);
-      }
-    }
 
     Popup.fire({
       html: <LocationLoadingPopup />,
@@ -118,191 +117,31 @@ const Home = () => {
       allowOutsideClick: false,
       allowEscapeKey: false,
     });
-  
-    if (!navigator.geolocation) {
+
+    // The first fix dismisses the spinner so the UI never feels stuck; any later
+    // high-accuracy refinement nudges the map quietly in the background.
+    let dismissed = false;
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      locatingRef.current = false;
       setIsLocating(false);
-      handleGeolocationError({ code: -1, message: 'Geolocation not supported' });
-      return;
-    }
-
-    let hasResult = false;
-    let watchId = null;
-    let highAccuracyWatchId = null;
-    let bestPosition = null;
-
-    // Cleanup function
-    const cleanup = () => {
-      if (watchId) {
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
-      }
-      if (highAccuracyWatchId) {
-        navigator.geolocation.clearWatch(highAccuracyWatchId);
-        highAccuracyWatchId = null;
-      }
-      if (locationRequestRef.current?.timeoutId) {
-        clearTimeout(locationRequestRef.current.timeoutId);
-      }
-      if (locationRequestRef.current?.accuracyTimeoutId) {
-        clearTimeout(locationRequestRef.current.accuracyTimeoutId);
-      }
-      locationRequestRef.current = null;
+      Popup.close();
     };
 
-    // Helper function to handle successful location
-    const onSuccess = (position, isFinal = true) => {
-      if (hasResult && isFinal) return;
-      
-      const { latitude, longitude } = position.coords;
-      const newLocation = { lat: latitude, lng: longitude };
-      
-      if (isFinal) {
-        hasResult = true;
-        cleanup();
-        setIsLocating(false);
-        Popup.close();
-        
-        // Cache the location
-        locationCache.set(newLocation);
-      }
-      
-      // Update both user location and map center
-      setUserLocation(newLocation);
-      setMapCenter(newLocation);
-      setZoom(12);
-      
-      console.log(`Location ${isFinal ? 'final' : 'update'}:`, position.coords.accuracy, "meters accuracy");
-    };
-
-    const onError = (error) => {
-      if (hasResult) return;
-      hasResult = true;
-      cleanup();
-      setIsLocating(false);
-      handleGeolocationError(error);
-    };
-
-    // Set up overall timeout fallback
-    const overallTimeoutId = setTimeout(() => {
-      if (!hasResult) {
-        // If we have any position, use it
-        if (bestPosition) {
-          console.log("Timeout reached, using best available position");
-          onSuccess(bestPosition, true);
-        } else {
-          console.log("Overall timeout reached, falling back to default location");
-          onError({ code: 3, message: 'Location request timed out' });
-        }
-      }
-    }, requestHighAccuracy ? 60000 : 45000); // Longer timeout when high accuracy requested
-
-    locationRequestRef.current = { timeoutId: overallTimeoutId, watchId: null };
-
-    // Use watchPosition for quick initial position (low accuracy)
-    watchId = navigator.geolocation.watchPosition(
-      (position) => {
-        console.log("watchPosition (low) success:", position.coords.accuracy, "meters accuracy");
-        bestPosition = position;
-        
-        if (!requestHighAccuracy) {
-          // If not requesting high accuracy, accept immediately
-          onSuccess(position, true);
-        } else {
-          // Show the position immediately but keep trying for better accuracy
-          onSuccess(position, false);
-        }
+    locate({
+      highAccuracy: requestHighAccuracy,
+      onFix: (location, { isFinal }) => {
+        dismiss();
+        applyLocation(location);
+        if (isFinal) locationCache.set(location);
       },
-      (error) => {
-        console.log("watchPosition (low) error:", error.message);
+      onError: (error) => {
+        dismiss();
+        handleGeolocationError(error);
       },
-      {
-        enableHighAccuracy: false,
-        timeout: 30000,
-        maximumAge: requestHighAccuracy ? 60000 : 600000, // Shorter cache when high accuracy requested
-      }
-    );
-
-    locationRequestRef.current.watchId = watchId;
-
-    // If high accuracy requested (user clicked "Lokasi Saya"), try to get GPS position
-    if (requestHighAccuracy) {
-      // Give low accuracy a head start, then try high accuracy
-      setTimeout(() => {
-        if (hasResult) return;
-        
-        console.log("Attempting high accuracy location...");
-        
-        highAccuracyWatchId = navigator.geolocation.watchPosition(
-          (position) => {
-            console.log("watchPosition (high) success:", position.coords.accuracy, "meters accuracy");
-            
-            // Accept if accuracy is good (under 100 meters) or better than current
-            if (position.coords.accuracy < 100 || !bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
-              bestPosition = position;
-              onSuccess(position, position.coords.accuracy < 100); // Final if good accuracy
-            }
-          },
-          (error) => {
-            console.log("watchPosition (high) error:", error.message);
-            // High accuracy failed, use whatever we have after a delay
-            setTimeout(() => {
-              if (!hasResult && bestPosition) {
-                console.log("High accuracy failed, using best available position");
-                onSuccess(bestPosition, true);
-              }
-            }, 5000);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 30000,
-            maximumAge: 0, // Always get fresh position for high accuracy
-          }
-        );
-        
-        locationRequestRef.current.highAccuracyWatchId = highAccuracyWatchId;
-        
-        // Set a timeout to accept best position if high accuracy is taking too long
-        const accuracyTimeoutId = setTimeout(() => {
-          if (!hasResult && bestPosition) {
-            console.log("High accuracy timeout, using best available position");
-            onSuccess(bestPosition, true);
-          }
-        }, 15000); // Wait 15 seconds for high accuracy
-        
-        locationRequestRef.current.accuracyTimeoutId = accuracyTimeoutId;
-        
-      }, 2000); // Wait 2 seconds for low accuracy first
-    }
-
-    // Also try getCurrentPosition as backup (sometimes works when watch doesn't)
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        console.log("getCurrentPosition success:", position.coords.accuracy, "meters");
-        if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
-          bestPosition = position;
-        }
-        if (!requestHighAccuracy) {
-          onSuccess(position, true);
-        } else {
-          onSuccess(position, false);
-        }
-      },
-      (error) => {
-        console.log("getCurrentPosition failed:", error.message);
-        // Wait a bit more for watchPosition before giving up
-        setTimeout(() => {
-          if (!hasResult && !bestPosition) {
-            onError(error);
-          }
-        }, 15000);
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 20000,
-        maximumAge: requestHighAccuracy ? 60000 : Infinity,
-      }
-    );
-  }, [isLocating]);
+    });
+  }, [locate, applyLocation]);
 
   // Handle geolocation errors in a single function
   const handleGeolocationError = (error) => {
@@ -317,6 +156,8 @@ const Home = () => {
           message={
             error.code === -1
               ? 'Perangkat Anda tidak mendukung akses lokasi.'
+              : isInAppBrowser()
+              ? 'Lokasi sulit didapat di dalam aplikasi (mis. Threads/Instagram). Buka halaman ini di browser (Chrome/Safari) lalu izinkan akses lokasi.'
               : 'Mohon izinkan akses lokasi Anda di perangkat dan browser/aplikasi Anda agar kami bisa mengarahkan peta ke lokasi Anda.'
           }
           onRetry={() => window.location.reload()}
@@ -328,8 +169,7 @@ const Home = () => {
     });
 
     // Fallback to the default location
-    const defaultLocation = { lat: -6.2088, lng: 106.8456 }; // Default to Jakarta
-    setMapCenter(defaultLocation);
+    setMapCenter(DEFAULT_LOCATION);
     setZoom(12);
   };
 
@@ -418,6 +258,16 @@ const Home = () => {
 
   return (
     <div className="content">
+      {/* Test-observable geolocation state (hidden; harmless in production) */}
+      <div
+        data-testid="geo-state"
+        data-locating={isLocating ? "1" : "0"}
+        data-user-lat={userLocation?.lat ?? ""}
+        data-user-lng={userLocation?.lng ?? ""}
+        data-center-lat={mapCenter?.lat ?? ""}
+        data-center-lng={mapCenter?.lng ?? ""}
+        style={{ display: "none" }}
+      />
       <div className="title-text mb-3 text-center text-custom-yellow-1 font-semibold text-sm md:text-base">{showDate}</div>
 
       {mapCenter && (
