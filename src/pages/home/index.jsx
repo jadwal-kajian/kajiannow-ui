@@ -193,7 +193,7 @@ const Home = () => {
         />
       ),
       showConfirmButton: false,
-      allowOutsideClick: false,
+      allowOutsideClick: true,
     });
 
     // Fallback to the default location

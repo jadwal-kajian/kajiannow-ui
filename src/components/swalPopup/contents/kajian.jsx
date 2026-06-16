@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faClock,
@@ -16,6 +17,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { formatDate } from "../../../utils/helpers";
 import { formatTimeRange } from "../../../utils/kajianStatus";
+import { MODAL_ACTIONS, BTN_PRIMARY, CloseButton } from "./modalStyles";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -78,6 +80,8 @@ function KajianPopup({ info, group, close }) {
   // Hooks must be at top level - used for single item scroll indicator
   const scrollRef = useRef(null);
   const [showScrollHint, setShowScrollHint] = useState(false);
+  // Full-size poster lightbox; holds the image URL when open, null when closed.
+  const [lightboxSrc, setLightboxSrc] = useState(null);
 
   useEffect(() => {
     const checkScroll = () => {
@@ -125,9 +129,35 @@ function KajianPopup({ info, group, close }) {
     }
   };
 
+  // Fullscreen poster viewer. Portaled to <body> so it sits above the SweetAlert popup.
+  const lightboxEl =
+    lightboxSrc &&
+    createPortal(
+      <div
+        className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/90 p-4 cursor-zoom-out"
+        onClick={() => setLightboxSrc(null)}
+      >
+        <button
+          className="absolute top-4 right-4 px-2 p-[6px] bg-white/20 text-white rounded-full flex items-center justify-center"
+          onClick={() => setLightboxSrc(null)}
+          aria-label="Tutup"
+        >
+          <FontAwesomeIcon icon={faTimes} size="lg" />
+        </button>
+        <img
+          src={lightboxSrc}
+          alt="poster"
+          className="max-w-full max-h-full object-contain"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>,
+      document.body
+    );
+
   if (group.length > 1) {
     return (
       <div className="relative flex flex-col text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
+        {lightboxEl}
         {/* Header with count indicator */}
         <div className="flex justify-between items-center px-3 pb-2">
           <span className="text-sm font-semibold text-gray-700">{group.length} Kajian di lokasi ini</span>
@@ -149,14 +179,12 @@ function KajianPopup({ info, group, close }) {
               <div className="relative bg-custom-yellow-3 rounded-xl overflow-hidden shadow-[0_0_4px_-2px_#000]">
                 <div className="content flex flex-col">
                   {info.src_image && (
-                    <div className="relative">
-                      <img 
-                        src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`} 
-                        alt="poster" 
-                        className="w-full object-contain max-h-[25vh]"
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-custom-yellow-3 to-transparent pointer-events-none" />
-                    </div>
+                    <img
+                      src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`}
+                      alt="poster"
+                      className="w-full object-contain max-h-[25vh] cursor-zoom-in"
+                      onClick={() => setLightboxSrc(`${import.meta.env.VITE_BASE_URL}/${info.src_image}`)}
+                    />
                   )}
                   <div className="description space-y-2 p-3">
                     <div className="title text-sm font-semibold">{info.topic}</div>
@@ -209,7 +237,7 @@ function KajianPopup({ info, group, close }) {
                     
                     {/* Google Maps button inside each card */}
                     <button
-                      className="w-full text-[12px] font-semibold p-2 mt-2 rounded-lg bg-custom-yellow-2"
+                      className="w-full text-[12px] font-semibold p-2 mt-2 rounded-lg bg-[#7a5530] text-[#f1dcb7]"
                       onClick={() => openGoogleMaps(info)}
                     >
                       Buka di Google Maps
@@ -235,31 +263,24 @@ function KajianPopup({ info, group, close }) {
           </div>
         )}
 
-        {/* Fixed close button at bottom */}
-        <div className="action-area flex justify-center items-center p-3 text-sm font-semibold">
-          <button className="cancel p-2 px-6 rounded-full bg-custom-yellow-3 text-sm font-semibold" onClick={close}>
-            Tutup
-          </button>
-        </div>
       </div>
     );
   } else {
     return (
       <div className="relative flex flex-col text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
-        <div 
+        {lightboxEl}
+        <CloseButton onClose={close} />
+        <div
           ref={scrollRef}
           className="content max-h-[60vh] overflow-y-auto mx-2 bg-custom-yellow-3 rounded-xl scroll-smooth"
         >
           {info.src_image && (
-            <div className="relative flex gap-3 items-center">
-              <img 
-                src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`} 
-                alt="poster" 
-                className="rounded-t-xl w-full object-contain max-h-[35vh]"
-              />
-              {/* Gradient overlay to hint there's content below */}
-              <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-custom-yellow-3 to-transparent pointer-events-none" />
-            </div>
+            <img
+              src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`}
+              alt="poster"
+              className="rounded-t-xl w-full object-contain max-h-[35vh] cursor-zoom-in"
+              onClick={() => setLightboxSrc(`${import.meta.env.VITE_BASE_URL}/${info.src_image}`)}
+            />
           )}
 
           <div className="description space-y-2 p-3">
@@ -329,12 +350,9 @@ function KajianPopup({ info, group, close }) {
           </div>
         )}
 
-        <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
-          <button className="confirm p-2 px-4 rounded-full bg-[#edce93]" onClick={() => openGoogleMaps(info)}>
+        <div className={MODAL_ACTIONS}>
+          <button className={BTN_PRIMARY} onClick={() => openGoogleMaps(info)}>
             Buka di Google Maps
-          </button>
-          <button className="cancel p-2 px-4 rounded-full bg-custom-yellow-3 text-sm font-semibold" onClick={close}>
-            Tutup
           </button>
         </div>
       </div>
