@@ -9,6 +9,15 @@ import {
   faTriangleExclamation,
   faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+  MODAL_SHELL,
+  MODAL_CONTENT,
+  MODAL_ACTIONS,
+  BTN_PRIMARY,
+  ModalHeader,
+  ModalRow,
+  CloseButton,
+} from "./modalStyles";
 
 const supported = typeof window !== "undefined" && "Notification" in window;
 
@@ -51,22 +60,6 @@ function Stepper({ value, onChange, min, step, unit, disabled }) {
       </span>
       <button type="button" className={btn} disabled={disabled}
         onClick={() => onChange(v + step)} aria-label="Tambah">+</button>
-    </div>
-  );
-}
-
-// One settings row: icon chip + label/sublabel + trailing control.
-function Row({ icon, title, subtitle, children, muted }) {
-  return (
-    <div className={`flex items-center gap-3 p-3 rounded-2xl bg-white/45 ${muted ? "opacity-60" : ""}`}>
-      <span className="w-9 h-9 shrink-0 rounded-full bg-[#7a5530] text-[#f1dcb7] flex items-center justify-center">
-        <FontAwesomeIcon icon={icon} className="text-sm" />
-      </span>
-      <div className="flex-1 min-w-0 text-left">
-        <div className="font-semibold text-sm text-gray-800 leading-tight">{title}</div>
-        {subtitle && <div className="text-[11px] text-gray-600 leading-tight mt-0.5">{subtitle}</div>}
-      </div>
-      {children}
     </div>
   );
 }
@@ -140,19 +133,15 @@ const NotifySettingsPopup = ({ settings, onSave, close, userLocation, push = {} 
   const blocked = supported && permission === "denied";
 
   return (
-    <div className="relative flex flex-col bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
-      {/* Header */}
-      <div className="flex flex-col items-center gap-2 pt-5 pb-3 px-4">
-        <span className="w-12 h-12 rounded-full bg-[#7a5530] text-[#f1dcb7] flex items-center justify-center shadow-[0_4px_10px_-4px_#000]">
-          <FontAwesomeIcon icon={faBell} className="text-lg" />
-        </span>
-        <h2 className="font-bold text-lg text-gray-800">Notifikasi Kajian Terdekat</h2>
-        <p className="text-[13px] text-gray-600 text-center max-w-[85%] leading-snug">
-          Dapatkan pemberitahuan saat ada kajian di dekat Anda yang akan segera dimulai.
-        </p>
-      </div>
+    <div className={MODAL_SHELL}>
+      <CloseButton onClose={close} />
+      <ModalHeader
+        icon={faBell}
+        title="Notifikasi Kajian Terdekat"
+        subtitle="Dapatkan pemberitahuan saat ada kajian di dekat Anda yang akan segera dimulai."
+      />
 
-      <div className="px-4 pb-2 max-h-[58vh] overflow-y-auto flex flex-col gap-2.5">
+      <div className={MODAL_CONTENT}>
         {!supported && (
           <p className="text-center text-[13px] text-red-700">Browser Anda tidak mendukung notifikasi.</p>
         )}
@@ -163,23 +152,23 @@ const NotifySettingsPopup = ({ settings, onSave, close, userLocation, push = {} 
           </div>
         )}
 
-        <Row icon={faDesktop} title="Saat situs terbuka" subtitle="Notifikasi selama halaman dibuka">
+        <ModalRow icon={faDesktop} title="Saat situs terbuka" subtitle="Notifikasi selama halaman dibuka">
           <Toggle checked={enabled} disabled={!supported || blocked} onChange={handleToggle} />
-        </Row>
+        </ModalRow>
 
         {pushSupported && (
-          <Row icon={faMoon} title="Latar belakang" subtitle="Tetap diberi tahu walau situs ditutup">
+          <ModalRow icon={faMoon} title="Latar belakang" subtitle="Tetap diberi tahu walau situs ditutup">
             <Toggle checked={pushOn} disabled={pushBusy} onChange={setPushOn} />
-          </Row>
+          </ModalRow>
         )}
 
-        <Row icon={faLocationDot} title="Jarak maksimal" subtitle="Radius pencarian kajian">
+        <ModalRow icon={faLocationDot} title="Jarak maksimal" subtitle="Radius pencarian kajian">
           <Stepper value={radiusKm} onChange={setRadiusKm} min={1} step={1} unit="km" />
-        </Row>
+        </ModalRow>
 
-        <Row icon={faClock} title="Beri tahu sebelum" subtitle="Selang waktu sebelum mulai">
+        <ModalRow icon={faClock} title="Beri tahu sebelum" subtitle="Selang waktu sebelum mulai">
           <Stepper value={leadMinutes} onChange={setLeadMinutes} min={5} step={5} unit="mnt" />
-        </Row>
+        </ModalRow>
 
         {pushError && (
           <div className="flex items-start gap-2 text-[12px] text-red-800 bg-red-100/70 border border-red-200 rounded-xl p-3">
@@ -212,19 +201,8 @@ const NotifySettingsPopup = ({ settings, onSave, close, userLocation, push = {} 
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex gap-2 justify-center items-center p-4 pt-3">
-        <button
-          className="flex-1 max-w-[120px] py-2.5 rounded-full bg-black/10 text-gray-700 text-sm font-semibold active:scale-95 transition-transform"
-          onClick={close}
-        >
-          Tutup
-        </button>
-        <button
-          className="flex-1 max-w-[160px] py-2.5 rounded-full bg-[#7a5530] text-[#f1dcb7] text-sm font-semibold shadow-[0_4px_10px_-4px_#000] active:scale-95 transition-transform disabled:opacity-60"
-          onClick={handleSave}
-          disabled={pushBusy}
-        >
+      <div className={MODAL_ACTIONS}>
+        <button className={BTN_PRIMARY} onClick={handleSave} disabled={pushBusy}>
           {pushBusy ? "Menyimpan…" : "Simpan"}
         </button>
       </div>
