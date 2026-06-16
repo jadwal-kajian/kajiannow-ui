@@ -119,6 +119,25 @@ export const formatTimeRange = (item, { endFallback = "selesai" } = {}) => {
 };
 
 /**
+ * Resolved start moment (a moment-timezone object in WIB) for a kajian, or null
+ * when its time can't be determined. Useful for "how soon does it start" math.
+ */
+export const getStartMoment = (item) => {
+  if (!item || !item.date) return null;
+  const start = startMoment(item);
+  return start && start.isValid() ? start : null;
+};
+
+/**
+ * Whole minutes from `now` until the kajian starts. Positive = starts later,
+ * negative = already started, null when the start time can't be resolved.
+ */
+export const getMinutesUntilStart = (item, now = moment.tz(TZ)) => {
+  const start = getStartMoment(item);
+  return start ? start.diff(now, "minutes") : null;
+};
+
+/**
  * Status of a single kajian relative to `now`:
  *   "upcoming" — will start later
  *   "ongoing"  — happening now
