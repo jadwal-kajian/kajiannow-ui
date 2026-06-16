@@ -16,7 +16,7 @@ const LEGEND_ITEMS = [
 
 function StatusLegend() {
   return (
-    <div className="absolute bottom-3 left-3 z-[1000] rounded-lg bg-white/85 px-2.5 py-2 shadow-md text-[11px] leading-tight text-gray-800 pointer-events-none">
+    <div className="absolute bottom-3 left-3 z-[1000] rounded-lg bg-white border border-gray-200 px-2.5 py-2 shadow-md text-[11px] leading-tight text-gray-800 pointer-events-none">
       {LEGEND_ITEMS.map((item) => (
         <div key={item.label} className="flex items-center gap-1.5 my-0.5">
           <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
@@ -62,14 +62,6 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, userLocation }, 
       center={center}
       zoom={12}
       scrollWheelZoom={true}
-      eventHandlers={{
-        locationfound: (e) => {
-          setUserLocation([e.latlng.lat, e.latlng.lng]);
-        },
-        locationerror: (e) => {
-          console.error("Error getting user location:", e);
-        },
-      }}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

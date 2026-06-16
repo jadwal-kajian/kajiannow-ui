@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash, faFilter, faInfoCircle, faExclamationTriangle, faCommentDots } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faEyeSlash, faFilter, faInfoCircle, faCommentDots, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
@@ -225,6 +225,15 @@ const Home = () => {
     });
   };
 
+  // Shift the selected date by whole days (negative = back, positive = forward).
+  const changeDay = (delta) => {
+    setSelectedDate((prev) => {
+      const next = new Date(prev);
+      next.setDate(next.getDate() + delta);
+      return next;
+    });
+  };
+
   const showFilter = () => {
     const filterProps = {
       filteredData,
@@ -268,7 +277,29 @@ const Home = () => {
         data-center-lng={mapCenter?.lng ?? ""}
         style={{ display: "none" }}
       />
-      <div className="title-text mb-3 text-center text-custom-yellow-1 font-semibold text-sm md:text-base">{showDate}</div>
+      <div className="date-nav mb-3 flex items-center justify-center gap-2 select-none">
+        <button
+          onClick={() => changeDay(-1)}
+          aria-label="Hari sebelumnya"
+          className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-full bg-custom-yellow-1 text-custom-gray-1 shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
+        >
+          <FontAwesomeIcon icon={faChevronLeft} />
+        </button>
+        <button
+          onClick={showFilter}
+          aria-label="Pilih tanggal"
+          className="min-w-0 flex-shrink px-4 h-11 flex items-center rounded-full bg-white/5 ring-1 ring-custom-yellow-1/40 text-custom-yellow-1 font-semibold text-sm md:text-base whitespace-nowrap truncate active:scale-95 transition-transform"
+        >
+          {showDate}
+        </button>
+        <button
+          onClick={() => changeDay(1)}
+          aria-label="Hari berikutnya"
+          className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-full bg-custom-yellow-1 text-custom-gray-1 shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
+        >
+          <FontAwesomeIcon icon={faChevronRight} />
+        </button>
+      </div>
 
       {mapCenter && (
         <KajianMap 
@@ -285,7 +316,7 @@ const Home = () => {
       <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
         <button
           onClick={showInfo}
-          className="relative w-[36px] h-[36px] text-[40px] border-none rounded-full bg-custom-gray-1 text-custom-yellow-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          className="relative w-11 h-11 text-[40px] border-none rounded-full bg-custom-gray-1 text-custom-yellow-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faInfoCircle} />
@@ -294,7 +325,7 @@ const Home = () => {
 
         <button
           onClick={() => setShowAllInfo(!showAllInfo)}
-          className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          className="relative w-11 h-11 text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {showAllInfo ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
@@ -303,7 +334,7 @@ const Home = () => {
 
         <button
           onClick={showFilter}
-          className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          className="relative w-11 h-11 text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
           aria-label="Open filters"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -313,7 +344,7 @@ const Home = () => {
 
         <button
           onClick={showReport}
-          className="relative w-[36px] h-[36px] text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          className="relative w-11 h-11 text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
           aria-label="Report issue"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
