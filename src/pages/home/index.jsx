@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash, faFilter, faInfoCircle, faCommentDots, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faEyeSlash, faFilter, faInfoCircle, faCommentDots, faChevronLeft, faChevronRight, faBell } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
@@ -10,11 +10,26 @@ import KajianMap from "components/kajianMap";
 import LocationErrorPopup from "../../components/swalPopup/contents/locationError";
 import LocationLoadingPopup from "../../components/swalPopup/contents/locationLoading";
 import LaporPopup from "../../components/swalPopup/contents/lapor";
+import NotifySettingsPopup from "../../components/swalPopup/contents/notifySettings";
 import { useGeolocation, isInAppBrowser } from "../../hooks/useGeolocation";
+import { useNearbyKajianNotifications } from "../../hooks/useNearbyKajianNotifications";
 
 const Popup = withReactContent(Swal);
 
 const DEFAULT_LOCATION = { lat: -6.2088, lng: 106.8456 }; // Jakarta
+
+// Nearby-kajian notification preferences (persisted across the on-mount cache clear).
+const NOTIFY_KEY = "kn_notify_settings";
+const DEFAULT_NOTIFY = { enabled: false, radiusKm: 5, leadMinutes: 60 };
+
+const readNotifySettings = () => {
+  try {
+    const raw = localStorage.getItem(NOTIFY_KEY);
+    return raw ? { ...DEFAULT_NOTIFY, ...JSON.parse(raw) } : DEFAULT_NOTIFY;
+  } catch {
+    return DEFAULT_NOTIFY;
+  }
+};
 
 // Cache for user location to avoid repeated geolocation calls
 const locationCache = {
@@ -52,6 +67,16 @@ const Home = () => {
   const mapRef = useRef(null);
   const locatingRef = useRef(false); // synchronous guard against overlapping requests
   const { locate } = useGeolocation();
+  const [notifySettings, setNotifySettings] = useState(readNotifySettings);
+
+  // Browser-notify about nearby kajian starting soon (while the tab is open).
+  useNearbyKajianNotifications({
+    enabled: notifySettings.enabled,
+    radiusKm: notifySettings.radiusKm,
+    leadMinutes: notifySettings.leadMinutes,
+    data,
+    userLocation,
+  });
 
   const applyLocation = useCallback((location) => {
     setUserLocation(location);
@@ -81,7 +106,10 @@ const Home = () => {
 
   useEffect(() => {
     fetchLastUpdate();
+    // Clear stale caches but keep the user's notification preferences.
+    const savedNotify = localStorage.getItem(NOTIFY_KEY);
     localStorage.clear();
+    if (savedNotify != null) localStorage.setItem(NOTIFY_KEY, savedNotify);
   }, []);
 
   // Initial location fetch - only once on mount
@@ -274,6 +302,29 @@ const Home = () => {
     });
   };
 
+  const saveNotifySettings = (next) => {
+    setNotifySettings(next);
+    try {
+      localStorage.setItem(NOTIFY_KEY, JSON.stringify(next));
+    } catch {
+      // ignore storage failures (private mode, quota) — settings still apply this session
+    }
+    Popup.close();
+  };
+
+  const showNotifySettings = () => {
+    Popup.fire({
+      html: (
+        <NotifySettingsPopup
+          settings={notifySettings}
+          onSave={saveNotifySettings}
+          close={() => Popup.close()}
+        />
+      ),
+      showConfirmButton: false,
+    });
+  };
+
   return (
     <div className="content">
       {/* Test-observable geolocation state (hidden; harmless in production) */}
@@ -358,6 +409,18 @@ const Home = () => {
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faCommentDots} className="text-sm" />
+          </span>
+        </button>
+
+        <button
+          onClick={showNotifySettings}
+          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] ${
+            notifySettings.enabled ? "bg-custom-gray-1 text-custom-yellow-1" : "bg-custom-yellow-1 text-custom-gray-1"
+          }`}
+          aria-label="Pengaturan notifikasi kajian terdekat"
+        >
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <FontAwesomeIcon icon={faBell} className="text-sm" />
           </span>
         </button>
 
