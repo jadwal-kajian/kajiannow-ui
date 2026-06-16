@@ -78,7 +78,7 @@ const openNotifySettings = async (page) => {
 };
 
 const pushToggle = (page) =>
-  page.locator("input[type=checkbox]").nth(1); // [0] = in-tab, [1] = background push
+  page.getByRole("switch").nth(1); // [0] = in-tab, [1] = background push
 const saveBtn = (page) => page.getByRole("button", { name: /Simpan/ });
 
 test.describe("Web Push subscription", () => {
@@ -98,7 +98,7 @@ test.describe("Web Push subscription", () => {
       .toBeGreaterThan(0);
 
     await openNotifySettings(page);
-    await pushToggle(page).check();
+    await pushToggle(page).click();
     await saveBtn(page).click();
 
     await expect.poll(() => page.evaluate(() => window.__push.subscribeCalls)).toBe(1);
@@ -125,9 +125,9 @@ test.describe("Web Push subscription", () => {
     await openNotifySettings(page);
 
     // Reflects the existing subscription as ON.
-    await expect(pushToggle(page)).toBeChecked();
+    await expect(pushToggle(page)).toHaveAttribute("aria-checked", "true");
 
-    await pushToggle(page).uncheck();
+    await pushToggle(page).click();
     await saveBtn(page).click();
 
     await expect.poll(() => page.evaluate(() => window.__push.unsubscribeCalls)).toBe(1);
@@ -151,7 +151,7 @@ test.describe("Web Push subscription", () => {
     await page.evaluate(() => window.Swal && window.Swal.close && window.Swal.close());
 
     await openNotifySettings(page);
-    await pushToggle(page).check();
+    await pushToggle(page).click();
     await saveBtn(page).click();
 
     await expect(page.getByText(/Aktifkan lokasi dulu/)).toBeVisible();
