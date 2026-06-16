@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import Select from "react-select";
 
-const CityFilter = ({ cities, setSelectedCity }) => {
+const CityFilter = ({ cities, cityCounts = {}, setSelectedCity }) => {
   const [chosenCity, setChosenCity] = useState("");
 
   useEffect(() => {
@@ -10,16 +10,21 @@ const CityFilter = ({ cities, setSelectedCity }) => {
     if (filter) setChosenCity(filter.city);
   }, []);
 
+  const totalCount = Object.values(cityCounts).reduce((sum, n) => sum + n, 0);
+
   const cityOptions = [
     {
       value: "",
-      label: "Semua Kota",
+      label: `Semua Kota (${totalCount})`,
     },
-    ...cities.map((city) => ({
-      value: city,
-      label: city,
-    })),
-  ].filter((option) => option.value !== "" || option.label !== "");
+    // Skip blank city names (bad data) — they'd render a nameless "(n)" row that collides with "Semua Kota".
+    ...cities
+      .filter((city) => city && String(city).trim() !== "")
+      .map((city) => ({
+        value: city,
+        label: `${city} (${cityCounts[city] ?? 0})`,
+      })),
+  ];
 
   const customStyles = {
     control: (provided, state) => ({
@@ -81,6 +86,7 @@ const CityFilter = ({ cities, setSelectedCity }) => {
 
 CityFilter.propTypes = {
   cities: PropTypes.arrayOf(PropTypes.string).isRequired,
+  cityCounts: PropTypes.objectOf(PropTypes.number),
   setSelectedCity: PropTypes.func.isRequired,
 };
 

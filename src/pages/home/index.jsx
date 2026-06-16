@@ -187,6 +187,13 @@ const Home = () => {
       .sort();
   }, [data]);
 
+  // Kajian count per city for the loaded date — shown beside each option in the city filter.
+  const cityCounts = useMemo(() => {
+    const counts = {};
+    for (const item of data) counts[item.city] = (counts[item.city] || 0) + 1;
+    return counts;
+  }, [data]);
+
   const filteredData = useMemo(() => {
     return data.filter((item) => {
       const cityMatch = selectedCity ? item.city === selectedCity : true;
@@ -237,7 +244,9 @@ const Home = () => {
   const showFilter = () => {
     const filterProps = {
       filteredData,
+      allData: data,
       cities,
+      cityCounts,
       selectedDate,
     };
     Popup.fire({
