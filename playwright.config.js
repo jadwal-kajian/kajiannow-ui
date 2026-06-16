@@ -27,5 +27,9 @@ export default defineConfig({
     url: "http://localhost:5173",
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
+    // A dummy VAPID key so the Web Push UI renders and is testable; the push
+    // service worker and subscription are stubbed per-test (push.spec.js).
+    // Production leaves VITE_VAPID_PUBLIC_KEY empty, which disables the feature.
+    env: { ...process.env, VITE_VAPID_PUBLIC_KEY: "A".repeat(88) },
   },
 });

@@ -1,17 +1,40 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const supported = typeof window !== "undefined" && "Notification" in window;
 
 // Reads the live OS-level permission ("default" | "granted" | "denied").
 const currentPermission = () => (supported ? Notification.permission : "denied");
 
-const NotifySettingsPopup = ({ settings, onSave, close }) => {
+const NotifySettingsPopup = ({
+  settings,
+  onSave,
+  close,
+  userLocation,
+  push = {},
+}) => {
   const [enabled, setEnabled] = useState(!!settings.enabled);
   const [radiusKm, setRadiusKm] = useState(settings.radiusKm);
   const [leadMinutes, setLeadMinutes] = useState(settings.leadMinutes);
   const [permission, setPermission] = useState(currentPermission());
 
-  // Turning the feature on requires OS notification permission; ask for it then.
+  // Background push (server-sent, works while the site is closed).
+  const { pushSupported, getIsSubscribed, subscribePush, unsubscribePush } = push;
+  const [pushOn, setPushOn] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushError, setPushError] = useState("");
+
+  // Reflect the current subscription state when the popup opens.
+  useEffect(() => {
+    let alive = true;
+    if (pushSupported && getIsSubscribed) {
+      getIsSubscribed().then((on) => alive && setPushOn(on));
+    }
+    return () => {
+      alive = false;
+    };
+  }, [pushSupported, getIsSubscribed]);
+
+  // Turning the in-tab feature on requires OS notification permission; ask for it.
   const handleToggle = async (next) => {
     if (next && supported && Notification.permission !== "granted") {
       const result = await Notification.requestPermission();
@@ -24,9 +47,39 @@ const NotifySettingsPopup = ({ settings, onSave, close }) => {
     setEnabled(next);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const km = Math.max(0.1, Number(radiusKm) || 0);
     const mins = Math.max(1, Math.round(Number(leadMinutes) || 0));
+
+    // Commit the background-push intent before persisting/closing.
+    if (pushSupported) {
+      setPushBusy(true);
+      setPushError("");
+      try {
+        if (pushOn) {
+          await subscribePush({
+            lat: userLocation?.lat,
+            lng: userLocation?.lng,
+            radiusKm: km,
+            leadMinutes: mins,
+          });
+        } else {
+          await unsubscribePush();
+        }
+      } catch (err) {
+        setPushBusy(false);
+        if (err.message === "no-location") {
+          setPushError('Aktifkan lokasi dulu (tombol "Lokasi Saya") agar notifikasi latar belakang tahu kajian terdekat.');
+        } else if (err.message === "denied") {
+          setPushError("Izin notifikasi ditolak.");
+        } else {
+          setPushError("Gagal mengaktifkan notifikasi latar belakang. Coba lagi.");
+        }
+        return; // keep popup open so the user sees the error
+      }
+      setPushBusy(false);
+    }
+
     onSave({ enabled: enabled && permission === "granted", radiusKm: km, leadMinutes: mins });
   };
 
@@ -40,13 +93,11 @@ const NotifySettingsPopup = ({ settings, onSave, close }) => {
 
       <div className="content p-3 max-w-[90%] md:max-w-full mx-auto flex flex-col gap-3 text-[13px] md:text-base text-left">
         <p className="text-center">
-          Dapatkan notifikasi browser saat ada kajian di dekat Anda yang akan segera dimulai.
+          Dapatkan notifikasi saat ada kajian di dekat Anda yang akan segera dimulai.
         </p>
 
         {!supported && (
-          <p className="text-center text-red-700">
-            Browser Anda tidak mendukung notifikasi.
-          </p>
+          <p className="text-center text-red-700">Browser Anda tidak mendukung notifikasi.</p>
         )}
 
         {blocked && (
@@ -56,7 +107,7 @@ const NotifySettingsPopup = ({ settings, onSave, close }) => {
         )}
 
         <label className="flex items-center justify-between gap-3 bg-[#fff8e1] border border-gray-300 rounded p-3">
-          <span className="font-semibold">Aktifkan notifikasi</span>
+          <span className="font-semibold">Notifikasi saat situs terbuka</span>
           <input
             type="checkbox"
             className="w-5 h-5 accent-[#7a5530]"
@@ -65,6 +116,26 @@ const NotifySettingsPopup = ({ settings, onSave, close }) => {
             onChange={(e) => handleToggle(e.target.checked)}
           />
         </label>
+
+        {pushSupported && (
+          <label className="flex items-center justify-between gap-3 bg-[#fff8e1] border border-gray-300 rounded p-3">
+            <span className="font-semibold">
+              Notifikasi latar belakang
+              <span className="block text-[11px] font-normal text-gray-600">
+                Tetap diberi tahu walau situs ditutup
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              className="w-5 h-5 accent-[#7a5530]"
+              checked={pushOn}
+              disabled={pushBusy}
+              onChange={(e) => setPushOn(e.target.checked)}
+            />
+          </label>
+        )}
+
+        {pushError && <p className="text-center text-red-700">{pushError}</p>}
 
         <label className="flex items-center justify-between gap-3">
           <span>Jarak maksimal (km)</span>
@@ -91,7 +162,7 @@ const NotifySettingsPopup = ({ settings, onSave, close }) => {
         </label>
 
         <p className="text-center text-[12px] text-gray-700">
-          Notifikasi hanya muncul selama situs ini terbuka di browser.
+          Di iPhone, notifikasi latar belakang hanya bekerja jika situs ditambahkan ke Layar Utama.
         </p>
       </div>
 
@@ -100,10 +171,11 @@ const NotifySettingsPopup = ({ settings, onSave, close }) => {
           Tutup
         </button>
         <button
-          className="submit p-2 px-6 rounded-full bg-[#7a5530] text-[#f1dcb7] text-sm font-semibold"
+          className="submit p-2 px-6 rounded-full bg-[#7a5530] text-[#f1dcb7] text-sm font-semibold disabled:opacity-60"
           onClick={handleSave}
+          disabled={pushBusy}
         >
-          Simpan
+          {pushBusy ? "Menyimpan..." : "Simpan"}
         </button>
       </div>
     </div>

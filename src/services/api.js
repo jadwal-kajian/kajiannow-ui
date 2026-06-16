@@ -30,3 +30,16 @@ export const GET_KAJIAN_QUERY = async (query) => {
     throw error;
   }
 };
+
+// Register a Web Push subscription (+ location and alert thresholds) so the
+// backend can push when a nearby kajian is about to start.
+export const PUSH_SUBSCRIBE = async (payload) => {
+  const response = await BASE_URL.post("/push/subscribe", payload);
+  return response.data;
+};
+
+// Drop a Web Push subscription by its endpoint.
+export const PUSH_UNSUBSCRIBE = async (endpoint) => {
+  const response = await BASE_URL.delete("/push/subscribe", { data: { endpoint } });
+  return response.data;
+};
