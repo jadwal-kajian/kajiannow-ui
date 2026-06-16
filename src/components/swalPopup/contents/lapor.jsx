@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { MODAL_SHELL, MODAL_TITLE, MODAL_CONTENT, MODAL_ACTIONS, BTN_PRIMARY, CloseButton } from "./modalStyles";
+import { faCommentDots } from "@fortawesome/free-solid-svg-icons";
+import { MODAL_SHELL, MODAL_CONTENT, MODAL_ACTIONS, BTN_PRIMARY, ModalHeader, CloseButton } from "./modalStyles";
 
 const LaporPopup = ({ close }) => {
   const [message, setMessage] = useState("");
@@ -13,12 +14,14 @@ const LaporPopup = ({ close }) => {
   return (
     <div className={MODAL_SHELL}>
       <CloseButton onClose={close} />
-      <div className={MODAL_TITLE}>
-        <span className="label mx-2">Laporkan Masalah/Saran Tentang Jadwal atau Kajian</span>
-      </div>
+      <ModalHeader
+        icon={faCommentDots}
+        title="Laporkan Masalah / Saran"
+        subtitle="Untuk jadwal atau kajian di aplikasi ini."
+      />
       <div className={MODAL_CONTENT}>
-        <p>Silakan laporkan masalah / saran yang Anda temui di aplikasi ini.</p>
-        <p>Semoga Allah membalas kebaikan atas kontribusi Anda.</p>
+        <p className="text-center">Silakan laporkan masalah / saran yang Anda temui di aplikasi ini.</p>
+        <p className="text-center">Semoga Allah membalas kebaikan atas kontribusi Anda.</p>
         <textarea
           className="w-full p-3 border border-gray-300 rounded mb-4 bg-[#fff8e1]"
           rows="4"

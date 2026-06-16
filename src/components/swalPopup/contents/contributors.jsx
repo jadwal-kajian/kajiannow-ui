@@ -1,7 +1,6 @@
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUsers } from "@fortawesome/free-solid-svg-icons";
-import { MODAL_SHELL, MODAL_TITLE, MODAL_CONTENT, CloseButton } from "./modalStyles";
+import { MODAL_SHELL, MODAL_CONTENT, ModalHeader, CloseButton } from "./modalStyles";
 
 function ContributorsPopup({ close }) {
   const contributors = [
@@ -15,15 +14,17 @@ function ContributorsPopup({ close }) {
   return (
     <div className={MODAL_SHELL}>
       <CloseButton onClose={close} />
-      <div className={MODAL_TITLE}>
-        <FontAwesomeIcon icon={faUsers} />
-        <span className="label mx-2">Contributors</span>
-      </div>
+      <ModalHeader icon={faUsers} title="Kontributor" subtitle="Terima kasih atas kontribusinya." />
       <div className={MODAL_CONTENT}>
-        <ul>
+        <ul className="flex flex-col gap-2 pb-2">
           {contributors.map((contributor, index) => (
             <li key={index}>
-              <a href={contributor.url} target="_blank" rel="noopener noreferrer" className="underline">
+              <a
+                href={contributor.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block rounded-2xl bg-white/45 py-2.5 px-4 text-center font-semibold text-[#7a5530] active:scale-95 transition-transform"
+              >
                 {contributor.name}
               </a>
             </li>
