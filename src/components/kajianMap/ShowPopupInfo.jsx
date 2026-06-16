@@ -16,7 +16,7 @@ export const ShowPopupInfo = ({ location, group }) => {
       />
     ),
     showConfirmButton: false,
-    allowOutsideClick: false,
+    allowOutsideClick: true,
     // Drop the default zoom/fade so the popup appears instantly on tap (felt laggy on mobile).
     showClass: { popup: "", backdrop: "" },
     hideClass: { popup: "", backdrop: "" },
