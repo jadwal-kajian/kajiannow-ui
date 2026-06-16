@@ -161,9 +161,20 @@ const NotifySettingsPopup = ({
           />
         </label>
 
-        <p className="text-center text-[12px] text-gray-700">
-          Di iPhone, notifikasi latar belakang hanya bekerja jika situs ditambahkan ke Layar Utama.
-        </p>
+        <div className="text-left text-[12px] text-gray-700 bg-[#fff8e1] border border-gray-300 rounded p-3 space-y-1">
+          <p className="font-semibold">Notifikasi tidak muncul?</p>
+          <p>
+            Izin di browser sudah benar, tetapi sistem Anda mungkin memblokirnya. Pastikan
+            notifikasi untuk browser Anda <span className="font-semibold">diizinkan di pengaturan sistem</span>, lalu
+            matikan mode <span className="font-semibold">Jangan Ganggu / Fokus</span>:
+          </p>
+          <ul className="list-disc pl-4">
+            <li>Windows: Pengaturan → Sistem → Notifikasi → aktifkan untuk browser, matikan Focus Assist.</li>
+            <li>macOS: Pengaturan Sistem → Notifikasi → izinkan untuk browser, matikan Fokus/Do Not Disturb.</li>
+            <li>Android: Setelan → Aplikasi → browser → Notifikasi → aktif.</li>
+            <li>iPhone: notifikasi latar belakang hanya bekerja jika situs ditambahkan ke Layar Utama.</li>
+          </ul>
+        </div>
       </div>
 
       <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
