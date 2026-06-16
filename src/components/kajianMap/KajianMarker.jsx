@@ -8,7 +8,7 @@ import pinpoint from "assets/icons/pinpoint.png";
 import { groupTopicsByLocation } from "../../utils/helpers";
 import { getGroupStatus } from "../../utils/kajianStatus";
 import { MarkerInfo } from "./MarkerInfo";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 // Same book-pin image, tinted per status via a CSS class (see index.css).
 // `null` status (time unknown) keeps the original untinted pin.
@@ -29,8 +29,12 @@ const getStatusIcon = (status) => {
 
 const KajianMarker = ({ location, locations, showAllInfo }) => {
   const markerRef = useRef(null);
-  const group = groupTopicsByLocation(location.lat, location.lng, locations);
-  const markerIcon = getStatusIcon(getGroupStatus(group));
+  // Grouping scans the whole locations array; memoize so toggles/re-renders don't redo it per marker.
+  const group = useMemo(
+    () => groupTopicsByLocation(location.lat, location.lng, locations),
+    [location.lat, location.lng, locations]
+  );
+  const markerIcon = useMemo(() => getStatusIcon(getGroupStatus(group)), [group]);
 
   useEffect(() => {
     if (markerRef.current) {
