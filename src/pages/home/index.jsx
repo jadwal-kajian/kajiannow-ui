@@ -14,6 +14,7 @@ import NotifySettingsPopup from "../../components/swalPopup/contents/notifySetti
 import { useGeolocation, isInAppBrowser } from "../../hooks/useGeolocation";
 import { useNearbyKajianNotifications } from "../../hooks/useNearbyKajianNotifications";
 import { usePushSubscription } from "../../hooks/usePushSubscription";
+import { REACTIONS_KEY } from "../../utils/reactions";
 
 const Popup = withReactContent(Swal);
 
@@ -108,10 +109,10 @@ const Home = () => {
 
   useEffect(() => {
     fetchLastUpdate();
-    // Clear stale caches but keep the user's notification preferences.
-    const savedNotify = localStorage.getItem(NOTIFY_KEY);
+    // Clear stale caches but keep settings that must survive reloads.
+    const keep = [NOTIFY_KEY, REACTIONS_KEY].map((k) => [k, localStorage.getItem(k)]);
     localStorage.clear();
-    if (savedNotify != null) localStorage.setItem(NOTIFY_KEY, savedNotify);
+    keep.forEach(([k, v]) => { if (v != null) localStorage.setItem(k, v); });
   }, []);
 
   // Initial location fetch - only once on mount
