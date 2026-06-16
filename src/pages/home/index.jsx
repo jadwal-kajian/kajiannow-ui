@@ -13,6 +13,7 @@ import LaporPopup from "../../components/swalPopup/contents/lapor";
 import NotifySettingsPopup from "../../components/swalPopup/contents/notifySettings";
 import { useGeolocation, isInAppBrowser } from "../../hooks/useGeolocation";
 import { useNearbyKajianNotifications } from "../../hooks/useNearbyKajianNotifications";
+import { usePushSubscription } from "../../hooks/usePushSubscription";
 
 const Popup = withReactContent(Swal);
 
@@ -68,6 +69,7 @@ const Home = () => {
   const locatingRef = useRef(false); // synchronous guard against overlapping requests
   const { locate } = useGeolocation();
   const [notifySettings, setNotifySettings] = useState(readNotifySettings);
+  const push = usePushSubscription();
 
   // Browser-notify about nearby kajian starting soon (while the tab is open).
   useNearbyKajianNotifications({
@@ -319,6 +321,8 @@ const Home = () => {
           settings={notifySettings}
           onSave={saveNotifySettings}
           close={() => Popup.close()}
+          userLocation={userLocation}
+          push={push}
         />
       ),
       showConfirmButton: false,
