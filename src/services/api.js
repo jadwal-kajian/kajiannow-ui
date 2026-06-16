@@ -43,3 +43,10 @@ export const PUSH_UNSUBSCRIBE = async (endpoint) => {
   const response = await BASE_URL.delete("/push/subscribe", { data: { endpoint } });
   return response.data;
 };
+
+// Add or remove a community reaction on a kajian.
+// type: "like" | "going", op: "add" | "remove". Returns { id, likes, going }.
+export const REACT = async (id, type, op) => {
+  const response = await BASE_URL.post(`/react/${id}?type=${type}&op=${op}`);
+  return response.data;
+};

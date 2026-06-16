@@ -14,12 +14,73 @@ import {
   faCity,
   faTags,
   faChevronDown,
+  faThumbsUp,
+  faUserCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatDate } from "../../../utils/helpers";
 import { formatTimeRange } from "../../../utils/kajianStatus";
+import { REACT } from "../../../services/api";
+import { hasReacted, setReacted } from "../../../utils/reactions";
 import { MODAL_ACTIONS, BTN_PRIMARY, CloseButton } from "./modalStyles";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+// Suka (like) + Akan Hadir (going) reactions for one kajian. Optimistic with a
+// localStorage-backed toggle, reconciled with the server's returned counts.
+function ReactionBar({ info }) {
+  const id = info.id;
+  const [likes, setLikes] = useState(Number(info.likes) || 0);
+  const [going, setGoing] = useState(Number(info.going) || 0);
+  const [liked, setLiked] = useState(id ? hasReacted(id, "like") : false);
+  const [attending, setAttending] = useState(id ? hasReacted(id, "going") : false);
+  const [busy, setBusy] = useState(false);
+
+  if (!id) return null;
+
+  const toggle = async (type) => {
+    if (busy) return;
+    const isOn = type === "like" ? liked : attending;
+    const op = isOn ? "remove" : "add";
+    const delta = isOn ? -1 : 1;
+    const setOn = type === "like" ? setLiked : setAttending;
+    const setCount = type === "like" ? setLikes : setGoing;
+
+    // Optimistic update.
+    setOn(!isOn);
+    setCount((n) => Math.max(0, n + delta));
+    setReacted(id, type, !isOn);
+    setBusy(true);
+
+    try {
+      const res = await REACT(id, type, op);
+      if (typeof res?.likes === "number") setLikes(res.likes);
+      if (typeof res?.going === "number") setGoing(res.going);
+    } catch {
+      // Revert on failure.
+      setOn(isOn);
+      setCount((n) => Math.max(0, n - delta));
+      setReacted(id, type, isOn);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const pill = (active) =>
+    `flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[13px] font-semibold transition-transform active:scale-95 disabled:opacity-70 ${
+      active ? "bg-[#7a5530] text-[#f1dcb7]" : "bg-white/70 text-gray-700 border border-[#d8c4a0]"
+    }`;
+
+  return (
+    <div className="flex gap-2 pt-1">
+      <button className={pill(liked)} onClick={() => toggle("like")} disabled={busy} aria-pressed={liked}>
+        <FontAwesomeIcon icon={faThumbsUp} /> Suka <span className="tabular-nums">{likes}</span>
+      </button>
+      <button className={pill(attending)} onClick={() => toggle("going")} disabled={busy} aria-pressed={attending}>
+        <FontAwesomeIcon icon={faUserCheck} /> Akan Hadir <span className="tabular-nums">{going}</span>
+      </button>
+    </div>
+  );
+}
 
 // Treat null/empty/"undefined" (string) as missing.
 const isBlank = (v) => v == null || String(v).trim() === "" || String(v).trim().toLowerCase() === "undefined";
@@ -234,7 +295,9 @@ function KajianPopup({ info, group, close }) {
                       <FontAwesomeIcon icon={faTags} className="w-4 h-4 text-gray-700 flex-shrink-0" />
                       <span className="text-sm text-left text-gray-800">{info.tags}</span>
                     </div>
-                    
+
+                    <ReactionBar info={info} />
+
                     {/* Google Maps button inside each card */}
                     <button
                       className="w-full text-[12px] font-semibold p-2 mt-2 rounded-lg bg-[#7a5530] text-[#f1dcb7]"
@@ -333,6 +396,8 @@ function KajianPopup({ info, group, close }) {
               <FontAwesomeIcon icon={faTags} className="w-4 h-4 text-gray-700 flex-shrink-0" />
               <span className="text-sm text-left text-gray-800">{info.tags}</span>
             </div>
+
+            <ReactionBar info={info} />
           </div>
         </div>
 
