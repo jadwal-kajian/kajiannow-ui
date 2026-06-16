@@ -35,8 +35,8 @@ function FilterPopup({ close, filter, submit }) {
       </button>
       <div className="content h-[80%] p-3 px-6 w-full mx-auto text-left text-[13px] overflow-y-auto md:text-base">
         <DateSelector selectedDate={dateSelected} setDateSelected={setDateSelected} />
-        <CityFilter cities={filter.cities} setSelectedCity={setSelectedCity} />
-        <CategoryFilter data={filter.filteredData} onCategoryChange={setSelectedCategories} />
+        <CityFilter cities={filter.cities} cityCounts={filter.cityCounts} setSelectedCity={setSelectedCity} />
+        <CategoryFilter data={filter.allData} onCategoryChange={setSelectedCategories} />
       </div>
 
       <div className="action-area flex gap-2 justify-center items-center p-3 text-sm font-semibold">
