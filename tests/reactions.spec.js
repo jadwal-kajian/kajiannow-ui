@@ -49,6 +49,26 @@ test.describe("Kajian reactions", () => {
     expect(stored.like).toContain("k1");
   });
 
+  test("count survives closing and reopening the popup", async ({ page }) => {
+    await mockApi(page, { schedule: [KAJIAN] });
+    await routeReact(page, []);
+    await openKajian(page);
+
+    const suka = page.getByRole("button", { name: /Suka/ });
+    await expect(suka).toContainText("2");
+    await suka.click();
+    await expect(suka).toContainText("3"); // server-reconciled
+
+    // Close, then reopen the same kajian (no page reload, schedule not refetched).
+    await page.getByRole("button", { name: "Tutup" }).click();
+    await expect(page.getByText("Kajian Reaksi")).toBeHidden();
+    await page.locator(".leaflet-marker-icon.kajian-pin").first().click();
+    await expect(page.getByText("Kajian Reaksi")).toBeVisible();
+
+    // Count stays at 3 instead of resetting to the page-load value of 2.
+    await expect(page.getByRole("button", { name: /Suka/ })).toContainText("3");
+  });
+
   test("tapping an active reaction removes it (toggle)", async ({ page }) => {
     const calls = [];
     await mockApi(page, { schedule: [KAJIAN] });

@@ -37,3 +37,30 @@ export const setReacted = (id, type, on) => {
   data[type] = [...set];
   write(data);
 };
+
+// Latest reaction counts, cached per kajian id so reopening the popup restores
+// the count instead of resetting to the page-load schedule snapshot (the schedule
+// is fetched once and not refreshed). Kept in sessionStorage so a full reload
+// still picks up fresh server counts.
+const COUNTS_KEY = "kn_reaction_counts";
+
+const readCounts = () => {
+  try {
+    return JSON.parse(sessionStorage.getItem(COUNTS_KEY)) || {};
+  } catch {
+    return {};
+  }
+};
+
+// Cached { likes, going } for `id`, or null if not reacted this session.
+export const getCounts = (id) => readCounts()[id] || null;
+
+export const setCounts = (id, likes, going) => {
+  try {
+    const all = readCounts();
+    all[id] = { likes, going };
+    sessionStorage.setItem(COUNTS_KEY, JSON.stringify(all));
+  } catch {
+    // ignore storage failures (private mode, quota)
+  }
+};
