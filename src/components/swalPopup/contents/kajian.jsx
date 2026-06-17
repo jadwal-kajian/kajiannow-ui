@@ -20,7 +20,7 @@ import {
 import { formatDate } from "../../../utils/helpers";
 import { formatTimeRange } from "../../../utils/kajianStatus";
 import { REACT } from "../../../services/api";
-import { hasReacted, setReacted } from "../../../utils/reactions";
+import { hasReacted, setReacted, getCounts, setCounts } from "../../../utils/reactions";
 import { MODAL_ACTIONS, BTN_PRIMARY, CloseButton } from "./modalStyles";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
@@ -29,8 +29,11 @@ const BASE_URL = import.meta.env.VITE_BASE_URL;
 // localStorage-backed toggle, reconciled with the server's returned counts.
 function ReactionBar({ info }) {
   const id = info.id;
-  const [likes, setLikes] = useState(Number(info.likes) || 0);
-  const [going, setGoing] = useState(Number(info.going) || 0);
+  // Prefer counts cached from a prior reaction this session over the page-load
+  // snapshot, so closing and reopening the popup keeps the updated count.
+  const cached = id ? getCounts(id) : null;
+  const [likes, setLikes] = useState(cached ? cached.likes : Number(info.likes) || 0);
+  const [going, setGoing] = useState(cached ? cached.going : Number(info.going) || 0);
   const [liked, setLiked] = useState(id ? hasReacted(id, "like") : false);
   const [attending, setAttending] = useState(id ? hasReacted(id, "going") : false);
   const [busy, setBusy] = useState(false);
@@ -43,23 +46,31 @@ function ReactionBar({ info }) {
     const op = isOn ? "remove" : "add";
     const delta = isOn ? -1 : 1;
     const setOn = type === "like" ? setLiked : setAttending;
-    const setCount = type === "like" ? setLikes : setGoing;
 
     // Optimistic update.
+    const optLikes = type === "like" ? Math.max(0, likes + delta) : likes;
+    const optGoing = type === "going" ? Math.max(0, going + delta) : going;
     setOn(!isOn);
-    setCount((n) => Math.max(0, n + delta));
+    setLikes(optLikes);
+    setGoing(optGoing);
     setReacted(id, type, !isOn);
+    setCounts(id, optLikes, optGoing);
     setBusy(true);
 
     try {
       const res = await REACT(id, type, op);
-      if (typeof res?.likes === "number") setLikes(res.likes);
-      if (typeof res?.going === "number") setGoing(res.going);
+      const srvLikes = typeof res?.likes === "number" ? res.likes : optLikes;
+      const srvGoing = typeof res?.going === "number" ? res.going : optGoing;
+      setLikes(srvLikes);
+      setGoing(srvGoing);
+      setCounts(id, srvLikes, srvGoing);
     } catch {
       // Revert on failure.
       setOn(isOn);
-      setCount((n) => Math.max(0, n - delta));
+      setLikes(likes);
+      setGoing(going);
       setReacted(id, type, isOn);
+      setCounts(id, likes, going);
     } finally {
       setBusy(false);
     }
