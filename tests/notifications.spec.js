@@ -47,6 +47,19 @@ const installNotificationMock = async (page) => {
     FakeNotification.permission = "granted";
     FakeNotification.requestPermission = () => Promise.resolve("granted");
     window.Notification = FakeNotification;
+
+    // The hook prefers the service worker's showNotification (required on
+    // Android Chrome); capture that path too.
+    const reg = {
+      showNotification(title, opts) {
+        window.__notifs.push({ title, body: opts && opts.body });
+        return Promise.resolve();
+      },
+    };
+    Object.defineProperty(navigator, "serviceWorker", {
+      value: { async register() { return reg; }, async getRegistration() { return reg; }, ready: Promise.resolve(reg) },
+      configurable: true,
+    });
   });
 };
 
