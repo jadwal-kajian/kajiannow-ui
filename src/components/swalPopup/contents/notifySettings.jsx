@@ -148,7 +148,14 @@ const NotifySettingsPopup = ({ settings, onSave, close, userLocation, push = {} 
         {blocked && (
           <div className="flex items-start gap-2 text-[12px] text-red-800 bg-red-100/70 border border-red-200 rounded-xl p-3">
             <FontAwesomeIcon icon={faTriangleExclamation} className="mt-0.5 shrink-0" />
-            <span>Izin notifikasi diblokir. Aktifkan kembali lewat ikon gembok di address bar browser.</span>
+            <div className="text-left space-y-1">
+              <p className="font-semibold">Izin notifikasi situs ini diblokir di browser.</p>
+              <p>Ini izin <span className="font-semibold">browser untuk situs ini</span> — beda dari pengaturan notifikasi di HP (yang sudah aktif).</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li><span className="font-semibold">HP (Chrome):</span> ketuk ikon di kiri alamat web (atau menu ⋮) → Setelan situs → Notifikasi → Izinkan, lalu muat ulang.</li>
+                <li><span className="font-semibold">Komputer:</span> klik ikon gembok di address bar → Notifikasi → Izinkan.</li>
+              </ul>
+            </div>
           </div>
         )}
 
