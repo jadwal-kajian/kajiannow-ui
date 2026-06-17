@@ -17,7 +17,11 @@ const formatLead = (mins) => {
   return m > 0 ? `${h} jam ${m} menit lagi` : `${h} jam lagi`;
 };
 
-const fireNotification = (item, mins, km) => {
+// Show a notification without ever throwing. Android Chrome forbids the
+// `new Notification()` constructor (it throws "Illegal constructor") and only
+// allows the service worker's showNotification — so prefer the SW, fall back to
+// the constructor on desktop, and swallow any failure so the app never crashes.
+const fireNotification = async (item, mins, km) => {
   const lead = formatLead(mins);
   const title = `Kajian dekat ${lead}`;
   const where = [item.loc_name, item.city].filter(Boolean).join(", ");
@@ -28,16 +32,29 @@ const fireNotification = (item, mins, km) => {
   ]
     .filter(Boolean)
     .join("\n");
-
-  const n = new Notification(title, {
+  const options = {
     body,
     icon: "/logo_text.png",
     tag: kajianKey(item), // collapse duplicate OS notifications for the same kajian
-  });
-  n.onclick = () => {
-    window.focus();
-    n.close();
   };
+
+  try {
+    if ("serviceWorker" in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg && reg.showNotification) {
+        await reg.showNotification(title, options);
+        return;
+      }
+    }
+    const n = new Notification(title, options); // desktop fallback
+    n.onclick = () => {
+      window.focus();
+      n.close();
+    };
+  } catch (err) {
+    // e.g. Android Chrome "Illegal constructor", or no active SW — never crash.
+    console.warn("Notification failed:", err);
+  }
 };
 
 /**
@@ -69,20 +86,26 @@ export function useNearbyKajianNotifications({
     const sent = sentRef.current;
 
     const check = () => {
-      for (const item of data) {
-        if (typeof item.lat !== "number" || typeof item.lng !== "number") continue;
-        if (getKajianStatus(item) !== "upcoming") continue;
+      // Defensive: this runs synchronously inside the effect, so a throw here
+      // would unmount the whole app. Never let one bad item blank the page.
+      try {
+        for (const item of data) {
+          if (typeof item.lat !== "number" || typeof item.lng !== "number") continue;
+          if (getKajianStatus(item) !== "upcoming") continue;
 
-        const mins = getMinutesUntilStart(item);
-        if (mins == null || mins <= 0 || mins > leadMinutes) continue;
+          const mins = getMinutesUntilStart(item);
+          if (mins == null || mins <= 0 || mins > leadMinutes) continue;
 
-        const km = distanceKm(userLocation, { lat: item.lat, lng: item.lng });
-        if (km > radiusKm) continue;
+          const km = distanceKm(userLocation, { lat: item.lat, lng: item.lng });
+          if (km > radiusKm) continue;
 
-        const key = kajianKey(item);
-        if (sent.has(key)) continue;
-        sent.add(key);
-        fireNotification(item, mins, km);
+          const key = kajianKey(item);
+          if (sent.has(key)) continue;
+          sent.add(key);
+          fireNotification(item, mins, km);
+        }
+      } catch (err) {
+        console.warn("Nearby-kajian scan failed:", err);
       }
     };
 
