@@ -79,4 +79,5 @@ export const timeStartMapping = {
   bada_asar: "Ba'da Ashar",
   bada_maghrib: "Ba'da Maghrib",
   bada_isya: "Ba'da Isya'",
+  bada_jumat: "Ba'da Jum'at",
 };
