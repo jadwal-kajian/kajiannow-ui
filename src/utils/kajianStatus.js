@@ -1,9 +1,13 @@
-import moment from "moment-timezone";
+import moment from "moment";
 import { Coordinates, CalculationMethod, PrayerTimes } from "adhan";
 import { timeStartMapping } from "./helpers";
 
-// Kajian schedules are in Western Indonesia time (Jawa Barat = WIB).
-const TZ = "Asia/Jakarta";
+// Kajian schedules are in Western Indonesia time (WIB). WIB is a fixed UTC+7
+// with no DST, so a constant offset is exact for every present/future date —
+// and lets us use plain `moment` instead of bundling moment-timezone's entire
+// ~800 KB zone database just to format one zone.
+const WIB_OFFSET = 7 * 60; // minutes
+const nowWIB = () => moment().utcOffset(WIB_OFFSET);
 
 // Assumed length when an event has no explicit end time.
 const DEFAULT_DURATION_MIN = 90;
@@ -44,8 +48,10 @@ const prayerOf = (raw) => {
   return null;
 };
 
+// Parse a "YYYY-MM-DD HH:mm" wall-clock as WIB (keepLocalTime so the numbers
+// are interpreted at +07:00 regardless of the browser's own timezone).
 const clockMoment = (date, hhmm) =>
-  moment.tz(`${date} ${hhmm}`, "YYYY-MM-DD HH:mm", TZ);
+  moment(`${date} ${hhmm}`, "YYYY-MM-DD HH:mm").utcOffset(WIB_OFFSET, true);
 
 // Parse "09.00" / "9:00" -> "HH:mm", or null.
 const parseClock = (raw) => {
@@ -100,7 +106,7 @@ export const isPrayerStart = (item) => !!prayerOf(item?.time_start);
 export const getResolvedStartClock = (item) => {
   if (!item || !item.date) return null;
   const start = startMoment(item);
-  return start && start.isValid() ? start.clone().tz(TZ).format("HH:mm") : null;
+  return start && start.isValid() ? start.clone().utcOffset(WIB_OFFSET).format("HH:mm") : null;
 };
 
 /**
@@ -141,7 +147,7 @@ export const getEndMoment = (item) => {
  * Whole minutes from `now` until the kajian starts. Positive = starts later,
  * negative = already started, null when the start time can't be resolved.
  */
-export const getMinutesUntilStart = (item, now = moment.tz(TZ)) => {
+export const getMinutesUntilStart = (item, now = nowWIB()) => {
   const start = getStartMoment(item);
   return start ? start.diff(now, "minutes") : null;
 };
@@ -153,7 +159,7 @@ export const getMinutesUntilStart = (item, now = moment.tz(TZ)) => {
  *   "passed"   — already finished
  * Returns null when the time can't be determined.
  */
-export const getKajianStatus = (item, now = moment.tz(TZ)) => {
+export const getKajianStatus = (item, now = nowWIB()) => {
   if (!item || !item.date) return null;
   const start = startMoment(item);
   if (!start || !start.isValid()) return null;
@@ -170,7 +176,7 @@ const STATUS_PRIORITY = { ongoing: 3, upcoming: 2, passed: 1 };
  * Combined status for a group of kajian at one location. Shows the most "active"
  * state present: ongoing beats upcoming beats passed. Null if none are parseable.
  */
-export const getGroupStatus = (group, now = moment.tz(TZ)) => {
+export const getGroupStatus = (group, now = nowWIB()) => {
   let best = null;
   for (const item of group || []) {
     const status = getKajianStatus(item, now);

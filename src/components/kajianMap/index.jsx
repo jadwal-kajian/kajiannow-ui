@@ -1,11 +1,10 @@
-import { forwardRef, useImperativeHandle, useRef } from "react";
+import { forwardRef, useImperativeHandle, useRef, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 import UserMarker from "./UserMarker";
 import KajianMarker from "./KajianMarker";
-import { useEffect } from "react";
 
 // Marker status legend (colors mirror STATUS_COLORS in KajianMarker).
 const LEGEND_ITEMS = [
@@ -30,6 +29,21 @@ function StatusLegend() {
 // Use userLocation prop from parent to avoid duplicate geolocation calls
 const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userLocation }, ref) => {
   const mapInstance = useRef(null);
+
+  // Group kajian by coordinate once (O(n)) and render one marker per location,
+  // instead of each marker re-scanning the whole list (O(n²)) and stacking
+  // duplicate pins at shared coordinates. Keeps the map snappy with many kajian.
+  const groups = useMemo(() => {
+    const byKey = new Map();
+    for (const loc of locations) {
+      if (loc.lat == null || loc.lng == null) continue;
+      const key = `${loc.lat},${loc.lng}`;
+      const existing = byKey.get(key);
+      if (existing) existing.push(loc);
+      else byKey.set(key, [loc]);
+    }
+    return [...byKey.values()];
+  }, [locations]);
 
   useEffect(() => {
     if (mapInstance.current) {
@@ -68,8 +82,13 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userL
       />
       {userLocation && <UserMarker position={userLocation} />}
 
-      {locations.map((location) => (
-        <KajianMarker key={location.id} location={location} locations={locations} showAllInfo={showAllInfo} />
+      {groups.map((group) => (
+        <KajianMarker
+          key={group[0].id ?? `${group[0].lat},${group[0].lng}`}
+          location={group[0]}
+          group={group}
+          showAllInfo={showAllInfo}
+        />
       ))}
     </MapContainer>
     <StatusLegend />
