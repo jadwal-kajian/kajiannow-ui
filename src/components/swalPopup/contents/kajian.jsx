@@ -109,16 +109,24 @@ const hasSourceInfo = (info) =>
     (!isBlank(info.src_platform))
   );
 
-// Drop "undefined" tokens that leaked into the source data (e.g. "undefined/undefined/Name").
-const cleanText = (v) =>
-  isBlank(v)
-    ? ""
-    : String(v)
-        .split("/")
-        .map((part) => part.trim())
-        .filter((part) => part && part.toLowerCase() !== "undefined")
-        .join("/")
-        .trim();
+// Clean slash-joined source values: drop "undefined" tokens and de-duplicate
+// repeats that leaked from the scraper (e.g. "Joko/Joko/undefined" -> "Joko").
+const cleanText = (v) => {
+  if (isBlank(v)) return "";
+  const seen = new Set();
+  return String(v)
+    .split("/")
+    .map((part) => part.trim())
+    .filter((part) => {
+      if (!part || part.toLowerCase() === "undefined") return false;
+      const key = part.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .join("/")
+    .trim();
+};
 
 // Renders the "Teks · Gambar dari NAME (CONTACT) via PLATFORM" attribution line,
 // omitting any piece that is missing and separating the source links.
