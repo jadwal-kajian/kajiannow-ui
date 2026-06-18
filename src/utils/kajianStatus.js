@@ -20,23 +20,31 @@ const calcParams = CalculationMethod.Singapore();
 
 // Map a "ba'da <prayer>" start to an adhan prayer by keyword, tolerating the many
 // Indonesian spellings (zuhur/zhuhur/dzuhur/dhuhur/luhur, ashar/asar, isya/isha…).
+// Jum'at (Friday/Jumu'ah prayer) replaces and occurs at Dzuhur time, so it
+// resolves to the adhan `dhuhr` time but keeps its own label. Checked before
+// dhuhr so "jumat" never gets mislabeled as "Ba'da Dzuhur".
 const PRAYER_KEYWORDS = [
   { prayer: "fajr", words: ["subuh", "shubuh", "fajar", "fajr"] },
+  { prayer: "jumat", words: ["jum'at", "jumat", "jum at", "jumuah", "jumu'ah", "jum'ah", "jumah"] },
   { prayer: "dhuhr", words: ["dzuhur", "dhuhur", "zhuhur", "zuhur", "dzuhr", "zuhr", "dhuhr", "luhur", "lohor", "dohor"] },
   { prayer: "asr", words: ["ashar", "asar", "ashr", "asr"] },
   { prayer: "maghrib", words: ["maghrib", "magrib"] },
   { prayer: "isha", words: ["isya", "isyak", "isha", "isa"] },
 ];
 
+// Prayer names above that aren't real adhan keys -> the adhan time they map to.
+const ADHAN_ALIAS = { jumat: "dhuhr" };
+
 // Human labels and rough WIB fallback times keyed by adhan prayer.
 const PRAYER_LABEL = {
   fajr: "Ba'da Subuh",
+  jumat: "Ba'da Jum'at",
   dhuhr: "Ba'da Dzuhur",
   asr: "Ba'da Ashar",
   maghrib: "Ba'da Maghrib",
   isha: "Ba'da Isya'",
 };
-const PRAYER_APPROX = { fajr: "05:00", dhuhr: "12:30", asr: "15:30", maghrib: "18:30", isha: "19:30" };
+const PRAYER_APPROX = { fajr: "05:00", jumat: "12:30", dhuhr: "12:30", asr: "15:30", maghrib: "18:30", isha: "19:30" };
 
 // Returns the adhan prayer name for a prayer-relative start ("ba'da …"), or null.
 const prayerOf = (raw) => {
@@ -71,7 +79,7 @@ const prayerMoment = (item, prayerName) => {
     new Date(y, m - 1, d),
     calcParams
   );
-  const t = times[prayerName];
+  const t = times[ADHAN_ALIAS[prayerName] || prayerName];
   return t ? moment(t).add(BADA_OFFSET_MIN, "minutes") : null;
 };
 
