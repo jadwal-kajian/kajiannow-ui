@@ -9,6 +9,17 @@ const POLL_MS = 60 * 1000;
 const kajianKey = (item) =>
   item.id || `${item.date}|${item.lat},${item.lng}|${item.time_start}|${item.topic}`;
 
+// Deep link that opens this kajian's flyer and centers the map on its location
+// when the notification is clicked (parsed on load in pages/home). Carries lat/lng
+// as a fallback so it still resolves when the kajian has no stable id.
+const deepLinkUrl = (item) => {
+  const params = new URLSearchParams({ k: String(kajianKey(item)) });
+  if (item.date) params.set("d", String(item.date));
+  if (typeof item.lat === "number") params.set("lat", String(item.lat));
+  if (typeof item.lng === "number") params.set("lng", String(item.lng));
+  return `/?${params.toString()}`;
+};
+
 // "45 menit lagi" / "1 jam lagi" / "1 jam 20 menit lagi".
 const formatLead = (mins) => {
   const h = Math.floor(mins / 60);
@@ -32,10 +43,12 @@ const fireNotification = async (item, mins, km) => {
   ]
     .filter(Boolean)
     .join("\n");
+  const url = deepLinkUrl(item);
   const options = {
     body,
     icon: "/logo_text.png",
     tag: kajianKey(item), // collapse duplicate OS notifications for the same kajian
+    data: { url }, // sw.js notificationclick navigates here → opens flyer + map
   };
 
   try {
@@ -49,6 +62,7 @@ const fireNotification = async (item, mins, km) => {
     const n = new Notification(title, options); // desktop fallback
     n.onclick = () => {
       window.focus();
+      window.location.assign(url); // deep-link to the kajian's flyer + location
       n.close();
     };
   } catch (err) {
