@@ -16,12 +16,15 @@ import {
   faChevronDown,
   faThumbsUp,
   faUserCheck,
+  faShareNodes,
+  faCalendarPlus,
+  faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatDate } from "../../../utils/helpers";
-import { formatTimeRange } from "../../../utils/kajianStatus";
+import { formatTimeRange, getKajianStatus, getStartMoment, getEndMoment } from "../../../utils/kajianStatus";
 import { REACT } from "../../../services/api";
 import { hasReacted, setReacted, getCounts, setCounts } from "../../../utils/reactions";
-import { MODAL_ACTIONS, BTN_PRIMARY, CloseButton } from "./modalStyles";
+import { CloseButton } from "./modalStyles";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -96,6 +99,16 @@ function ReactionBar({ info }) {
 // Treat null/empty/"undefined" (string) as missing.
 const isBlank = (v) => v == null || String(v).trim() === "" || String(v).trim().toLowerCase() === "undefined";
 
+// True when SourceInfo would render something — so callers can skip the empty row+icon.
+const hasSourceInfo = (info) =>
+  !!(
+    info.src_text ||
+    info.src_image ||
+    cleanText(info.src_sender_name) ||
+    (!isBlank(info.src_sender_contact)) ||
+    (!isBlank(info.src_platform))
+  );
+
 // Drop "undefined" tokens that leaked into the source data (e.g. "undefined/undefined/Name").
 const cleanText = (v) =>
   isBlank(v)
@@ -145,6 +158,122 @@ function SourceInfo({ info }) {
       ))}
       {credit && <span className="mx-1">{credit}</span>}
     </span>
+  );
+}
+
+// Colored status pill mirroring the map pin colors.
+const STATUS_META = {
+  ongoing: { label: "Berlangsung", cls: "bg-green-600" },
+  upcoming: { label: "Akan datang", cls: "bg-blue-600" },
+  passed: { label: "Selesai", cls: "bg-gray-400" },
+};
+
+function StatusBadge({ info }) {
+  const status = getKajianStatus(info);
+  const meta = status && STATUS_META[status];
+  if (!meta) return null;
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white ${meta.cls}`}>
+      <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
+      {meta.label}
+    </span>
+  );
+}
+
+// Comma/whitespace-separated tags rendered as readable chips.
+function TagChips({ tags }) {
+  const list = String(tags || "")
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+  if (list.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {list.map((t) => (
+        <span key={t} className="rounded-full bg-[#7a5530]/15 px-2.5 py-0.5 text-[12px] font-medium text-[#7a5530]">
+          {t.replace(/_/g, " ")}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// Build a shareable deep link the app already knows how to open (?k=&d=&lat=&lng=).
+const buildShareUrl = (info) => {
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const p = new URLSearchParams();
+  if (info.id != null) p.set("k", String(info.id));
+  if (info.date) p.set("d", String(info.date));
+  if (typeof info.lat === "number") p.set("lat", String(info.lat));
+  if (typeof info.lng === "number") p.set("lng", String(info.lng));
+  return `${origin}/?${p.toString()}`;
+};
+
+// Google Calendar "add event" link with resolved WIB start/end in UTC.
+const buildCalendarUrl = (info) => {
+  const start = getStartMoment(info);
+  const end = getEndMoment(info);
+  const p = new URLSearchParams({ action: "TEMPLATE", text: info.topic || "Kajian" });
+  const details = [info.speaker && `Pemateri: ${info.speaker}`, info.notes].filter(Boolean).join("\n");
+  if (details) p.set("details", details);
+  const location = [info.loc_name, info.addr].filter(Boolean).join(", ");
+  if (location) p.set("location", location);
+  if (start && end) {
+    const fmt = (m) => m.clone().utc().format("YYYYMMDDTHHmmss") + "Z";
+    p.set("dates", `${fmt(start)}/${fmt(end)}`);
+  }
+  return `https://calendar.google.com/calendar/render?${p.toString()}`;
+};
+
+// Actions row: primary "Open in Maps" + Share + Add-to-calendar.
+function KajianActions({ info, openGoogleMaps }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const url = buildShareUrl(info);
+    const text = `${info.topic || "Kajian"}${info.speaker ? ` — ${info.speaker}` : ""}\n${info.loc_name || ""}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: info.topic || "Kajian", text, url });
+        return;
+      }
+    } catch {
+      return; // user cancelled the share sheet
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // clipboard blocked — silently ignore
+    }
+  };
+
+  const iconBtn =
+    "w-11 shrink-0 flex items-center justify-center rounded-full bg-white/70 text-[#7a5530] border border-[#d8c4a0] active:scale-95 transition-transform";
+
+  return (
+    <div className="flex gap-2 pt-1">
+      <button
+        className="flex-1 flex items-center justify-center gap-2 whitespace-nowrap py-2.5 px-4 rounded-full bg-[#7a5530] text-[#f1dcb7] text-sm font-semibold shadow-[0_4px_10px_-4px_#000] active:scale-95 transition-transform"
+        onClick={() => openGoogleMaps(info)}
+      >
+        <FontAwesomeIcon icon={faMapLocationDot} /> Buka di Maps
+      </button>
+      <button className={iconBtn} onClick={handleShare} title="Bagikan" aria-label="Bagikan kajian">
+        <FontAwesomeIcon icon={copied ? faCheck : faShareNodes} className={copied ? "text-green-600" : ""} />
+      </button>
+      <a
+        className={iconBtn}
+        href={buildCalendarUrl(info)}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Tambah ke Google Kalender"
+        aria-label="Tambah ke Google Kalender"
+      >
+        <FontAwesomeIcon icon={faCalendarPlus} />
+      </a>
+    </div>
   );
 }
 
@@ -259,7 +388,10 @@ function KajianPopup({ info, group, close }) {
                     />
                   )}
                   <div className="description space-y-2 p-3">
-                    <div className="title text-sm font-semibold">{info.topic}</div>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="title text-sm font-semibold flex-1">{info.topic}</div>
+                      <StatusBadge info={info} />
+                    </div>
                     <div className="flex gap-3 items-center">
                       <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-700 flex-shrink-0" />
                       <span className="text-[13px] text-left text-gray-800">{info.speaker}</span>
@@ -288,55 +420,53 @@ function KajianPopup({ info, group, close }) {
                         <span className="text-[13px] text-left text-gray-800">{info.contact}</span>
                       </div>
                     )}
-                    <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                      <span className="text-[13px] text-left text-gray-800 leading-5">{info.addr}</span>
-                    </div>
+                    {!isBlank(info.addr) && (
+                      <div className="flex gap-3 items-center">
+                        <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                        <span className="text-[13px] text-left text-gray-800 leading-5">{info.addr}</span>
+                      </div>
+                    )}
                     {info.notes !== "" && (
                       <div className="flex gap-3 items-center">
                         <FontAwesomeIcon icon={faNoteSticky} className="w-4 h-4 text-gray-700 flex-shrink-0" />
                         <span className="text-[13px] text-left text-gray-800">{info.notes}</span>
                       </div>
                     )}
-                    <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                      <SourceInfo info={info} />
-                    </div>
-                    <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faTags} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                      <span className="text-sm text-left text-gray-800">{info.tags}</span>
-                    </div>
+                    {hasSourceInfo(info) && (
+                      <div className="flex gap-3 items-center">
+                        <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                        <SourceInfo info={info} />
+                      </div>
+                    )}
+                    {!isBlank(info.tags) && (
+                      <div className="flex gap-3 items-start">
+                        <FontAwesomeIcon icon={faTags} className="w-4 h-4 mt-0.5 text-gray-700 flex-shrink-0" />
+                        <TagChips tags={info.tags} />
+                      </div>
+                    )}
 
                     <ReactionBar info={info} />
 
-                    {/* Google Maps button inside each card */}
-                    <button
-                      className="w-full text-[12px] font-semibold p-2 mt-2 rounded-lg bg-[#7a5530] text-[#f1dcb7]"
-                      onClick={() => openGoogleMaps(info)}
-                    >
-                      Buka di Google Maps
-                    </button>
+                    <KajianActions info={info} openGoogleMaps={openGoogleMaps} />
                   </div>
                 </div>
               </div>
             </div>
           ))}
+
+          {/* Scroll indicator — compact sticky chevron so it barely covers content. */}
+          {showScrollHint && (
+            <div className="sticky bottom-1 -mt-9 z-10 flex justify-center pointer-events-none">
+              <button
+                onClick={handleScrollDown}
+                className="w-8 h-8 flex items-center justify-center text-gray-700 bg-custom-yellow-2/95 rounded-full shadow-md animate-bounce pointer-events-auto"
+                aria-label="Geser ke bawah untuk lihat lebih"
+              >
+                <FontAwesomeIcon icon={faChevronDown} />
+              </button>
+            </div>
+          )}
         </div>
-
-        {/* Scroll indicator */}
-        {showScrollHint && (
-          <div className="absolute inset-x-0 bottom-16 z-10 flex justify-center pointer-events-none">
-            <button 
-              onClick={handleScrollDown}
-              className="flex flex-col items-center animate-bounce pointer-events-auto"
-              aria-label="Scroll untuk lihat lebih"
-            >
-              <span className="text-xs text-gray-600 bg-custom-yellow-2/90 px-2 py-1 rounded-full shadow-sm">Geser ke bawah</span>
-              <FontAwesomeIcon icon={faChevronDown} className="text-gray-600" />
-            </button>
-          </div>
-        )}
-
       </div>
     );
   } else {
@@ -358,7 +488,11 @@ function KajianPopup({ info, group, close }) {
           )}
 
           <div className="description space-y-2 p-3">
-            <div className="title font-semibold p-3 pl-4 pb-2 text-sm md:text-base">{info.topic}</div>
+            {/* pr-10 keeps a long title / the status badge clear of the close (✕) button. */}
+            <div className="flex flex-col items-start gap-1.5 px-1 pt-1 pb-1 pr-10">
+              <div className="title font-semibold text-sm md:text-base">{info.topic}</div>
+              <StatusBadge info={info} />
+            </div>
             <div className="flex gap-3 items-center">
               <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-700 flex-shrink-0" />
               <span className="text-sm text-left text-gray-800">{info.speaker}</span>
@@ -389,47 +523,50 @@ function KajianPopup({ info, group, close }) {
                 <span className="text-sm text-left text-gray-800">{info.contact}</span>
               </div>
             )}
-            <div className="flex gap-3 items-center">
-              <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-              <span className="text-sm text-left text-gray-800">{info.addr}</span>
-            </div>
+            {!isBlank(info.addr) && (
+              <div className="flex gap-3 items-center">
+                <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                <span className="text-sm text-left text-gray-800">{info.addr}</span>
+              </div>
+            )}
             {info.notes !== "" && (
               <div className="flex gap-3 items-center">
                 <FontAwesomeIcon icon={faNoteSticky} className="w-4 h-4 text-gray-700 flex-shrink-0" />
                 <span className="text-sm text-left text-gray-800">{info.notes}</span>
               </div>
             )}
-            <div className="flex gap-3 items-center">
-              <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-              <SourceInfo info={info} />
-            </div>
-            <div className="flex gap-3 items-center">
-              <FontAwesomeIcon icon={faTags} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-              <span className="text-sm text-left text-gray-800">{info.tags}</span>
-            </div>
+            {hasSourceInfo(info) && (
+              <div className="flex gap-3 items-center">
+                <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                <SourceInfo info={info} />
+              </div>
+            )}
+            {!isBlank(info.tags) && (
+              <div className="flex gap-3 items-start">
+                <FontAwesomeIcon icon={faTags} className="w-4 h-4 mt-0.5 text-gray-700 flex-shrink-0" />
+                <TagChips tags={info.tags} />
+              </div>
+            )}
 
             <ReactionBar info={info} />
+
+            {/* Scroll indicator — compact sticky chevron. */}
+            {showScrollHint && (
+              <div className="sticky bottom-1 -mt-7 z-10 flex justify-center pointer-events-none">
+                <button
+                  onClick={handleScrollDown}
+                  className="w-8 h-8 flex items-center justify-center text-gray-700 bg-custom-yellow-2/95 rounded-full shadow-md animate-bounce pointer-events-auto"
+                  aria-label="Geser ke bawah untuk lihat lebih"
+                >
+                  <FontAwesomeIcon icon={faChevronDown} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        {showScrollHint && (
-          <div className="absolute inset-x-0 bottom-16 z-10 flex justify-center pointer-events-none">
-            <button 
-              onClick={handleScrollDown}
-              className="flex flex-col items-center animate-bounce pointer-events-auto"
-              aria-label="Scroll untuk lihat lebih"
-            >
-              <span className="text-xs text-gray-600 bg-custom-yellow-2/90 px-2 py-1 rounded-full shadow-sm">Geser ke bawah</span>
-              <FontAwesomeIcon icon={faChevronDown} className="text-gray-600" />
-            </button>
-          </div>
-        )}
-
-        <div className={MODAL_ACTIONS}>
-          <button className={BTN_PRIMARY} onClick={() => openGoogleMaps(info)}>
-            Buka di Google Maps
-          </button>
+        <div className="px-3 pt-3 pb-1">
+          <KajianActions info={info} openGoogleMaps={openGoogleMaps} />
         </div>
       </div>
     );
