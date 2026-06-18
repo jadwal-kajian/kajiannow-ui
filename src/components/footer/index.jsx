@@ -16,7 +16,7 @@ function Footer() {
   return (
     <footer className="flex flex-col items-center mt-auto">
       <div className="flex gap-1">
-        <div className="copyright">&copy; 2025</div>
+        <div className="copyright">&copy; {new Date().getFullYear()}</div>
         by
         <button onClick={showContributors} className='text-blue-300'>
           contributors

@@ -39,7 +39,7 @@ test.describe("Notification deep link", () => {
 
     // Flyer (SweetAlert) opens with the kajian topic.
     await expect(page.getByText("Kajian Tauhid")).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole("button", { name: "Buka di Google Maps" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Buka di Maps" })).toBeVisible();
 
     // It must STAY open past the geolocation fix (regression: it auto-closed).
     await page.waitForTimeout(1200);

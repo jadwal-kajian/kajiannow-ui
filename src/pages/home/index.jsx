@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash, faFilter, faInfoCircle, faCommentDots, faChevronLeft, faChevronRight, faBell } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faEyeSlash, faFilter, faInfoCircle, faCommentDots, faChevronLeft, faChevronRight, faBell, faSpinner, faCalendarXmark, faLocationCrosshairs } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
@@ -78,6 +78,7 @@ const locationCache = {
 
 const Home = () => {
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState();
   const [showAllInfo, setShowAllInfo] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
@@ -124,12 +125,16 @@ const Home = () => {
   }, []);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const formattedDate = convertToYYYYMMDD(selectedDate);
       const result = await GET_ALL_KAJIAN(formattedDate);
-      setData(result);
+      setData(Array.isArray(result) ? result : []);
     } catch (error) {
       console.error("Error fetching data:", error);
+      setData([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -326,6 +331,31 @@ const Home = () => {
     }
   }, [filteredData, selectedCity]);
 
+  const hasActiveFilters = !!selectedCity || selectedCategories.length > 0;
+
+  // Relative-day label for the selected date (Kemarin / Hari ini / Besok), or null.
+  const dayLabel = useMemo(() => {
+    const d = new Date(selectedDate);
+    d.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diff = Math.round((d - today) / 86400000);
+    if (diff === 0) return "Hari ini";
+    if (diff === 1) return "Besok";
+    if (diff === -1) return "Kemarin";
+    return null;
+  }, [selectedDate]);
+
+  const clearFilters = () => {
+    setSelectedCity("");
+    setSelectedCategories([]);
+    try {
+      localStorage.removeItem("filter");
+    } catch {
+      // ignore storage failures
+    }
+  };
+
   const handleSetCenter = () => {
     // Force refresh location with high accuracy when user clicks "Lokasi Saya"
     locationCache.clear();
@@ -444,22 +474,66 @@ const Home = () => {
         </button>
       </div>
 
+      {/* Result summary: how many kajian are shown for the chosen date/filters. */}
+      <div className="results-bar mb-2 flex items-center justify-center gap-2 text-sm min-h-[20px]">
+        {loading ? (
+          <span className="flex items-center gap-2 text-[#f1dcb7]">
+            <FontAwesomeIcon icon={faSpinner} spin />
+            Memuat kajian…
+          </span>
+        ) : (
+          <span className="text-[#f1dcb7]">
+            <span className="font-bold text-custom-yellow-1">{filteredData.length}</span> kajian
+            {hasActiveFilters ? " (tersaring)" : " ditampilkan"}
+            {dayLabel && <span className="text-[#f1dcb7]/70"> • {dayLabel}</span>}
+          </span>
+        )}
+      </div>
+
       {mapCenter && (
-        <KajianMap 
-          locations={filteredData} 
-          ref={mapRef} 
-          showAllInfo={showAllInfo} 
-          center={[mapCenter.lat, mapCenter.lng]} 
-          zoom={zoom}
-          userLocation={userLocation ? [userLocation.lat, userLocation.lng] : null}
-        />
+        <div className="relative">
+          <KajianMap
+            locations={filteredData}
+            ref={mapRef}
+            showAllInfo={showAllInfo}
+            center={[mapCenter.lat, mapCenter.lng]}
+            zoom={zoom}
+            userLocation={userLocation ? [userLocation.lat, userLocation.lng] : null}
+          />
+          {/* Empty state — nothing to show for this date/filter. */}
+          {!loading && filteredData.length === 0 && (
+            <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center p-4">
+              <div className="pointer-events-auto max-w-[300px] rounded-2xl bg-black/75 backdrop-blur-sm px-5 py-4 text-center shadow-[0_8px_24px_-6px_#000]">
+                <FontAwesomeIcon icon={faCalendarXmark} className="text-2xl text-custom-yellow-1" />
+                <p className="mt-2 font-semibold text-custom-yellow-1">
+                  {hasActiveFilters ? "Tidak ada kajian yang cocok" : "Belum ada kajian pada tanggal ini"}
+                </p>
+                <p className="mt-1 text-[12px] text-[#f1dcb7]/80">
+                  {hasActiveFilters
+                    ? "Coba ubah atau hapus filter Anda."
+                    : "Coba pilih tanggal lain atau periksa kembali nanti."}
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="mt-3 rounded-full bg-custom-yellow-1 px-4 py-1.5 text-[12px] font-semibold text-custom-gray-1 active:scale-95 transition-transform"
+                  >
+                    Hapus filter
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       )}
-      <div className="last-update text-sm text-center text-[#f1dcb7]">Terakhir Update: {lastUpdate}</div>
+      <div className="last-update text-sm text-center text-[#f1dcb7] mt-3">Terakhir Update: {lastUpdate}</div>
 
       <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
         <button
           onClick={showInfo}
-          className="relative w-11 h-11 text-[40px] border-none rounded-full bg-custom-gray-1 text-custom-yellow-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          title="Petunjuk penggunaan"
+          aria-label="Petunjuk penggunaan"
+          className="relative w-11 h-11 text-[40px] border-none rounded-full bg-custom-gray-1 text-custom-yellow-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faInfoCircle} />
@@ -468,7 +542,12 @@ const Home = () => {
 
         <button
           onClick={() => setShowAllInfo(!showAllInfo)}
-          className="relative w-11 h-11 text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
+          title={showAllInfo ? "Sembunyikan semua info" : "Tampilkan semua info"}
+          aria-label={showAllInfo ? "Sembunyikan semua info" : "Tampilkan semua info"}
+          aria-pressed={showAllInfo}
+          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
+            showAllInfo ? "bg-custom-gray-1 text-custom-yellow-1" : "bg-custom-yellow-1 text-custom-gray-1"
+          }`}
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             {showAllInfo ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
@@ -477,18 +556,25 @@ const Home = () => {
 
         <button
           onClick={showFilter}
-          className="relative w-11 h-11 text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
-          aria-label="Open filters"
+          title="Saring & pilih tanggal"
+          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
+            hasActiveFilters ? "bg-custom-gray-1 text-custom-yellow-1" : "bg-custom-yellow-1 text-custom-gray-1"
+          }`}
+          aria-label="Saring kajian dan pilih tanggal"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faFilter} className="text-sm" />
           </span>
+          {hasActiveFilters && (
+            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-400 ring-1 ring-black/40" />
+          )}
         </button>
 
         <button
           onClick={showReport}
-          className="relative w-11 h-11 text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000]"
-          aria-label="Report issue"
+          title="Lapor / pesan ke pengembang"
+          className="relative w-11 h-11 text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
+          aria-label="Lapor atau kirim pesan ke pengembang"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faCommentDots} className="text-sm" />
@@ -497,7 +583,8 @@ const Home = () => {
 
         <button
           onClick={showNotifySettings}
-          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] ${
+          title="Notifikasi kajian terdekat"
+          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
             notifySettings.enabled ? "bg-custom-gray-1 text-custom-yellow-1" : "bg-custom-yellow-1 text-custom-gray-1"
           }`}
           aria-label="Pengaturan notifikasi kajian terdekat"
@@ -505,13 +592,19 @@ const Home = () => {
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faBell} className="text-sm" />
           </span>
+          {notifySettings.enabled && (
+            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-400 ring-1 ring-black/40" />
+          )}
         </button>
 
         <button
           onClick={handleSetCenter}
-          className="my-3 py-2 px-6 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 font-semibold shadow-[inset_0_0_12px_-2px_#000]"
+          title="Arahkan peta ke lokasi Anda"
+          disabled={isLocating}
+          className="my-3 py-2 px-5 flex items-center gap-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 font-semibold shadow-[inset_0_0_12px_-2px_#000] active:scale-95 transition-transform disabled:opacity-70"
         >
-          Lokasi Saya
+          <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} className="text-sm" />
+          {isLocating ? "Mencari…" : "Lokasi Saya"}
         </button>
       </div>
 
