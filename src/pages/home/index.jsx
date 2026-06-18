@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
 import SwalPopup from "../../components/swalPopup/index";
-import { convertToYYYYMMDD, getDynamicCategory, ID_FormattedDate, groupTopicsByLocation } from "../../utils/helpers";
+import { convertToYYYYMMDD, ID_FormattedDate, groupTopicsByLocation } from "../../utils/helpers";
 import KajianMap from "components/kajianMap";
 import { ShowPopupInfo } from "../../components/kajianMap/ShowPopupInfo";
 import LocationErrorPopup from "../../components/swalPopup/contents/locationError";
@@ -327,7 +327,6 @@ const Home = () => {
         setMapCenter({ lat: centerLat, lng: centerLng });
         setZoom(12);
       }
-      getDynamicCategory(filteredData);
     }
   }, [filteredData, selectedCity]);
 
@@ -558,16 +557,15 @@ const Home = () => {
           onClick={showFilter}
           title="Saring & pilih tanggal"
           className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
-            hasActiveFilters ? "bg-custom-gray-1 text-custom-yellow-1" : "bg-custom-yellow-1 text-custom-gray-1"
+            hasActiveFilters
+              ? "bg-custom-gray-1 text-custom-yellow-1 outline outline-2 outline-offset-1 outline-green-400"
+              : "bg-custom-yellow-1 text-custom-gray-1"
           }`}
           aria-label="Saring kajian dan pilih tanggal"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faFilter} className="text-sm" />
           </span>
-          {hasActiveFilters && (
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-400 ring-1 ring-black/40" />
-          )}
         </button>
 
         <button
@@ -585,16 +583,15 @@ const Home = () => {
           onClick={showNotifySettings}
           title="Notifikasi kajian terdekat"
           className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
-            notifySettings.enabled ? "bg-custom-gray-1 text-custom-yellow-1" : "bg-custom-yellow-1 text-custom-gray-1"
+            notifySettings.enabled
+              ? "bg-custom-gray-1 text-custom-yellow-1 outline outline-2 outline-offset-1 outline-green-400"
+              : "bg-custom-yellow-1 text-custom-gray-1"
           }`}
           aria-label="Pengaturan notifikasi kajian terdekat"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faBell} className="text-sm" />
           </span>
-          {notifySettings.enabled && (
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-400 ring-1 ring-black/40" />
-          )}
         </button>
 
         <button

@@ -13,5 +13,19 @@ export default defineConfig({
       'routes': path.resolve(__dirname, 'src/routes'),
       'services': path.resolve(__dirname, 'src/services'),
     }
-  }
+  },
+  build: {
+    // Split big, rarely-changing vendors into their own chunks so they download
+    // in parallel and stay cached across app deploys (faster repeat visits).
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          leaflet: ['leaflet', 'react-leaflet'],
+          datetime: ['moment', 'date-fns', 'adhan'],
+          ui: ['sweetalert2', 'sweetalert2-react-content', 'react-select', 'react-datepicker'],
+        },
+      },
+    },
+  },
 });
