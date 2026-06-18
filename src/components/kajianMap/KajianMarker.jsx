@@ -5,7 +5,6 @@ import { Icon } from "leaflet";
 import { ShowPopupInfo } from "./ShowPopupInfo";
 
 import pinpoint from "assets/icons/pinpoint.png";
-import { groupTopicsByLocation } from "../../utils/helpers";
 import { getGroupStatus } from "../../utils/kajianStatus";
 import { MarkerInfo } from "./MarkerInfo";
 import { useEffect, useMemo, useRef } from "react";
@@ -27,13 +26,9 @@ const getStatusIcon = (status) => {
   return iconCache[key];
 };
 
-const KajianMarker = ({ location, locations, showAllInfo }) => {
+const KajianMarker = ({ location, group, showAllInfo }) => {
   const markerRef = useRef(null);
-  // Grouping scans the whole locations array; memoize so toggles/re-renders don't redo it per marker.
-  const group = useMemo(
-    () => groupTopicsByLocation(location.lat, location.lng, locations),
-    [location.lat, location.lng, locations]
-  );
+  // `group` (all kajian at this coordinate) is precomputed once by KajianMap.
   const markerIcon = useMemo(() => getStatusIcon(getGroupStatus(group)), [group]);
 
   useEffect(() => {
@@ -78,7 +73,7 @@ KajianMarker.propTypes = {
     notes: PropTypes.string,
   }).isRequired,
   showAllInfo: PropTypes.bool.isRequired,
-  locations: PropTypes.array.isRequired,
+  group: PropTypes.array.isRequired,
 };
 
 export default KajianMarker;
