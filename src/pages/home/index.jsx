@@ -151,9 +151,11 @@ const Home = () => {
     keep.forEach(([k, v]) => { if (v != null) localStorage.setItem(k, v); });
   }, []);
 
-  // Initial location fetch - only once on mount
+  // Initial location fetch - only once on mount. When following a notification
+  // deep link, run silently: no loading spinner and no Popup.close(), so the
+  // geolocation flow can't clobber the kajian flyer we're about to open.
   useEffect(() => {
-    getUserLocation();
+    getUserLocation(false, false, !!deepLinkRef.current);
   }, []);
 
   // Fetch data when date changes
@@ -189,7 +191,7 @@ const Home = () => {
     ShowPopupInfo({ location: item, group: groupTopicsByLocation(item.lat, item.lng, data) });
   }, [data]);
 
-  const getUserLocation = useCallback((forceRefresh = false, requestHighAccuracy = false) => {
+  const getUserLocation = useCallback((forceRefresh = false, requestHighAccuracy = false, silent = false) => {
     // Prevent duplicate requests (ref is synchronous — guards rapid double-clicks
     // that the isLocating state update would be too slow to catch).
     if (locatingRef.current) {
@@ -205,12 +207,16 @@ const Home = () => {
     locatingRef.current = true;
     setIsLocating(true);
 
-    Popup.fire({
-      html: <LocationLoadingPopup />,
-      showConfirmButton: false,
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-    });
+    // Silent mode (notification deep link) skips the spinner so it can never
+    // share — and later close — the SweetAlert singleton the flyer uses.
+    if (!silent) {
+      Popup.fire({
+        html: <LocationLoadingPopup />,
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      });
+    }
 
     // The first fix dismisses the spinner so the UI never feels stuck; any later
     // high-accuracy refinement nudges the map quietly in the background.
@@ -220,7 +226,7 @@ const Home = () => {
       dismissed = true;
       locatingRef.current = false;
       setIsLocating(false);
-      Popup.close();
+      if (!silent) Popup.close();
     };
 
     locate({
@@ -232,6 +238,15 @@ const Home = () => {
       },
       onError: (error) => {
         dismiss();
+        // Don't pop an error dialog over the deep-linked flyer; just fall back
+        // to the default center if we haven't already centered on the kajian.
+        if (silent) {
+          if (!deepLinkDoneRef.current) {
+            setMapCenter(DEFAULT_LOCATION);
+            setZoom(12);
+          }
+          return;
+        }
         handleGeolocationError(error);
       },
     });
