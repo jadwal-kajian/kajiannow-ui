@@ -28,8 +28,11 @@ const deepLink = (k) =>
 test.describe("Notification deep link", () => {
   test("opens the kajian flyer and centers the map on its location", async ({ page }) => {
     await mockApi(page, { schedule: [KAJIAN] });
+    // Geolocation resolves after the flyer is likely open: the old code's
+    // location spinner shared the SweetAlert singleton and its dismiss() closed
+    // the flyer ~100ms in. The flyer must survive that.
     await installGeoMock(page, {
-      getCurrentPosition: { type: "success", coords: USER, delay: 30 },
+      getCurrentPosition: { type: "success", coords: USER, delay: 500 },
     });
 
     await page.goto(deepLink(KAJIAN));
@@ -38,6 +41,10 @@ test.describe("Notification deep link", () => {
     await expect(page.getByText("Kajian Tauhid")).toBeVisible({ timeout: 8000 });
     await expect(page.getByRole("button", { name: "Buka di Google Maps" })).toBeVisible();
 
+    // It must STAY open past the geolocation fix (regression: it auto-closed).
+    await page.waitForTimeout(1200);
+    await expect(page.getByText("Kajian Tauhid")).toBeVisible();
+
     // Map centered on the kajian, not the (far-away) user.
     const geo = await readGeoState(page);
     expect(geo.centerLat).toBeCloseTo(KAJIAN.lat, 3);
@@ -45,6 +52,21 @@ test.describe("Notification deep link", () => {
 
     // The deep-link query is stripped so a refresh won't reopen it.
     expect(new URL(page.url()).search).toBe("");
+  });
+
+  test("flyer survives a geolocation error (no spinner/error dialog clobbers it)", async ({ page }) => {
+    await mockApi(page, { schedule: [KAJIAN] });
+    await installGeoMock(page, {
+      getCurrentPosition: { type: "error", code: 1, message: "denied", delay: 500 },
+    });
+
+    await page.goto(deepLink(KAJIAN));
+    await expect(page.getByText("Kajian Tauhid")).toBeVisible({ timeout: 8000 });
+
+    await page.waitForTimeout(1200);
+    await expect(page.getByText("Kajian Tauhid")).toBeVisible();
+    // The geolocation error dialog must NOT appear over the flyer.
+    await expect(page.getByText(/izinkan akses lokasi/i)).toHaveCount(0);
   });
 
   test("a late geolocation fix does not yank the map off the deep-linked kajian", async ({ page }) => {
