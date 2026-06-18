@@ -5,8 +5,9 @@ import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
 import SwalPopup from "../../components/swalPopup/index";
-import { convertToYYYYMMDD, getDynamicCategory, ID_FormattedDate } from "../../utils/helpers";
+import { convertToYYYYMMDD, getDynamicCategory, ID_FormattedDate, groupTopicsByLocation } from "../../utils/helpers";
 import KajianMap from "components/kajianMap";
+import { ShowPopupInfo } from "../../components/kajianMap/ShowPopupInfo";
 import LocationErrorPopup from "../../components/swalPopup/contents/locationError";
 import LocationLoadingPopup from "../../components/swalPopup/contents/locationLoading";
 import LaporPopup from "../../components/swalPopup/contents/lapor";
@@ -30,6 +31,27 @@ const readNotifySettings = () => {
     return raw ? { ...DEFAULT_NOTIFY, ...JSON.parse(raw) } : DEFAULT_NOTIFY;
   } catch {
     return DEFAULT_NOTIFY;
+  }
+};
+
+// Notification deep link: ?k=<id>&d=<YYYY-MM-DD>&lat=&lng= (emitted by the
+// nearby-kajian notification). Read once on load to open the kajian's flyer and
+// center the map on it. Returns null when no deep link is present.
+const readDeepLink = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("k");
+    if (!id) return null;
+    const lat = parseFloat(params.get("lat"));
+    const lng = parseFloat(params.get("lng"));
+    return {
+      id,
+      date: params.get("d") || null,
+      lat: Number.isFinite(lat) ? lat : null,
+      lng: Number.isFinite(lng) ? lng : null,
+    };
+  } catch {
+    return null;
   }
 };
 
@@ -60,7 +82,19 @@ const Home = () => {
   const [showAllInfo, setShowAllInfo] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  // A pending notification deep link (kajian to auto-open), captured once on mount.
+  const deepLinkRef = useRef(readDeepLink());
+  // Once the deep-linked kajian is centered, keep the map there (don't let a late
+  // geolocation fix yank it back to the user's location).
+  const deepLinkDoneRef = useRef(false);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const dl = deepLinkRef.current;
+    if (dl?.date) {
+      const parsed = new Date(`${dl.date}T00:00:00`);
+      if (!isNaN(parsed)) return parsed;
+    }
+    return new Date();
+  });
   const [showDate, setShowDate] = useState("");
   const [mapCenter, setMapCenter] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -83,6 +117,8 @@ const Home = () => {
 
   const applyLocation = useCallback((location) => {
     setUserLocation(location);
+    // Keep the map on a deep-linked kajian; only the user marker tracks location.
+    if (deepLinkDoneRef.current) return;
     setMapCenter(location);
     setZoom(12);
   }, []);
@@ -125,6 +161,33 @@ const Home = () => {
     fetchData();
     setShowDate(ID_FormattedDate(selectedDate));
   }, [selectedDate]);
+
+  // Strip the deep-link query once captured so a refresh / popup reopen won't retrigger it.
+  useEffect(() => {
+    if (deepLinkRef.current) {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  // Notification deep link: once the target kajian is loaded, center the map on it
+  // and open its flyer. Matches by id, falling back to lat/lng from the link.
+  useEffect(() => {
+    const dl = deepLinkRef.current;
+    if (!dl || !Array.isArray(data) || data.length === 0) return;
+
+    const item =
+      data.find((it) => it.id != null && String(it.id) === String(dl.id)) ||
+      (dl.lat != null && dl.lng != null
+        ? data.find((it) => it.lat === dl.lat && it.lng === dl.lng)
+        : null);
+    if (!item) return;
+
+    deepLinkRef.current = null;
+    deepLinkDoneRef.current = true;
+    setMapCenter({ lat: item.lat, lng: item.lng });
+    setZoom(16);
+    ShowPopupInfo({ location: item, group: groupTopicsByLocation(item.lat, item.lng, data) });
+  }, [data]);
 
   const getUserLocation = useCallback((forceRefresh = false, requestHighAccuracy = false) => {
     // Prevent duplicate requests (ref is synchronous — guards rapid double-clicks

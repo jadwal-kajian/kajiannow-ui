@@ -28,14 +28,14 @@ function StatusLegend() {
 }
 
 // Use userLocation prop from parent to avoid duplicate geolocation calls
-const KajianMap = forwardRef(({ locations, showAllInfo, center, userLocation }, ref) => {
+const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userLocation }, ref) => {
   const mapInstance = useRef(null);
 
   useEffect(() => {
     if (mapInstance.current) {
-      mapInstance.current.flyTo(center, 12);
+      mapInstance.current.flyTo(center, zoom);
     }
-  }, [center]);
+  }, [center, zoom]);
 
   useImperativeHandle(
     ref,
@@ -60,7 +60,7 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, userLocation }, 
         borderRadius: 12,
       }}
       center={center}
-      zoom={12}
+      zoom={zoom}
       scrollWheelZoom={true}
     >
       <TileLayer
@@ -91,6 +91,7 @@ KajianMap.propTypes = {
   ).isRequired,
   showAllInfo: PropTypes.bool,
   center: PropTypes.arrayOf(PropTypes.number).isRequired,
+  zoom: PropTypes.number,
   userLocation: PropTypes.arrayOf(PropTypes.number),
 };
 
