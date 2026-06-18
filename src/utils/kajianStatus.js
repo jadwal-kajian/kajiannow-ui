@@ -129,6 +129,15 @@ export const getStartMoment = (item) => {
 };
 
 /**
+ * Resolved end moment (moment-timezone in WIB) for a kajian, or null. Uses the
+ * explicit end time when present, otherwise a default duration after the start.
+ */
+export const getEndMoment = (item) => {
+  const start = getStartMoment(item);
+  return start ? endMoment(item, start) : null;
+};
+
+/**
  * Whole minutes from `now` until the kajian starts. Positive = starts later,
  * negative = already started, null when the start time can't be resolved.
  */

@@ -42,7 +42,6 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userL
     () => ({
       setCenter: (coords) => {
         if (mapInstance.current) {
-          console.log("Setting center to:", coords);
           mapInstance.current.setView(coords, 12);
         }
       },

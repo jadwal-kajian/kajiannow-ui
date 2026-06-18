@@ -2,13 +2,21 @@ import PropTypes from "prop-types";
 import { useEffect, useState } from "react";
 import Select from "react-select";
 
-const CityFilter = ({ cities, cityCounts = {}, setSelectedCity }) => {
+const CityFilter = ({ cities, cityCounts = {}, setSelectedCity, resetSignal = 0 }) => {
   const [chosenCity, setChosenCity] = useState("");
 
   useEffect(() => {
     const filter = JSON.parse(localStorage.getItem("filter")) || null;
     if (filter) setChosenCity(filter.city);
   }, []);
+
+  // Parent bumps resetSignal to clear back to "Semua Kota".
+  useEffect(() => {
+    if (resetSignal > 0) {
+      setChosenCity("");
+      setSelectedCity("");
+    }
+  }, [resetSignal]);
 
   const totalCount = Object.values(cityCounts).reduce((sum, n) => sum + n, 0);
 
@@ -88,6 +96,7 @@ CityFilter.propTypes = {
   cities: PropTypes.arrayOf(PropTypes.string).isRequired,
   cityCounts: PropTypes.objectOf(PropTypes.number),
   setSelectedCity: PropTypes.func.isRequired,
+  resetSignal: PropTypes.number,
 };
 
 export default CityFilter;

@@ -3,10 +3,13 @@ import Header from "components/header";
 
 const Layout = ({ children }) => {
   return (
-    <div className="flex flex-col min-h-screen p-4 text-white bg-[#000] shadow-[inset_0_0_24px_0px_#ffe7be]">
-      <Header />
-      <main className="flex-grow">{children}</main>
-      <Footer />
+    <div className="flex flex-col min-h-screen text-white bg-[#000] shadow-[inset_0_0_24px_0px_#ffe7be]">
+      {/* Mobile-first: keep the app a centered column so it doesn't stretch on wide screens. */}
+      <div className="flex flex-col flex-grow w-full max-w-2xl mx-auto p-4">
+        <Header />
+        <main className="flex-grow">{children}</main>
+        <Footer />
+      </div>
     </div>
   );
 };
