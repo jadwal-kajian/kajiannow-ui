@@ -364,6 +364,13 @@ function KajianPopup({ info, group, close }) {
     );
 
   if (group.length > 1) {
+    // Order the list so finished (passed) kajian sink to the bottom: ongoing
+    // first, then upcoming, then passed/unknown. Stable, so events that share a
+    // status keep their original (time-based) order. Sort a copy, not the prop.
+    const STATUS_RANK = { ongoing: 3, upcoming: 2, passed: 1 };
+    const orderedGroup = [...group].sort(
+      (a, b) => (STATUS_RANK[getKajianStatus(b)] || 0) - (STATUS_RANK[getKajianStatus(a)] || 0)
+    );
     return (
       <div className="relative flex flex-col text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
         {lightboxEl}
@@ -383,7 +390,7 @@ function KajianPopup({ info, group, close }) {
           ref={scrollRef}
           className="max-h-[60vh] overflow-y-auto scroll-smooth px-2"
         >
-          {group.map((info, i) => (
+          {orderedGroup.map((info, i) => (
             <div key={i} className="group-item mb-3">
               <div className="relative bg-custom-yellow-3 rounded-xl overflow-hidden shadow-[0_0_4px_-2px_#000]">
                 <div className="content flex flex-col">
