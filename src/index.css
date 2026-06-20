@@ -114,6 +114,14 @@ body {
   display: none;
 }
 
+/* Clamp text to two lines (session-card topics). */
+.kn-clamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* Pulse halo for the user-location dot. */
 @keyframes kn-pulse {
   0% {

@@ -38,12 +38,12 @@ test.describe("Notification deep link", () => {
     await page.goto(deepLink(KAJIAN));
 
     // Flyer (SweetAlert) opens with the kajian topic.
-    await expect(page.getByText("Kajian Tauhid")).toBeVisible({ timeout: 8000 });
-    await expect(page.getByRole("button", { name: "Buka di Maps" })).toBeVisible();
+    await expect(page.locator(".swal2-popup").getByText("Kajian Tauhid")).toBeVisible({ timeout: 8000 });
+    await expect(page.getByRole("button", { name: "Buka di Google Maps" })).toBeVisible();
 
     // It must STAY open past the geolocation fix (regression: it auto-closed).
     await page.waitForTimeout(1200);
-    await expect(page.getByText("Kajian Tauhid")).toBeVisible();
+    await expect(page.locator(".swal2-popup").getByText("Kajian Tauhid")).toBeVisible();
 
     // Map centered on the kajian, not the (far-away) user.
     const geo = await readGeoState(page);
@@ -61,10 +61,10 @@ test.describe("Notification deep link", () => {
     });
 
     await page.goto(deepLink(KAJIAN));
-    await expect(page.getByText("Kajian Tauhid")).toBeVisible({ timeout: 8000 });
+    await expect(page.locator(".swal2-popup").getByText("Kajian Tauhid")).toBeVisible({ timeout: 8000 });
 
     await page.waitForTimeout(1200);
-    await expect(page.getByText("Kajian Tauhid")).toBeVisible();
+    await expect(page.locator(".swal2-popup").getByText("Kajian Tauhid")).toBeVisible();
     // The geolocation error dialog must NOT appear over the flyer.
     await expect(page.getByText(/izinkan akses lokasi/i)).toHaveCount(0);
   });
@@ -77,7 +77,7 @@ test.describe("Notification deep link", () => {
     });
 
     await page.goto(deepLink(KAJIAN));
-    await expect(page.getByText("Kajian Tauhid")).toBeVisible({ timeout: 8000 });
+    await expect(page.locator(".swal2-popup").getByText("Kajian Tauhid")).toBeVisible({ timeout: 8000 });
 
     // Wait past the geolocation delay, then confirm the center stayed on the kajian.
     await page.waitForTimeout(2000);
@@ -97,7 +97,7 @@ test.describe("Notification deep link", () => {
     await page.locator(".leaflet-container").waitFor();
     await page.waitForTimeout(500);
 
-    await expect(page.getByText("Kajian Tauhid")).toHaveCount(0);
+    await expect(page.locator(".swal2-popup").getByText("Kajian Tauhid")).toHaveCount(0);
     const geo = await readGeoState(page);
     expect(geo.centerLat).toBeCloseTo(USER.latitude, 3);
   });

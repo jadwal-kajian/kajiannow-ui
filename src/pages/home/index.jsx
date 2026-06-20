@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
+import { GET_ALL_KAJIAN } from "../../services/api";
 import SwalPopup from "../../components/swalPopup/index";
 import { convertToYYYYMMDD, ID_FormattedDate, groupTopicsByLocation } from "../../utils/helpers";
 import KajianMap from "components/kajianMap";
@@ -162,7 +162,6 @@ const Home = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState();
   const [showAllInfo, setShowAllInfo] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -225,18 +224,7 @@ const Home = () => {
     }
   };
 
-  const fetchLastUpdate = async () => {
-    try {
-      const getDate = await GET_LAST_UPDATE();
-      const date = new Date(getDate.last_update.replace(" ", "T"));
-      setLastUpdate(ID_FormattedDate(date));
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
-
   useEffect(() => {
-    fetchLastUpdate();
     // Clear stale caches but keep settings that must survive reloads.
     const keep = [NOTIFY_KEY, REACTIONS_KEY, THEME_KEY].map((k) => [k, localStorage.getItem(k)]);
     localStorage.clear();
@@ -419,19 +407,6 @@ const Home = () => {
 
   const hasActiveFilters = !!selectedCity || selectedCategories.length > 0;
 
-  // Relative-day label for the selected date (Kemarin / Hari ini / Besok), or null.
-  const dayLabel = useMemo(() => {
-    const d = new Date(selectedDate);
-    d.setHours(0, 0, 0, 0);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diff = Math.round((d - today) / 86400000);
-    if (diff === 0) return "Hari ini";
-    if (diff === 1) return "Besok";
-    if (diff === -1) return "Kemarin";
-    return null;
-  }, [selectedDate]);
-
   const clearFilters = () => {
     setSelectedCity("");
     setSelectedCategories([]);
@@ -448,22 +423,6 @@ const Home = () => {
     getUserLocation(true, true); // forceRefresh=true, requestHighAccuracy=true
     setSelectedCity("");
     setSelectedCategories([]);
-  };
-
-  const showInfo = () => {
-    Popup.fire({
-      html: <SwalPopup type="petunjuk" close={() => Popup.close()} />,
-      showConfirmButton: false,
-    });
-  };
-
-  // Shift the selected date by whole days (negative = back, positive = forward).
-  const changeDay = (delta) => {
-    setSelectedDate((prev) => {
-      const next = new Date(prev);
-      next.setDate(next.getDate() + delta);
-      return next;
-    });
   };
 
   const showFilter = () => {
@@ -598,7 +557,7 @@ const Home = () => {
           </div>
 
           <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
-            <IconButton icon={faBell} onClick={showNotifySettings} label="Notifikasi" dot={notifySettings.enabled} />
+            <IconButton icon={faBell} onClick={showNotifySettings} label="Pengaturan notifikasi kajian terdekat" dot={notifySettings.enabled} />
             <IconButton
               icon={showAllInfo ? faEyeSlash : faEye}
               onClick={() => setShowAllInfo(!showAllInfo)}
@@ -619,7 +578,7 @@ const Home = () => {
           <button
             onClick={handleSetCenter}
             disabled={isLocating}
-            aria-label="Arahkan peta ke lokasi Anda"
+            aria-label="Lokasi Saya"
             className="absolute right-3 bottom-[150px] z-[1000] w-12 h-12 flex items-center justify-center rounded-2xl bg-accent text-accent-ink shadow-[0_12px_26px_-10px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
           >
             <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} />
@@ -667,7 +626,7 @@ const Home = () => {
                 </div>
               </div>
               <div className="flex gap-2">
-                <IconButton icon={faBell} onClick={showNotifySettings} label="Notifikasi" dot={notifySettings.enabled} />
+                <IconButton icon={faBell} onClick={showNotifySettings} label="Pengaturan notifikasi kajian terdekat" dot={notifySettings.enabled} />
                 <ThemeToggle />
               </div>
             </div>
@@ -699,7 +658,7 @@ const Home = () => {
           <button
             onClick={handleSetCenter}
             disabled={isLocating}
-            aria-label="Arahkan peta ke lokasi Anda"
+            aria-label="Lokasi Saya"
             className="absolute right-3 bottom-[170px] z-[1000] w-12 h-12 flex items-center justify-center rounded-2xl bg-accent text-accent-ink shadow-[0_12px_26px_-10px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
           >
             <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} />

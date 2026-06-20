@@ -30,7 +30,11 @@
   color: var(--kn-text);
   box-shadow: 0 -16px 40px -20px rgba(0, 0, 0, 0.5);
   overflow: hidden;
-  animation: kn-sheet-up 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+  // Animate ONLY while shown — a permanent animation makes SweetAlert2's close
+  // wait forever for an animationend that already fired (popup never removes).
+  &.swal2-show {
+    animation: kn-sheet-up 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
   .swal2-html-container {
     padding: 0;
     color: var(--kn-text);

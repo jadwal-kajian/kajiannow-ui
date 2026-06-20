@@ -1,30 +1,57 @@
 import React, { useState, useRef, useEffect } from "react";
+import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faClock,
   faMosque,
-  faNoteSticky,
   faUser,
   faMapLocationDot,
-  faPhone,
-  faEnvelopeCircleCheck,
   faTimes,
   faCalendar,
-  faCity,
-  faTags,
   faChevronDown,
   faThumbsUp,
   faUserCheck,
   faShareNodes,
   faCalendarPlus,
   faCheck,
+  faLocationDot,
+  faCircleInfo,
 } from "@fortawesome/free-solid-svg-icons";
 import { formatDate } from "../../../utils/helpers";
 import { formatTimeRange, getKajianStatus, getStartMoment, getEndMoment } from "../../../utils/kajianStatus";
 import { REACT } from "../../../services/api";
 import { hasReacted, setReacted, getCounts, setCounts } from "../../../utils/reactions";
-import { CloseButton } from "./modalStyles";
+import { ShowPopupInfo } from "../../kajianMap/ShowPopupInfo";
+
+// Square poster thumbnail; striped placeholder with the first tag when imageless.
+function Thumb({ info, className = "", onClick }) {
+  const cat = String(info.tags || "").split(",")[0]?.trim();
+  if (info.src_image) {
+    return (
+      <img
+        src={`${BASE_URL}/${info.src_image}`}
+        alt=""
+        onClick={onClick}
+        className={`object-cover ${onClick ? "cursor-zoom-in" : ""} ${className}`}
+      />
+    );
+  }
+  return (
+    <div
+      className={`flex items-end p-1.5 ${className}`}
+      style={{ background: "repeating-linear-gradient(135deg, var(--kn-surface-2) 0 10px, var(--kn-amber-soft) 10px 20px)" }}
+    >
+      {cat && <span className="rounded bg-surface/80 px-1.5 py-0.5 text-[9px] font-semibold text-ink-dim">{cat}</span>}
+    </div>
+  );
+}
+
+Thumb.propTypes = { info: PropTypes.object.isRequired, className: PropTypes.string, onClick: PropTypes.func };
+
+// Prayer-relative times (Ba'da Maghrib, etc.) get a "follows prayer schedule" note.
+const isPrayerRelative = (info) =>
+  /ba'?da|subuh|dzuhur|zuhur|ashar|maghrib|isya|jum'?at/i.test(`${info.time_start || ""} ${info.time || ""}`);
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -262,30 +289,33 @@ function KajianActions({ info, openGoogleMaps }) {
     }
   };
 
-  const iconBtn =
-    "w-12 shrink-0 flex items-center justify-center rounded-2xl bg-surface-2 text-accent border border-line active:scale-95 transition-transform";
+  const secBtn =
+    "flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-surface border border-line text-ink text-sm font-bold active:scale-95 transition-transform";
 
+  // Maps full-width on top, then Kalender + Bagikan side by side (per the design).
   return (
-    <div className="flex gap-2 pt-1">
+    <div className="flex flex-col gap-2.5">
       <button
-        className="flex-1 flex items-center justify-center gap-2 whitespace-nowrap py-3 px-4 rounded-2xl bg-accent text-accent-ink text-sm font-bold shadow-[0_10px_24px_-12px_rgba(13,107,110,.6)] active:scale-95 transition-transform"
+        className="w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-accent text-accent-ink text-[15px] font-bold shadow-[0_10px_24px_-12px_rgba(13,107,110,.6)] active:scale-95 transition-transform"
         onClick={() => openGoogleMaps(info)}
       >
-        <FontAwesomeIcon icon={faMapLocationDot} /> Buka di Maps
+        <FontAwesomeIcon icon={faMapLocationDot} /> Buka di Google Maps
       </button>
-      <button className={iconBtn} onClick={handleShare} title="Bagikan" aria-label="Bagikan kajian">
-        <FontAwesomeIcon icon={copied ? faCheck : faShareNodes} className={copied ? "text-green-600" : ""} />
-      </button>
-      <a
-        className={iconBtn}
-        href={buildCalendarUrl(info)}
-        target="_blank"
-        rel="noopener noreferrer"
-        title="Tambah ke Google Kalender"
-        aria-label="Tambah ke Google Kalender"
-      >
-        <FontAwesomeIcon icon={faCalendarPlus} />
-      </a>
+      <div className="flex gap-2.5">
+        <a
+          className={secBtn}
+          href={buildCalendarUrl(info)}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Tambah ke Google Kalender"
+        >
+          <FontAwesomeIcon icon={faCalendarPlus} className="text-accent" /> Kalender
+        </a>
+        <button className={secBtn} onClick={handleShare} aria-label="Bagikan kajian">
+          <FontAwesomeIcon icon={copied ? faCheck : faShareNodes} className={copied ? "text-ok" : "text-accent"} />
+          {copied ? "Tersalin" : "Bagikan"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -378,105 +408,59 @@ function KajianPopup({ info, group, close }) {
     const orderedGroup = [...group].sort(
       (a, b) => (STATUS_RANK[getKajianStatus(b)] || 0) - (STATUS_RANK[getKajianStatus(a)] || 0)
     );
+    const loc = group[0];
     return (
-      <div className="relative flex flex-col text-base py-2 bg-surface text-ink">
+      <div className="relative flex flex-col bg-surface text-ink">
         {lightboxEl}
-        {/* Header with count indicator */}
-        <div className="flex justify-between items-center px-3 pb-2">
-          <span className="text-sm font-bold text-ink">{group.length} Kajian di lokasi ini</span>
+        {/* Grab handle */}
+        <div className="flex justify-center pt-2.5 pb-1">
+          <div className="w-10 h-1.5 rounded-full bg-line" />
+        </div>
+        {/* Header: count + location */}
+        <div className="flex items-start justify-between gap-2 px-4 pb-3 border-b border-line">
+          <div className="min-w-0">
+            <div className="text-lg font-extrabold">{group.length} Kajian di lokasi ini</div>
+            <div className="flex items-center gap-1.5 mt-1 text-[13px] font-semibold text-ink-dim">
+              <FontAwesomeIcon icon={faLocationDot} className="text-accent" />
+              <span className="truncate">{[loc.loc_name, loc.city].filter(Boolean).join(" · ")}</span>
+            </div>
+          </div>
           <button
-            className="w-8 h-8 bg-surface-2 text-ink-dim hover:text-ink border border-line rounded-full flex items-center justify-center"
+            className="w-9 h-9 flex-none bg-surface-2 text-ink-dim hover:text-ink border border-line rounded-xl flex items-center justify-center"
             onClick={close}
+            aria-label="Tutup"
           >
-            <FontAwesomeIcon icon={faTimes} size="lg" />
+            <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>
 
-        {/* Scrollable content area */}
-        <div 
-          ref={scrollRef}
-          className="max-h-[60vh] overflow-y-auto scroll-smooth px-2"
-        >
+        {/* Compact session cards — tap to open the full flyer. */}
+        <div ref={scrollRef} className="max-h-[64vh] overflow-y-auto scroll-smooth px-3 py-3 flex flex-col gap-3">
           {orderedGroup.map((info, i) => (
-            <div key={i} className="group-item mb-3">
-              <div className="relative bg-surface-2 border border-line rounded-2xl overflow-hidden">
-                <div className="content flex flex-col">
-                  {info.src_image && (
-                    <img
-                      src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`}
-                      alt="poster"
-                      className="w-full object-contain max-h-[25vh] cursor-zoom-in"
-                      onClick={() => setLightboxSrc(`${import.meta.env.VITE_BASE_URL}/${info.src_image}`)}
-                    />
-                  )}
-                  <div className="description space-y-2 p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="title text-sm font-semibold flex-1">{info.topic}</div>
-                      <StatusBadge info={info} />
-                    </div>
-                    <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                      <span className="text-[13px] text-left text-ink">{info.speaker}</span>
-                    </div>
-                    <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                      <span className="text-[13px] text-left text-ink">{info.loc_name}</span>
-                    </div>
-                    <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                      <span className="text-sm text-left text-ink">{info.city}</span>
-                    </div>
-                    <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faCalendar} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                      <span className="text-[13px] text-left text-ink">{formatDate(info.date)}</span>
-                    </div>
-                    <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                      <span className="text-[13px] text-left text-ink">
-                        {formatTimeRange(info, { endFallback: "Selesai" })}
-                      </span>
-                    </div>
-                    {info.contact !== "" && info.contact !== "-" && (
-                      <div className="flex gap-3 items-center">
-                        <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                        <span className="text-[13px] text-left text-ink">{info.contact}</span>
-                      </div>
-                    )}
-                    {!isBlank(info.addr) && (
-                      <div className="flex gap-3 items-center">
-                        <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                        <span className="text-[13px] text-left text-ink leading-5">{info.addr}</span>
-                      </div>
-                    )}
-                    {info.notes !== "" && (
-                      <div className="flex gap-3 items-center">
-                        <FontAwesomeIcon icon={faNoteSticky} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                        <span className="text-[13px] text-left text-ink">{info.notes}</span>
-                      </div>
-                    )}
-                    {hasSourceInfo(info) && (
-                      <div className="flex gap-3 items-center">
-                        <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                        <SourceInfo info={info} />
-                      </div>
-                    )}
-                    {!isBlank(info.tags) && (
-                      <div className="flex gap-3 items-start">
-                        <FontAwesomeIcon icon={faTags} className="w-4 h-4 mt-0.5 text-ink-dim flex-shrink-0" />
-                        <TagChips tags={info.tags} />
-                      </div>
-                    )}
-
-                    <ReactionBar info={info} />
-
-                    <KajianActions info={info} openGoogleMaps={openGoogleMaps} />
-                  </div>
+            <button
+              key={i}
+              onClick={() => ShowPopupInfo({ location: info, group: [info] })}
+              className="flex gap-3 w-full text-left bg-surface-2 border border-line rounded-2xl p-2.5 active:scale-[.99] transition-transform"
+            >
+              <Thumb info={info} className="w-[78px] h-[78px] flex-none rounded-xl" />
+              <div className="flex-1 min-w-0 flex flex-col gap-1">
+                <StatusBadge info={info} />
+                <div className="kn-clamp2 text-[15px] font-bold leading-tight">{info.topic}</div>
+                <div className="truncate text-[12px] font-semibold text-ink-dim">{info.speaker}</div>
+                <div className="flex items-center gap-3 text-[12px] text-ink-dim mt-0.5">
+                  <span className="inline-flex items-center gap-1">
+                    <FontAwesomeIcon icon={faClock} className="text-[11px]" />
+                    {formatTimeRange(info, { endFallback: "Selesai" })}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <FontAwesomeIcon icon={faThumbsUp} className="text-[11px]" />
+                    {Number(info.likes) || 0}
+                  </span>
                 </div>
               </div>
-            </div>
+            </button>
           ))}
 
-          {/* Scroll indicator — compact sticky chevron so it barely covers content. */}
           {showScrollHint && (
             <div className="sticky bottom-1 -mt-9 z-10 flex justify-center pointer-events-none">
               <button
@@ -492,141 +476,170 @@ function KajianPopup({ info, group, close }) {
       </div>
     );
   } else {
+    const cat = String(info.tags || "").split(",")[0]?.trim();
+    const posterUrl = info.src_image ? `${BASE_URL}/${info.src_image}` : null;
     return (
-      <div className="relative flex flex-col text-base py-2 bg-surface text-ink">
+      <div className="relative flex flex-col bg-surface text-ink">
         {lightboxEl}
-        <CloseButton onClose={close} />
-        {/* A/B layout toggle — mirrors the design's two flyer variants
-            (A: poster-forward hero on top · B: compact side thumbnail). */}
-        <div className="absolute top-3 left-3 z-10 flex items-center rounded-full bg-surface-2 border border-line p-0.5 text-[11px] font-bold">
-          {["a", "b"].map((v) => (
-            <button
-              key={v}
-              onClick={() => setCardVariant(v)}
-              aria-pressed={cardVariant === v}
-              aria-label={`Tampilan ${v.toUpperCase()}`}
-              className={`px-2.5 py-1 rounded-full uppercase transition-colors ${
-                cardVariant === v ? "bg-accent text-accent-ink" : "text-ink-dim"
-              }`}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
-        <div
-          ref={scrollRef}
-          className="content max-h-[60vh] overflow-y-auto mx-2 bg-surface-2 border border-line rounded-2xl scroll-smooth"
-        >
-          {cardVariant === "a" && info.src_image && (
-            <img
-              src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`}
-              alt="poster"
-              className="rounded-t-2xl w-full object-contain max-h-[35vh] cursor-zoom-in"
-              onClick={() => setLightboxSrc(`${import.meta.env.VITE_BASE_URL}/${info.src_image}`)}
-            />
-          )}
-
-          <div className="description space-y-2 p-3">
-            {/* pr-10 keeps a long title / the status badge clear of the close (✕) button. */}
-            {cardVariant === "b" ? (
-              <div className="flex items-start gap-3 pt-7 pr-2">
-                {info.src_image && (
-                  <img
-                    src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`}
-                    alt="poster"
-                    className="w-20 h-20 flex-none rounded-xl object-cover cursor-zoom-in"
-                    onClick={() => setLightboxSrc(`${import.meta.env.VITE_BASE_URL}/${info.src_image}`)}
-                  />
-                )}
-                <div className="flex-1 min-w-0 flex flex-col items-start gap-1.5">
-                  <StatusBadge info={info} />
-                  <div className="title font-semibold text-sm md:text-base">{info.topic}</div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-start gap-1.5 px-1 pt-1 pb-1 pr-10">
-                <div className="title font-semibold text-sm md:text-base">{info.topic}</div>
-                <StatusBadge info={info} />
-              </div>
-            )}
-            <div className="flex gap-3 items-center">
-              <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-              <span className="text-sm text-left text-ink">{info.speaker}</span>
-            </div>
-            <div className="flex gap-3 items-center">
-              <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-              <span className="text-sm text-left text-ink">{info.loc_name}</span>
-            </div>
-            {info.city && (
-              <div className="flex gap-3 items-center">
-                <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                <span className="text-sm text-left text-ink">{info.city}</span>
-              </div>
-            )}
-            <div className="flex gap-3 items-center">
-              <FontAwesomeIcon icon={faCalendar} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-              <span className="text-[13px] text-left text-ink">{formatDate(info.date)}</span>
-            </div>
-            <div className="flex gap-3 items-center">
-              <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-              <span className="text-sm text-left text-ink">
-                {formatTimeRange(info, { endFallback: "Selesai" })}
-              </span>
-            </div>
-            {info.contact !== "" && info.contact !== "-" && (
-              <div className="flex gap-3 items-center">
-                <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                <span className="text-sm text-left text-ink">{info.contact}</span>
-              </div>
-            )}
-            {!isBlank(info.addr) && (
-              <div className="flex gap-3 items-center">
-                <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                <span className="text-sm text-left text-ink">{info.addr}</span>
-              </div>
-            )}
-            {info.notes !== "" && (
-              <div className="flex gap-3 items-center">
-                <FontAwesomeIcon icon={faNoteSticky} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                <span className="text-sm text-left text-ink">{info.notes}</span>
-              </div>
-            )}
-            {hasSourceInfo(info) && (
-              <div className="flex gap-3 items-center">
-                <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-ink-dim flex-shrink-0" />
-                <SourceInfo info={info} />
-              </div>
-            )}
-            {!isBlank(info.tags) && (
-              <div className="flex gap-3 items-start">
-                <FontAwesomeIcon icon={faTags} className="w-4 h-4 mt-0.5 text-ink-dim flex-shrink-0" />
-                <TagChips tags={info.tags} />
-              </div>
-            )}
-
-            <ReactionBar info={info} />
-
-            {/* Scroll indicator — compact sticky chevron. */}
-            {showScrollHint && (
-              <div className="sticky bottom-1 -mt-7 z-10 flex justify-center pointer-events-none">
-                <button
-                  onClick={handleScrollDown}
-                  className="w-8 h-8 flex items-center justify-center text-ink bg-surface-2 border border-line rounded-full shadow-md animate-bounce pointer-events-auto"
-                  aria-label="Geser ke bawah untuk lihat lebih"
-                >
-                  <FontAwesomeIcon icon={faChevronDown} />
-                </button>
-              </div>
-            )}
+        {/* Sticky header: close · title · A/B toggle */}
+        <div className="flex items-center justify-between gap-2 px-3 py-2.5 border-b border-line">
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Tutup"
+            className="w-9 h-9 flex-none rounded-xl bg-surface-2 border border-line text-ink flex items-center justify-center"
+          >
+            <FontAwesomeIcon icon={faTimes} />
+          </button>
+          <span className="font-bold">Detail Kajian</span>
+          <div className="flex items-center rounded-full bg-surface-2 border border-line p-0.5 text-[11px] font-bold">
+            {["a", "b"].map((v) => (
+              <button
+                key={v}
+                onClick={() => setCardVariant(v)}
+                aria-label={`Tampilan ${v.toUpperCase()}`}
+                className={`px-2.5 py-1 rounded-full uppercase transition-colors ${
+                  cardVariant === v ? "bg-accent text-accent-ink" : "text-ink-dim"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="px-3 pt-3 pb-1">
+        {/* Scrollable body */}
+        <div ref={scrollRef} className="overflow-y-auto px-4 py-4 scroll-smooth" style={{ maxHeight: "calc(92vh - 168px)" }}>
+          {/* Hero — variant A: poster-forward; variant B: compact card */}
+          {cardVariant === "a" ? (
+            posterUrl ? (
+              <div className="relative rounded-2xl overflow-hidden mb-4 aspect-[4/5]">
+                <img
+                  src={posterUrl}
+                  alt="poster"
+                  className="absolute inset-0 w-full h-full object-cover cursor-zoom-in"
+                  onClick={() => setLightboxSrc(posterUrl)}
+                />
+                <div className="absolute top-3 left-3">
+                  <StatusBadge info={info} />
+                </div>
+                {cat && (
+                  <div className="absolute top-3 right-3">
+                    <span className="rounded-lg bg-surface/80 px-2 py-1 text-[10px] font-mono text-ink-dim">poster · {cat}</span>
+                  </div>
+                )}
+                <div
+                  className="absolute inset-x-0 bottom-0 p-4 pt-12"
+                  style={{ background: "linear-gradient(to top, rgba(20,12,4,.62), rgba(20,12,4,0))" }}
+                >
+                  <div className="text-[22px] font-extrabold leading-tight text-white">{info.topic}</div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-surface-2 border border-line p-5 mb-4">
+                <StatusBadge info={info} />
+                {cat && <div className="mt-2 text-[10px] font-mono text-ink-dim">tanpa poster · {cat}</div>}
+                <div className="mt-1 text-[22px] font-extrabold leading-tight">{info.topic}</div>
+              </div>
+            )
+          ) : (
+            <div className="flex gap-3 bg-surface-2 border border-line rounded-2xl p-3 mb-4">
+              <Thumb
+                info={info}
+                onClick={posterUrl ? () => setLightboxSrc(posterUrl) : undefined}
+                className="w-24 h-24 flex-none rounded-xl"
+              />
+              <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+                <StatusBadge info={info} />
+                <div className="text-lg font-extrabold leading-tight">{info.topic}</div>
+                {cat && <div className="text-[13px] font-semibold text-ink-dim">{cat}</div>}
+              </div>
+            </div>
+          )}
+
+          {/* Pemateri */}
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-11 h-11 flex-none rounded-full bg-amber-soft text-amber flex items-center justify-center">
+              <FontAwesomeIcon icon={faUser} />
+            </span>
+            <div className="min-w-0">
+              <div className="text-[11px] font-bold uppercase tracking-wide text-ink-dim">Pemateri</div>
+              <div className="text-base font-bold truncate">{info.speaker}</div>
+            </div>
+          </div>
+
+          {/* Grouped info card */}
+          <div className="rounded-2xl bg-surface-2 border border-line overflow-hidden mb-4">
+            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-line">
+              <FontAwesomeIcon icon={faMosque} className="w-5 text-accent flex-none" />
+              <div className="min-w-0">
+                <div className="font-bold leading-tight">{info.loc_name}</div>
+                {!isBlank(info.addr) && <div className="text-[13px] text-ink-dim leading-tight mt-0.5">{info.addr}{info.city ? `, ${info.city}` : ""}</div>}
+              </div>
+            </div>
+            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-line">
+              <FontAwesomeIcon icon={faCalendar} className="w-5 text-accent flex-none" />
+              <div className="font-bold">{formatDate(info.date)}</div>
+            </div>
+            <div className="flex items-center gap-3 px-4 py-3.5">
+              <FontAwesomeIcon icon={faClock} className="w-5 text-accent flex-none" />
+              <div className="min-w-0">
+                <div className="font-bold">{formatTimeRange(info, { endFallback: "Selesai" })}</div>
+                {isPrayerRelative(info) && (
+                  <div className="text-[12px] font-bold text-amber mt-0.5">Waktu mengikuti jadwal shalat</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Catatan */}
+          {!isBlank(info.notes) && (
+            <>
+              <div className="text-[13px] font-extrabold mb-1.5">Catatan</div>
+              <div className="text-[14px] leading-relaxed text-ink-dim mb-4">{info.notes}</div>
+            </>
+          )}
+
+          {/* Tags */}
+          {!isBlank(info.tags) && (
+            <div className="mb-4">
+              <TagChips tags={info.tags} />
+            </div>
+          )}
+
+          {/* Contact + source */}
+          {(info.contact !== "" && info.contact !== "-") || hasSourceInfo(info) ? (
+            <div className="flex items-start gap-2 text-[12px] text-ink-dim mb-4">
+              <FontAwesomeIcon icon={faCircleInfo} className="mt-0.5 flex-none" />
+              <div className="min-w-0 space-y-0.5">
+                {hasSourceInfo(info) && <div>Sumber: <SourceInfo info={info} /></div>}
+                {info.contact !== "" && info.contact !== "-" && <div>Kontak {info.contact}</div>}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Reactions */}
+          <ReactionBar info={info} />
+        </div>
+
+        {/* Sticky footer actions */}
+        <div className="border-t border-line bg-surface px-4 pt-3 pb-4 shadow-[0_-14px_24px_-18px_rgba(60,40,10,.5)]">
           <KajianActions info={info} openGoogleMaps={openGoogleMaps} />
         </div>
       </div>
     );
   }
 }
+
+ReactionBar.propTypes = { info: PropTypes.object };
+SourceInfo.propTypes = { info: PropTypes.object };
+StatusBadge.propTypes = { info: PropTypes.object };
+TagChips.propTypes = { tags: PropTypes.string };
+KajianActions.propTypes = { info: PropTypes.object, openGoogleMaps: PropTypes.func };
+KajianPopup.propTypes = {
+  info: PropTypes.object,
+  group: PropTypes.array,
+  close: PropTypes.func,
+};
 
 export default KajianPopup;

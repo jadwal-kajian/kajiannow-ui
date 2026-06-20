@@ -29,7 +29,7 @@ const openKajian = async (page) => {
   await installGeoMock(page, { getCurrentPosition: { type: "success", coords: USER, delay: 20 } });
   await page.goto("/");
   await page.locator(".leaflet-marker-icon.kajian-pin").first().click();
-  await expect(page.getByText("Kajian Reaksi")).toBeVisible();
+  await expect(page.locator(".swal2-popup").getByText("Kajian Reaksi")).toBeVisible();
 };
 
 test.describe("Kajian reactions", () => {
@@ -61,9 +61,9 @@ test.describe("Kajian reactions", () => {
 
     // Close, then reopen the same kajian (no page reload, schedule not refetched).
     await page.getByRole("button", { name: "Tutup" }).click();
-    await expect(page.getByText("Kajian Reaksi")).toBeHidden();
+    await expect(page.locator(".swal2-popup").getByText("Kajian Reaksi")).toBeHidden();
     await page.locator(".leaflet-marker-icon.kajian-pin").first().click();
-    await expect(page.getByText("Kajian Reaksi")).toBeVisible();
+    await expect(page.locator(".swal2-popup").getByText("Kajian Reaksi")).toBeVisible();
 
     // Count stays at 3 instead of resetting to the page-load value of 2.
     await expect(page.getByRole("button", { name: /Suka/ })).toContainText("3");

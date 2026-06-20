@@ -227,7 +227,7 @@ test.describe("Geolocation — edge details", () => {
     // clicks). This exercises the synchronous locatingRef guard directly.
     await page.evaluate(() => {
       const btn = [...document.querySelectorAll("button")].find(
-        (b) => b.textContent.trim() === "Lokasi Saya"
+        (b) => b.getAttribute("aria-label") === "Lokasi Saya"
       );
       btn.click();
       btn.click();
