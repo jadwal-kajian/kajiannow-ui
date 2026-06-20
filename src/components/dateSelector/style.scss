@@ -1,31 +1,31 @@
 /* Custom styles for the datepicker popup */
 .custom-datepicker-popup {
-  background-color: #f1dcb7;
+  background-color: var(--kn-surface-2);
   border-radius: 16px;
-  border-color: #b7a484;
+  border-color: var(--kn-border);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   padding: 10px;
 }
 
 /* Custom header styles */
 .custom-datepicker-popup .react-datepicker__header {
-  background-color: #f1dcb7;
-  color: #7a5530;
+  background-color: var(--kn-surface-2);
+  color: var(--kn-text);
   padding: 10px 15px;
   border-radius: 6px 6px 0 0;
-  border-color: #7a5530;
+  border-color: var(--kn-border);
   text-align: center;
   font-weight: bold;
   .react-datepicker__current-month,
   .react-datepicker__day-name {
-    color: #7a5530;
+    color: var(--kn-text);
   }
 }
 
 /* Navigation buttons in the header (previous/next month arrows) */
 .custom-datepicker-popup .react-datepicker__navigation {
-  background-color: #7a5530;
-  color: white;
+  background-color: var(--kn-accent);
+  color: var(--kn-accent-ink);
   border-radius: 50%;
 }
 
@@ -53,33 +53,33 @@
 .react-datepicker__month-read-view--down-arrow,
 .react-datepicker__month-year-read-view--down-arrow,
 .react-datepicker__navigation-icon::before {
-  border-color: #f1dcb7;
+  border-color: var(--kn-surface-2);
 }
 
 /* Custom styling for the days */
 .custom-datepicker-popup .react-datepicker__day {
-  color: #7a5530;
+  color: var(--kn-text);
   font-size: 14px;
 }
 
 .custom-datepicker-popup .react-datepicker__day:hover {
-  background-color: #b7a484;
-  color: #fff;
+  background-color: var(--kn-surface);
+  color: var(--kn-text);
 }
 
 /* Style the selected day */
 .custom-datepicker-popup .react-datepicker__day--selected {
-  background-color: #7a5530;
-  color: #fff;
+  background-color: var(--kn-accent);
+  color: var(--kn-accent-ink);
 }
 
 /* Style the month/year picker */
 .custom-datepicker-popup .react-datepicker__current-month {
-  color: #fff;
+  color: var(--kn-text);
   font-weight: bold;
 }
 
 .react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle {
-  fill: #f1dcb7;
-  color: #f1dcb7;
+  fill: var(--kn-surface-2);
+  color: var(--kn-surface-2);
 }

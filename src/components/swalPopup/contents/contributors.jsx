@@ -23,7 +23,7 @@ function ContributorsPopup({ close }) {
                 href={contributor.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-2xl bg-white/45 py-2.5 px-4 text-center font-semibold text-[#7a5530] active:scale-95 transition-transform"
+                className="block rounded-2xl bg-surface-2 py-2.5 px-4 text-center font-semibold text-accent active:scale-95 transition-transform"
               >
                 {contributor.name}
               </a>

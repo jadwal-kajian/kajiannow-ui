@@ -34,7 +34,7 @@ function Toggle({ checked, disabled, onChange }) {
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative w-12 h-7 rounded-full shrink-0 transition-colors duration-200 disabled:opacity-40 ${
-        checked ? "bg-[#7a5530]" : "bg-black/20"
+        checked ? "bg-accent" : "bg-surface-2 border border-line"
       }`}
     >
       <span
@@ -50,13 +50,13 @@ function Toggle({ checked, disabled, onChange }) {
 function Stepper({ value, onChange, min, step, unit, disabled }) {
   const v = Number(value) || 0;
   const btn =
-    "w-8 h-8 flex items-center justify-center text-lg font-semibold text-[#7a5530] disabled:opacity-30 active:scale-90 transition-transform";
+    "w-8 h-8 flex items-center justify-center text-lg font-semibold text-accent disabled:opacity-30 active:scale-90 transition-transform";
   return (
-    <div className="flex items-center rounded-full bg-white/80 border border-[#d8c4a0] overflow-hidden shrink-0">
+    <div className="flex items-center rounded-full bg-surface border border-line overflow-hidden shrink-0">
       <button type="button" className={btn} disabled={disabled || v <= min}
         onClick={() => onChange(Math.max(min, v - step))} aria-label="Kurangi">−</button>
-      <span className="px-1 min-w-[64px] text-center text-sm font-semibold tabular-nums text-gray-800">
-        {v}<span className="text-[11px] text-gray-500"> {unit}</span>
+      <span className="px-1 min-w-[64px] text-center text-sm font-semibold tabular-nums text-ink">
+        {v}<span className="text-[11px] text-ink-dim"> {unit}</span>
       </span>
       <button type="button" className={btn} disabled={disabled}
         onClick={() => onChange(v + step)} aria-label="Tambah">+</button>
@@ -185,17 +185,17 @@ const NotifySettingsPopup = ({ settings, onSave, close, userLocation, push = {} 
         )}
 
         {/* Collapsible troubleshooting */}
-        <div className="rounded-2xl bg-white/30 overflow-hidden">
+        <div className="rounded-2xl bg-surface-2 overflow-hidden">
           <button
             type="button"
             onClick={() => setShowHelp((v) => !v)}
-            className="w-full flex items-center justify-between gap-2 p-3 text-left text-[12px] font-semibold text-gray-700"
+            className="w-full flex items-center justify-between gap-2 p-3 text-left text-[12px] font-semibold text-ink"
           >
             <span>Notifikasi tidak muncul?</span>
             <FontAwesomeIcon icon={faChevronDown} className={`transition-transform ${showHelp ? "rotate-180" : ""}`} />
           </button>
           {showHelp && (
-            <div className="px-3 pb-3 text-[12px] text-gray-700 text-left space-y-1.5">
+            <div className="px-3 pb-3 text-[12px] text-ink text-left space-y-1.5">
               <p>Izin di browser sudah benar, tetapi sistem Anda mungkin memblokirnya. Pastikan notifikasi untuk browser diizinkan, lalu matikan mode <span className="font-semibold">Jangan Ganggu / Fokus</span>:</p>
               <ul className="list-disc pl-4 space-y-0.5">
                 <li><span className="font-semibold">Windows:</span> Pengaturan → Sistem → Notifikasi → aktifkan untuk browser; matikan Focus Assist.</li>

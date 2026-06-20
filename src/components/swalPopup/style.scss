@@ -1,9 +1,14 @@
 .swal2-popup {
   padding: 0;
-  border-radius: 16px;
-  box-shadow: 0 0 24px -4px #000;
+  border-radius: 24px;
+  // Match the design tokens so the popup chrome follows the active theme
+  // (no white sliver behind dark-mode content).
+  background: var(--kn-surface);
+  color: var(--kn-text);
+  box-shadow: 0 24px 60px -24px rgba(20, 14, 6, 0.6);
   overflow: hidden;
   .swal2-html-container {
     padding: 0;
+    color: var(--kn-text);
   }
 }

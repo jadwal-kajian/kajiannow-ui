@@ -23,18 +23,18 @@ class ErrorBoundary extends Component {
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 text-center">
-        <div className="max-w-sm w-full rounded-2xl bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000] p-6 flex flex-col items-center gap-3">
-          <span className="w-12 h-12 rounded-full bg-[#7a5530] text-[#f1dcb7] flex items-center justify-center text-2xl shadow-[0_4px_10px_-4px_#000]">
+      <div className="min-h-screen flex items-center justify-center p-6 text-center bg-bg text-ink">
+        <div className="max-w-sm w-full rounded-2xl bg-surface border border-line shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)] p-6 flex flex-col items-center gap-3">
+          <span className="w-12 h-12 rounded-2xl bg-accent text-accent-ink flex items-center justify-center text-2xl">
             !
           </span>
-          <h2 className="font-bold text-lg text-gray-800">Terjadi kesalahan</h2>
-          <p className="text-[13px] text-gray-600 leading-snug">
+          <h2 className="font-bold text-lg text-ink">Terjadi kesalahan</h2>
+          <p className="text-[13px] text-ink-dim leading-snug">
             Maaf, terjadi gangguan saat memuat halaman. Silakan muat ulang.
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-1 py-2.5 px-8 rounded-full bg-[#7a5530] text-[#f1dcb7] text-sm font-semibold shadow-[0_4px_10px_-4px_#000] active:scale-95 transition-transform"
+            className="mt-1 py-2.5 px-8 rounded-2xl bg-accent text-accent-ink text-sm font-bold shadow-[0_10px_24px_-12px_rgba(13,107,110,.6)] active:scale-95 transition-transform"
           >
             Muat Ulang
           </button>

@@ -16,6 +16,7 @@ import { useGeolocation, isInAppBrowser } from "../../hooks/useGeolocation";
 import { useNearbyKajianNotifications } from "../../hooks/useNearbyKajianNotifications";
 import { usePushSubscription } from "../../hooks/usePushSubscription";
 import { REACTIONS_KEY } from "../../utils/reactions";
+import { THEME_KEY } from "../../theme";
 
 const Popup = withReactContent(Swal);
 
@@ -151,7 +152,7 @@ const Home = () => {
   useEffect(() => {
     fetchLastUpdate();
     // Clear stale caches but keep settings that must survive reloads.
-    const keep = [NOTIFY_KEY, REACTIONS_KEY].map((k) => [k, localStorage.getItem(k)]);
+    const keep = [NOTIFY_KEY, REACTIONS_KEY, THEME_KEY].map((k) => [k, localStorage.getItem(k)]);
     localStorage.clear();
     keep.forEach(([k, v]) => { if (v != null) localStorage.setItem(k, v); });
   }, []);
@@ -453,21 +454,21 @@ const Home = () => {
         <button
           onClick={() => changeDay(-1)}
           aria-label="Hari sebelumnya"
-          className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-full bg-custom-yellow-1 text-custom-gray-1 shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
+          className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform"
         >
           <FontAwesomeIcon icon={faChevronLeft} />
         </button>
         <button
           onClick={showFilter}
           aria-label="Pilih tanggal"
-          className="min-w-0 flex-shrink px-4 h-11 flex items-center rounded-full bg-white/5 ring-1 ring-custom-yellow-1/40 text-custom-yellow-1 font-semibold text-sm md:text-base whitespace-nowrap truncate active:scale-95 transition-transform"
+          className="min-w-0 flex-shrink px-4 h-11 flex items-center rounded-2xl bg-surface border border-line text-accent font-bold text-sm md:text-base whitespace-nowrap truncate shadow-[0_8px_18px_-12px_rgba(60,40,10,.5)] active:scale-95 transition-transform"
         >
           {showDate}
         </button>
         <button
           onClick={() => changeDay(1)}
           aria-label="Hari berikutnya"
-          className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-full bg-custom-yellow-1 text-custom-gray-1 shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
+          className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform"
         >
           <FontAwesomeIcon icon={faChevronRight} />
         </button>
@@ -476,15 +477,15 @@ const Home = () => {
       {/* Result summary: how many kajian are shown for the chosen date/filters. */}
       <div className="results-bar mb-2 flex items-center justify-center gap-2 text-sm min-h-[20px]">
         {loading ? (
-          <span className="flex items-center gap-2 text-[#f1dcb7]">
+          <span className="flex items-center gap-2 text-ink-dim">
             <FontAwesomeIcon icon={faSpinner} spin />
             Memuat kajian…
           </span>
         ) : (
-          <span className="text-[#f1dcb7]">
-            <span className="font-bold text-custom-yellow-1">{filteredData.length}</span> kajian
+          <span className="text-ink-dim">
+            <span className="font-bold text-accent">{filteredData.length}</span> kajian
             {hasActiveFilters ? " (tersaring)" : " ditampilkan"}
-            {dayLabel && <span className="text-[#f1dcb7]/70"> • {dayLabel}</span>}
+            {dayLabel && <span className="text-ink-dim/70"> • {dayLabel}</span>}
           </span>
         )}
       </div>
@@ -502,12 +503,12 @@ const Home = () => {
           {/* Empty state — nothing to show for this date/filter. */}
           {!loading && filteredData.length === 0 && (
             <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center p-4">
-              <div className="pointer-events-auto max-w-[300px] rounded-2xl bg-black/75 backdrop-blur-sm px-5 py-4 text-center shadow-[0_8px_24px_-6px_#000]">
-                <FontAwesomeIcon icon={faCalendarXmark} className="text-2xl text-custom-yellow-1" />
-                <p className="mt-2 font-semibold text-custom-yellow-1">
+              <div className="pointer-events-auto max-w-[300px] rounded-2xl bg-surface border border-line px-5 py-4 text-center shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)]">
+                <FontAwesomeIcon icon={faCalendarXmark} className="text-2xl text-accent" />
+                <p className="mt-2 font-bold text-ink">
                   {hasActiveFilters ? "Tidak ada kajian yang cocok" : "Belum ada kajian pada tanggal ini"}
                 </p>
-                <p className="mt-1 text-[12px] text-[#f1dcb7]/80">
+                <p className="mt-1 text-[12px] text-ink-dim">
                   {hasActiveFilters
                     ? "Coba ubah atau hapus filter Anda."
                     : "Coba pilih tanggal lain atau periksa kembali nanti."}
@@ -515,7 +516,7 @@ const Home = () => {
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="mt-3 rounded-full bg-custom-yellow-1 px-4 py-1.5 text-[12px] font-semibold text-custom-gray-1 active:scale-95 transition-transform"
+                    className="mt-3 rounded-full bg-accent px-4 py-1.5 text-[12px] font-bold text-accent-ink active:scale-95 transition-transform"
                   >
                     Hapus filter
                   </button>
@@ -525,14 +526,14 @@ const Home = () => {
           )}
         </div>
       )}
-      <div className="last-update text-sm text-center text-[#f1dcb7] mt-3">Terakhir Update: {lastUpdate}</div>
+      <div className="last-update text-sm text-center text-ink-dim mt-3">Terakhir Update: {lastUpdate}</div>
 
       <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
         <button
           onClick={showInfo}
           title="Petunjuk penggunaan"
           aria-label="Petunjuk penggunaan"
-          className="relative w-11 h-11 text-[40px] border-none rounded-full bg-custom-gray-1 text-custom-yellow-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
+          className="relative w-11 h-11 text-[40px] rounded-full bg-accent text-accent-ink cursor-pointer overflow-hidden shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <FontAwesomeIcon icon={faInfoCircle} />
@@ -544,8 +545,8 @@ const Home = () => {
           title={showAllInfo ? "Sembunyikan semua info" : "Tampilkan semua info"}
           aria-label={showAllInfo ? "Sembunyikan semua info" : "Tampilkan semua info"}
           aria-pressed={showAllInfo}
-          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
-            showAllInfo ? "bg-custom-gray-1 text-custom-yellow-1" : "bg-custom-yellow-1 text-custom-gray-1"
+          className={`relative w-11 h-11 text-lg p-2 rounded-full cursor-pointer overflow-hidden shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform ${
+            showAllInfo ? "bg-accent text-accent-ink" : "bg-surface border border-line text-ink"
           }`}
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -556,10 +557,10 @@ const Home = () => {
         <button
           onClick={showFilter}
           title="Saring & pilih tanggal"
-          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
+          className={`relative w-11 h-11 text-lg p-2 rounded-full cursor-pointer overflow-hidden shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform ${
             hasActiveFilters
-              ? "bg-custom-gray-1 text-custom-yellow-1 outline outline-2 outline-offset-1 outline-green-400"
-              : "bg-custom-yellow-1 text-custom-gray-1"
+              ? "bg-accent text-accent-ink ring-2 ring-offset-1 ring-ok"
+              : "bg-surface border border-line text-ink"
           }`}
           aria-label="Saring kajian dan pilih tanggal"
         >
@@ -571,7 +572,7 @@ const Home = () => {
         <button
           onClick={showReport}
           title="Lapor / pesan ke pengembang"
-          className="relative w-11 h-11 text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
+          className="relative w-11 h-11 text-lg p-2 rounded-full bg-surface border border-line text-ink cursor-pointer overflow-hidden shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform"
           aria-label="Lapor atau kirim pesan ke pengembang"
         >
           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -582,10 +583,10 @@ const Home = () => {
         <button
           onClick={showNotifySettings}
           title="Notifikasi kajian terdekat"
-          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
+          className={`relative w-11 h-11 text-lg p-2 rounded-full cursor-pointer overflow-hidden shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform ${
             notifySettings.enabled
-              ? "bg-custom-gray-1 text-custom-yellow-1 outline outline-2 outline-offset-1 outline-green-400"
-              : "bg-custom-yellow-1 text-custom-gray-1"
+              ? "bg-accent text-accent-ink ring-2 ring-offset-1 ring-ok"
+              : "bg-surface border border-line text-ink"
           }`}
           aria-label="Pengaturan notifikasi kajian terdekat"
         >
@@ -598,7 +599,7 @@ const Home = () => {
           onClick={handleSetCenter}
           title="Arahkan peta ke lokasi Anda"
           disabled={isLocating}
-          className="my-3 py-2 px-5 flex items-center gap-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 font-semibold shadow-[inset_0_0_12px_-2px_#000] active:scale-95 transition-transform disabled:opacity-70"
+          className="my-3 py-2.5 px-5 flex items-center gap-2 rounded-2xl bg-accent text-accent-ink font-bold shadow-[0_10px_24px_-12px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
         >
           <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} className="text-sm" />
           {isLocating ? "Mencari…" : "Lokasi Saya"}

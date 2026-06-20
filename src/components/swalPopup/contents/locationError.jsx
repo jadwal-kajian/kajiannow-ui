@@ -8,7 +8,7 @@ function LocationErrorPopup({ message, onRetry, onClose }) {
       <CloseButton onClose={onClose} />
       <ModalHeader icon={faLocationDot} title="Gagal mendapatkan lokasi" danger />
       <div className={MODAL_CONTENT}>
-        <p className="text-center text-gray-700">{message}</p>
+        <p className="text-center text-ink">{message}</p>
       </div>
       <div className={MODAL_ACTIONS}>
         <button className={BTN_PRIMARY} onClick={onRetry}>

@@ -40,13 +40,14 @@ const CityFilter = ({ cities, cityCounts = {}, setSelectedCity, resetSignal = 0 
       paddingLeft: 8,
       borderRadius: 12,
       border: "none",
-      boxShadow: "0 0 8px -2px #b7a484",
-      backgroundColor: "#f1dcb7",
+      boxShadow: "0 0 0 1px var(--kn-border)",
+      backgroundColor: "var(--kn-surface-2)",
+      color: "var(--kn-text)",
       cursor: "pointer",
     }),
     singleValue: (provided) => ({
       ...provided,
-      color: "#7a5530",
+      color: "var(--kn-accent)",
       fontWeight: 600,
     }),
     menu: (provided) => ({
@@ -54,16 +55,20 @@ const CityFilter = ({ cities, cityCounts = {}, setSelectedCity, resetSignal = 0 
       borderRadius: 12,
       border: "none",
       boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-      backgroundColor: "#f1dcb7",
+      backgroundColor: "var(--kn-surface-2)",
     }),
     option: (provided, state) => ({
       ...provided,
       borderRadius: "0.5rem",
-      backgroundColor: state.isSelected ? "#f0c68f" : state.isFocused ? "#f0c68f" : "#f1dcb7",
-      color: "#7a5530",
+      backgroundColor: state.isSelected
+        ? "var(--kn-accent)"
+        : state.isFocused
+          ? "var(--kn-surface)"
+          : "var(--kn-surface-2)",
+      color: state.isSelected ? "var(--kn-accent-ink)" : "var(--kn-text)",
       cursor: "pointer",
       "&:hover": {
-        backgroundColor: "#f0c68f",
+        backgroundColor: "var(--kn-surface)",
       },
     }),
   };
@@ -71,9 +76,9 @@ const CityFilter = ({ cities, cityCounts = {}, setSelectedCity, resetSignal = 0 
   return (
     <div className="city-area my-3 mb-6">
       <div className="flex items-center gap-4 my-2">
-        <div className="flex-grow border-t border-custom-yellow-4"></div>
-        <div className="label text-sm text-[#917951]">Pilih Kota</div>
-        <div className="flex-grow border-t border-custom-yellow-4"></div>
+        <div className="flex-grow border-t border-line"></div>
+        <div className="label text-sm text-ink-dim">Pilih Kota</div>
+        <div className="flex-grow border-t border-line"></div>
       </div>
       <Select
         name="city"

@@ -79,17 +79,22 @@ function ReactionBar({ info }) {
     }
   };
 
-  const pill = (active) =>
-    `flex-1 flex items-center justify-center gap-2 py-2 rounded-full text-[13px] font-semibold transition-transform active:scale-95 disabled:opacity-70 ${
-      active ? "bg-[#7a5530] text-[#f1dcb7]" : "bg-white/70 text-gray-700 border border-[#d8c4a0]"
+  // Shared pill; `tone` colors the active state — "ok" (green) for Suka, accent (teal) for Akan Hadir.
+  const pill = (active, tone) =>
+    `flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[13px] font-bold transition-transform active:scale-95 disabled:opacity-70 ${
+      active
+        ? tone === "ok"
+          ? "bg-ok-bg text-ok border border-ok"
+          : "bg-accent text-accent-ink border border-accent"
+        : "bg-surface-2 text-ink border border-line"
     }`;
 
   return (
     <div className="flex gap-2 pt-1">
-      <button className={pill(liked)} onClick={() => toggle("like")} disabled={busy} aria-pressed={liked}>
+      <button className={pill(liked, "ok")} onClick={() => toggle("like")} disabled={busy} aria-pressed={liked}>
         <FontAwesomeIcon icon={faThumbsUp} /> Suka <span className="tabular-nums">{likes}</span>
       </button>
-      <button className={pill(attending)} onClick={() => toggle("going")} disabled={busy} aria-pressed={attending}>
+      <button className={pill(attending, "accent")} onClick={() => toggle("going")} disabled={busy} aria-pressed={attending}>
         <FontAwesomeIcon icon={faUserCheck} /> Akan Hadir <span className="tabular-nums">{going}</span>
       </button>
     </div>
@@ -157,7 +162,7 @@ function SourceInfo({ info }) {
   if (links.length === 0 && !credit) return null;
 
   return (
-    <span className="text-sm text-left text-gray-800">
+    <span className="text-sm text-left text-ink">
       {links.map((link, i) => (
         <React.Fragment key={link.key}>
           {i > 0 && <span className="mx-1">·</span>}
@@ -169,11 +174,11 @@ function SourceInfo({ info }) {
   );
 }
 
-// Colored status pill mirroring the map pin colors.
+// Soft-tinted status pill (label + colored dot), keyed to the design's status palette.
 const STATUS_META = {
-  ongoing: { label: "Berlangsung", cls: "bg-green-600" },
-  upcoming: { label: "Akan datang", cls: "bg-blue-600" },
-  passed: { label: "Selesai", cls: "bg-gray-400" },
+  ongoing: { label: "Berlangsung", cls: "bg-ok-bg text-ok", dot: "bg-ok" },
+  upcoming: { label: "Akan datang", cls: "bg-soon-bg text-soon", dot: "bg-soon" },
+  passed: { label: "Selesai", cls: "bg-done-bg text-done", dot: "bg-done" },
 };
 
 function StatusBadge({ info }) {
@@ -181,8 +186,8 @@ function StatusBadge({ info }) {
   const meta = status && STATUS_META[status];
   if (!meta) return null;
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white ${meta.cls}`}>
-      <span className="w-1.5 h-1.5 rounded-full bg-white/90" />
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${meta.cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
       {meta.label}
     </span>
   );
@@ -198,7 +203,7 @@ function TagChips({ tags }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {list.map((t) => (
-        <span key={t} className="rounded-full bg-[#7a5530]/15 px-2.5 py-0.5 text-[12px] font-medium text-[#7a5530]">
+        <span key={t} className="rounded-full bg-surface-2 border border-line px-2.5 py-0.5 text-[12px] font-medium text-ink">
           {t.replace(/_/g, " ")}
         </span>
       ))}
@@ -258,12 +263,12 @@ function KajianActions({ info, openGoogleMaps }) {
   };
 
   const iconBtn =
-    "w-11 shrink-0 flex items-center justify-center rounded-full bg-white/70 text-[#7a5530] border border-[#d8c4a0] active:scale-95 transition-transform";
+    "w-12 shrink-0 flex items-center justify-center rounded-2xl bg-surface-2 text-accent border border-line active:scale-95 transition-transform";
 
   return (
     <div className="flex gap-2 pt-1">
       <button
-        className="flex-1 flex items-center justify-center gap-2 whitespace-nowrap py-2.5 px-4 rounded-full bg-[#7a5530] text-[#f1dcb7] text-sm font-semibold shadow-[0_4px_10px_-4px_#000] active:scale-95 transition-transform"
+        className="flex-1 flex items-center justify-center gap-2 whitespace-nowrap py-3 px-4 rounded-2xl bg-accent text-accent-ink text-sm font-bold shadow-[0_10px_24px_-12px_rgba(13,107,110,.6)] active:scale-95 transition-transform"
         onClick={() => openGoogleMaps(info)}
       >
         <FontAwesomeIcon icon={faMapLocationDot} /> Buka di Maps
@@ -291,6 +296,8 @@ function KajianPopup({ info, group, close }) {
   const [showScrollHint, setShowScrollHint] = useState(false);
   // Full-size poster lightbox; holds the image URL when open, null when closed.
   const [lightboxSrc, setLightboxSrc] = useState(null);
+  // Flyer layout: "a" = poster-forward hero on top, "b" = compact side thumbnail.
+  const [cardVariant, setCardVariant] = useState("a");
 
   useEffect(() => {
     const checkScroll = () => {
@@ -372,13 +379,13 @@ function KajianPopup({ info, group, close }) {
       (a, b) => (STATUS_RANK[getKajianStatus(b)] || 0) - (STATUS_RANK[getKajianStatus(a)] || 0)
     );
     return (
-      <div className="relative flex flex-col text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
+      <div className="relative flex flex-col text-base py-2 bg-surface text-ink">
         {lightboxEl}
         {/* Header with count indicator */}
         <div className="flex justify-between items-center px-3 pb-2">
-          <span className="text-sm font-semibold text-gray-700">{group.length} Kajian di lokasi ini</span>
+          <span className="text-sm font-bold text-ink">{group.length} Kajian di lokasi ini</span>
           <button
-            className="px-2 p-[6px] bg-custom-yellow-4 text-gray-600 hover:text-gray-800 rounded-full flex items-center justify-center shadow-[0_0_8px_-4px_#000]"
+            className="w-8 h-8 bg-surface-2 text-ink-dim hover:text-ink border border-line rounded-full flex items-center justify-center"
             onClick={close}
           >
             <FontAwesomeIcon icon={faTimes} size="lg" />
@@ -392,7 +399,7 @@ function KajianPopup({ info, group, close }) {
         >
           {orderedGroup.map((info, i) => (
             <div key={i} className="group-item mb-3">
-              <div className="relative bg-custom-yellow-3 rounded-xl overflow-hidden shadow-[0_0_4px_-2px_#000]">
+              <div className="relative bg-surface-2 border border-line rounded-2xl overflow-hidden">
                 <div className="content flex flex-col">
                   {info.src_image && (
                     <img
@@ -408,54 +415,54 @@ function KajianPopup({ info, group, close }) {
                       <StatusBadge info={info} />
                     </div>
                     <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                      <span className="text-[13px] text-left text-gray-800">{info.speaker}</span>
+                      <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                      <span className="text-[13px] text-left text-ink">{info.speaker}</span>
                     </div>
                     <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                      <span className="text-[13px] text-left text-gray-800">{info.loc_name}</span>
+                      <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                      <span className="text-[13px] text-left text-ink">{info.loc_name}</span>
                     </div>
                     <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                      <span className="text-sm text-left text-gray-800">{info.city}</span>
+                      <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                      <span className="text-sm text-left text-ink">{info.city}</span>
                     </div>
                     <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faCalendar} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                      <span className="text-[13px] text-left text-gray-800">{formatDate(info.date)}</span>
+                      <FontAwesomeIcon icon={faCalendar} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                      <span className="text-[13px] text-left text-ink">{formatDate(info.date)}</span>
                     </div>
                     <div className="flex gap-3 items-center">
-                      <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                      <span className="text-[13px] text-left text-gray-800">
+                      <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                      <span className="text-[13px] text-left text-ink">
                         {formatTimeRange(info, { endFallback: "Selesai" })}
                       </span>
                     </div>
                     {info.contact !== "" && info.contact !== "-" && (
                       <div className="flex gap-3 items-center">
-                        <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                        <span className="text-[13px] text-left text-gray-800">{info.contact}</span>
+                        <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                        <span className="text-[13px] text-left text-ink">{info.contact}</span>
                       </div>
                     )}
                     {!isBlank(info.addr) && (
                       <div className="flex gap-3 items-center">
-                        <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                        <span className="text-[13px] text-left text-gray-800 leading-5">{info.addr}</span>
+                        <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                        <span className="text-[13px] text-left text-ink leading-5">{info.addr}</span>
                       </div>
                     )}
                     {info.notes !== "" && (
                       <div className="flex gap-3 items-center">
-                        <FontAwesomeIcon icon={faNoteSticky} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                        <span className="text-[13px] text-left text-gray-800">{info.notes}</span>
+                        <FontAwesomeIcon icon={faNoteSticky} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                        <span className="text-[13px] text-left text-ink">{info.notes}</span>
                       </div>
                     )}
                     {hasSourceInfo(info) && (
                       <div className="flex gap-3 items-center">
-                        <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                        <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-ink-dim flex-shrink-0" />
                         <SourceInfo info={info} />
                       </div>
                     )}
                     {!isBlank(info.tags) && (
                       <div className="flex gap-3 items-start">
-                        <FontAwesomeIcon icon={faTags} className="w-4 h-4 mt-0.5 text-gray-700 flex-shrink-0" />
+                        <FontAwesomeIcon icon={faTags} className="w-4 h-4 mt-0.5 text-ink-dim flex-shrink-0" />
                         <TagChips tags={info.tags} />
                       </div>
                     )}
@@ -474,7 +481,7 @@ function KajianPopup({ info, group, close }) {
             <div className="sticky bottom-1 -mt-9 z-10 flex justify-center pointer-events-none">
               <button
                 onClick={handleScrollDown}
-                className="w-8 h-8 flex items-center justify-center text-gray-700 bg-custom-yellow-2/95 rounded-full shadow-md animate-bounce pointer-events-auto"
+                className="w-8 h-8 flex items-center justify-center text-ink bg-surface-2 border border-line rounded-full shadow-md animate-bounce pointer-events-auto"
                 aria-label="Geser ke bawah untuk lihat lebih"
               >
                 <FontAwesomeIcon icon={faChevronDown} />
@@ -486,79 +493,113 @@ function KajianPopup({ info, group, close }) {
     );
   } else {
     return (
-      <div className="relative flex flex-col text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
+      <div className="relative flex flex-col text-base py-2 bg-surface text-ink">
         {lightboxEl}
         <CloseButton onClose={close} />
+        {/* A/B layout toggle — mirrors the design's two flyer variants
+            (A: poster-forward hero on top · B: compact side thumbnail). */}
+        <div className="absolute top-3 left-3 z-10 flex items-center rounded-full bg-surface-2 border border-line p-0.5 text-[11px] font-bold">
+          {["a", "b"].map((v) => (
+            <button
+              key={v}
+              onClick={() => setCardVariant(v)}
+              aria-pressed={cardVariant === v}
+              aria-label={`Tampilan ${v.toUpperCase()}`}
+              className={`px-2.5 py-1 rounded-full uppercase transition-colors ${
+                cardVariant === v ? "bg-accent text-accent-ink" : "text-ink-dim"
+              }`}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
         <div
           ref={scrollRef}
-          className="content max-h-[60vh] overflow-y-auto mx-2 bg-custom-yellow-3 rounded-xl scroll-smooth"
+          className="content max-h-[60vh] overflow-y-auto mx-2 bg-surface-2 border border-line rounded-2xl scroll-smooth"
         >
-          {info.src_image && (
+          {cardVariant === "a" && info.src_image && (
             <img
               src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`}
               alt="poster"
-              className="rounded-t-xl w-full object-contain max-h-[35vh] cursor-zoom-in"
+              className="rounded-t-2xl w-full object-contain max-h-[35vh] cursor-zoom-in"
               onClick={() => setLightboxSrc(`${import.meta.env.VITE_BASE_URL}/${info.src_image}`)}
             />
           )}
 
           <div className="description space-y-2 p-3">
             {/* pr-10 keeps a long title / the status badge clear of the close (✕) button. */}
-            <div className="flex flex-col items-start gap-1.5 px-1 pt-1 pb-1 pr-10">
-              <div className="title font-semibold text-sm md:text-base">{info.topic}</div>
-              <StatusBadge info={info} />
-            </div>
-            <div className="flex gap-3 items-center">
-              <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-              <span className="text-sm text-left text-gray-800">{info.speaker}</span>
-            </div>
-            <div className="flex gap-3 items-center">
-              <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-              <span className="text-sm text-left text-gray-800">{info.loc_name}</span>
-            </div>
-            {info.city && (
-              <div className="flex gap-3 items-center">
-                <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                <span className="text-sm text-left text-gray-800">{info.city}</span>
+            {cardVariant === "b" ? (
+              <div className="flex items-start gap-3 pt-7 pr-2">
+                {info.src_image && (
+                  <img
+                    src={`${import.meta.env.VITE_BASE_URL}/${info.src_image}`}
+                    alt="poster"
+                    className="w-20 h-20 flex-none rounded-xl object-cover cursor-zoom-in"
+                    onClick={() => setLightboxSrc(`${import.meta.env.VITE_BASE_URL}/${info.src_image}`)}
+                  />
+                )}
+                <div className="flex-1 min-w-0 flex flex-col items-start gap-1.5">
+                  <StatusBadge info={info} />
+                  <div className="title font-semibold text-sm md:text-base">{info.topic}</div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-start gap-1.5 px-1 pt-1 pb-1 pr-10">
+                <div className="title font-semibold text-sm md:text-base">{info.topic}</div>
+                <StatusBadge info={info} />
               </div>
             )}
             <div className="flex gap-3 items-center">
-              <FontAwesomeIcon icon={faCalendar} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-              <span className="text-[13px] text-left text-gray-800">{formatDate(info.date)}</span>
+              <FontAwesomeIcon icon={faUser} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+              <span className="text-sm text-left text-ink">{info.speaker}</span>
             </div>
             <div className="flex gap-3 items-center">
-              <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-              <span className="text-sm text-left text-gray-800">
+              <FontAwesomeIcon icon={faMosque} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+              <span className="text-sm text-left text-ink">{info.loc_name}</span>
+            </div>
+            {info.city && (
+              <div className="flex gap-3 items-center">
+                <FontAwesomeIcon icon={faCity} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                <span className="text-sm text-left text-ink">{info.city}</span>
+              </div>
+            )}
+            <div className="flex gap-3 items-center">
+              <FontAwesomeIcon icon={faCalendar} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+              <span className="text-[13px] text-left text-ink">{formatDate(info.date)}</span>
+            </div>
+            <div className="flex gap-3 items-center">
+              <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+              <span className="text-sm text-left text-ink">
                 {formatTimeRange(info, { endFallback: "Selesai" })}
               </span>
             </div>
             {info.contact !== "" && info.contact !== "-" && (
               <div className="flex gap-3 items-center">
-                <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                <span className="text-sm text-left text-gray-800">{info.contact}</span>
+                <FontAwesomeIcon icon={faPhone} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                <span className="text-sm text-left text-ink">{info.contact}</span>
               </div>
             )}
             {!isBlank(info.addr) && (
               <div className="flex gap-3 items-center">
-                <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                <span className="text-sm text-left text-gray-800">{info.addr}</span>
+                <FontAwesomeIcon icon={faMapLocationDot} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                <span className="text-sm text-left text-ink">{info.addr}</span>
               </div>
             )}
             {info.notes !== "" && (
               <div className="flex gap-3 items-center">
-                <FontAwesomeIcon icon={faNoteSticky} className="w-4 h-4 text-gray-700 flex-shrink-0" />
-                <span className="text-sm text-left text-gray-800">{info.notes}</span>
+                <FontAwesomeIcon icon={faNoteSticky} className="w-4 h-4 text-ink-dim flex-shrink-0" />
+                <span className="text-sm text-left text-ink">{info.notes}</span>
               </div>
             )}
             {hasSourceInfo(info) && (
               <div className="flex gap-3 items-center">
-                <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-gray-700 flex-shrink-0" />
+                <FontAwesomeIcon icon={faEnvelopeCircleCheck} className="w-4 h-4 text-ink-dim flex-shrink-0" />
                 <SourceInfo info={info} />
               </div>
             )}
             {!isBlank(info.tags) && (
               <div className="flex gap-3 items-start">
-                <FontAwesomeIcon icon={faTags} className="w-4 h-4 mt-0.5 text-gray-700 flex-shrink-0" />
+                <FontAwesomeIcon icon={faTags} className="w-4 h-4 mt-0.5 text-ink-dim flex-shrink-0" />
                 <TagChips tags={info.tags} />
               </div>
             )}
@@ -570,7 +611,7 @@ function KajianPopup({ info, group, close }) {
               <div className="sticky bottom-1 -mt-7 z-10 flex justify-center pointer-events-none">
                 <button
                   onClick={handleScrollDown}
-                  className="w-8 h-8 flex items-center justify-center text-gray-700 bg-custom-yellow-2/95 rounded-full shadow-md animate-bounce pointer-events-auto"
+                  className="w-8 h-8 flex items-center justify-center text-ink bg-surface-2 border border-line rounded-full shadow-md animate-bounce pointer-events-auto"
                   aria-label="Geser ke bawah untuk lihat lebih"
                 >
                   <FontAwesomeIcon icon={faChevronDown} />

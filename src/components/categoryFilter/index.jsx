@@ -48,9 +48,9 @@ const CategoryFilter = ({ onCategoryChange, data, resetSignal = 0 }) => {
   return (
     <div className="category-area my-3">
       <div className="flex items-center gap-4 my-4">
-        <div className="flex-grow border-t border-custom-yellow-4"></div>
-        <div className="label text-sm text-[#917951]">Pilih Kategori</div>
-        <div className="flex-grow border-t border-custom-yellow-4"></div>
+        <div className="flex-grow border-t border-line"></div>
+        <div className="label text-sm text-ink-dim">Pilih Kategori</div>
+        <div className="flex-grow border-t border-line"></div>
       </div>
       <div className="flex flex-wrap gap-2 justify-center text-[13px]">
         {categories.map((category) => {
@@ -62,13 +62,13 @@ const CategoryFilter = ({ onCategoryChange, data, resetSignal = 0 }) => {
               aria-pressed={active}
               className={`px-[10px] py-[3px] rounded-full cursor-pointer transition-all active:scale-95 ${
                 active
-                  ? "bg-[#795548] text-white" // active chip
-                  : "bg-[#ebd7b4] text-[#7A5530]" // inactive chip
+                  ? "bg-accent text-accent-ink" // active chip
+                  : "bg-surface-2 text-ink border border-line" // inactive chip
               }`}
               onClick={() => handleCheckboxChange(category)}
             >
               {category.replace(/_/g, " ")}
-              <span className={`ml-1 text-[11px] ${active ? "text-white/70" : "text-[#7A5530]/60"}`}>
+              <span className={`ml-1 text-[11px] ${active ? "text-accent-ink/70" : "text-ink/60"}`}>
                 {tagCounts[category] ?? 0}
               </span>
             </button>

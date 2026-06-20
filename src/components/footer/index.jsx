@@ -18,13 +18,13 @@ function Footer() {
       <div className="flex gap-1">
         <div className="copyright">&copy; {new Date().getFullYear()}</div>
         by
-        <button onClick={showContributors} className='text-blue-300'>
+        <button onClick={showContributors} className='text-accent'>
           contributors
         </button>
       </div>
       <div className="flex gap-1">
         hosted on
-        <a href="https://derrylab.com" target="_blank" rel="noopener noreferrer" className='text-blue-300'>
+        <a href="https://derrylab.com" target="_blank" rel="noopener noreferrer" className='text-accent'>
           derrylab.com
         </a>
       </div>

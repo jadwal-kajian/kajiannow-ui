@@ -31,3 +31,6 @@ bun.lockb
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+# Claude Design handoff working files
+.design-handoff/
+*handoff*.zip

@@ -40,7 +40,7 @@ function FilterPopup({ close, filter, submit }) {
   };
 
   return (
-    <div className="relative h-[65vh] overflow-y-auto flex flex-col text-center text-base py-2 bg-custom-yellow-1 shadow-[inset_0_0_20px_-2px_#000]">
+    <div className="relative h-[65vh] overflow-y-auto flex flex-col text-center text-base py-2 bg-surface text-ink">
       <CloseButton onClose={close} sticky />
       <ModalHeader icon={faFilter} title="Filter Kajian" />
       <div className="content h-[80%] p-3 px-6 w-full mx-auto text-left text-[13px] overflow-y-auto md:text-base">

@@ -46,9 +46,9 @@ const DateSelector = ({ selectedDate, setDateSelected }) => {
   return (
     <div className="select-date relative mb-6 text-sm">
       <div className="flex items-center gap-4 my-2">
-        <div className="flex-grow border-t border-custom-yellow-4"></div>
-        <div className="label text-sm text-[#917951]">Pilih Tanggal</div>
-        <div className="flex-grow border-t border-custom-yellow-4"></div>
+        <div className="flex-grow border-t border-line"></div>
+        <div className="label text-sm text-ink-dim">Pilih Tanggal</div>
+        <div className="flex-grow border-t border-line"></div>
       </div>
       <DatePicker
         showIcon
@@ -67,14 +67,14 @@ const DateSelector = ({ selectedDate, setDateSelected }) => {
           nextMonthButtonDisabled,
         }) => (
           <div className="flex justify-between items-center px-4 py-2">
-            <button onClick={decreaseMonth} disabled={prevMonthButtonDisabled} className="absolute left-[-8px] top-[-8px] text-[#7a5530]">
+            <button onClick={decreaseMonth} disabled={prevMonthButtonDisabled} className="absolute left-[-8px] top-[-8px] text-accent">
               <FontAwesomeIcon icon={faCircleChevronLeft} className="text-[32px]" />
             </button>
             <div className="flex items-center gap-2">
               <select
                 value={getYear(date)}
                 onChange={({ target: { value } }) => changeYear(Number(value))}
-                className="outline-none border border-[#917951] bg-[#f1dcb7] rounded-lg px-2 py-1"
+                className="outline-none border border-line bg-surface-2 text-ink rounded-lg px-2 py-1"
               >
                 {years.map((year) => (
                   <option key={year} value={year}>
@@ -85,7 +85,7 @@ const DateSelector = ({ selectedDate, setDateSelected }) => {
               <select
                 value={getMonth(date)}
                 onChange={({ target: { value } }) => changeMonth(Number(value))}
-                className="outline-none border border-[#917951] bg-[#f1dcb7] rounded-lg px-2 py-1"
+                className="outline-none border border-line bg-surface-2 text-ink rounded-lg px-2 py-1"
               >
                 {months.map((month, index) => (
                   <option key={index} value={index}>
@@ -94,20 +94,20 @@ const DateSelector = ({ selectedDate, setDateSelected }) => {
                 ))}
               </select>
             </div>
-            <button onClick={increaseMonth} disabled={nextMonthButtonDisabled} className="absolute right-[-8px] top-[-8px] text-[#7a5530]">
+            <button onClick={increaseMonth} disabled={nextMonthButtonDisabled} className="absolute right-[-8px] top-[-8px] text-accent">
               <FontAwesomeIcon icon={faCircleChevronRight} className="text-[32px]" />
             </button>
           </div>
         )}
         customInput={
           <div className="relative text-sm">
-            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-[#7a5530]">
+            <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-accent">
               <FontAwesomeIcon icon={faCalendar} />
             </div>
             <input
               readOnly
               type="text"
-              className="w-full py-2 h-[38px] !px-4 rounded-lg bg-[#f1dcb7] text-[#7a5530] font-semibold placeholder-[#7a5530] shadow-[0_0_8px_-2px_#b7a484] focus:outline-none cursor-pointer"
+              className="w-full py-2 h-[38px] !px-4 rounded-lg bg-surface-2 text-ink font-semibold placeholder-[color:var(--kn-accent)] shadow-[0_0_8px_-2px_var(--kn-border)] focus:outline-none cursor-pointer"
               placeholder="Pilih Tanggal"
               value={displayDate}
             />

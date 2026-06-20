@@ -23,7 +23,7 @@ const LaporPopup = ({ close }) => {
         <p className="text-center">Silakan laporkan masalah / saran yang Anda temui di aplikasi ini.</p>
         <p className="text-center">Semoga Allah membalas kebaikan atas kontribusi Anda.</p>
         <textarea
-          className="w-full p-3 border border-gray-300 rounded mb-4 bg-[#fff8e1]"
+          className="w-full p-3 border border-line rounded-xl mb-4 bg-surface-2 text-ink placeholder-ink-dim"
           rows="4"
           placeholder={`Contoh:\n- Ada kekeliruan jadwal kajian di lokasi x tidak sesuai...\n- Bisakah menambahkan kajian di lokasi z, saya ada grup whatsappnya...`}
           value={message}
