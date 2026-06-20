@@ -1,14 +1,45 @@
+// Popups present as bottom sheets (per the design): anchored to the bottom of
+// the viewport, full-width, rounded top corners, sliding up on open.
+@keyframes kn-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.swal2-container {
+  padding: 0;
+  // Bottom-anchored, horizontally centered (so it reads as a sheet on phones
+  // and a centered card-sheet on wide screens).
+  align-items: flex-end;
+  justify-items: center;
+}
+
 .swal2-popup {
   padding: 0;
-  border-radius: 24px;
+  width: 100%;
+  max-width: 520px;
+  margin: 0;
+  max-height: 92vh;
+  border-radius: 26px 26px 0 0;
   // Match the design tokens so the popup chrome follows the active theme
   // (no white sliver behind dark-mode content).
   background: var(--kn-surface);
   color: var(--kn-text);
-  box-shadow: 0 24px 60px -24px rgba(20, 14, 6, 0.6);
+  box-shadow: 0 -16px 40px -20px rgba(0, 0, 0, 0.5);
   overflow: hidden;
+  animation: kn-sheet-up 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
   .swal2-html-container {
     padding: 0;
     color: var(--kn-text);
+    max-height: 92vh;
+    overflow: hidden;
   }
+}
+
+// Small grab handle at the top of every sheet.
+.swal2-html-container > div::before {
+  content: "";
 }

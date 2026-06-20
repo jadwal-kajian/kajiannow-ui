@@ -99,16 +99,32 @@ body {
   box-shadow: none;
 }
 
-/* Tint the book-pin image by schedule status (red base ≈ hue 0°). */
-.kajian-pin-ongoing {
-  /* green — happening now */
-  filter: hue-rotate(108deg) saturate(1.5) drop-shadow(0 0 4px rgba(22, 163, 74, 0.7));
+/* Custom HTML map pins (divIcon): strip Leaflet's default white box/border so
+   only our circular mosque pin shows. */
+.kn-divpin {
+  background: transparent;
+  border: none;
 }
-.kajian-pin-upcoming {
-  /* blue — will start later */
-  filter: hue-rotate(212deg) saturate(1.55) brightness(0.98);
+
+/* Horizontal chip/carousel rows: scroll without a visible scrollbar. */
+.kn-noscroll {
+  scrollbar-width: none;
 }
-.kajian-pin-passed {
-  /* gray — already finished */
-  filter: grayscale(1) brightness(1.05) opacity(0.6);
+.kn-noscroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pulse halo for the user-location dot. */
+@keyframes kn-pulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.55;
+  }
+  80% {
+    transform: scale(2.6);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
 }

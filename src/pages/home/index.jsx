@@ -1,6 +1,11 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash, faFilter, faInfoCircle, faCommentDots, faChevronLeft, faChevronRight, faBell, faSpinner, faCalendarXmark, faLocationCrosshairs } from "@fortawesome/free-solid-svg-icons";
+import {
+  faEye, faEyeSlash, faBell, faSpinner, faLocationCrosshairs, faMagnifyingGlass,
+  faSliders, faPlus, faLocationDot, faMosque, faCircleInfo, faClock,
+} from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
@@ -16,7 +21,9 @@ import { useGeolocation, isInAppBrowser } from "../../hooks/useGeolocation";
 import { useNearbyKajianNotifications } from "../../hooks/useNearbyKajianNotifications";
 import { usePushSubscription } from "../../hooks/usePushSubscription";
 import { REACTIONS_KEY } from "../../utils/reactions";
-import { THEME_KEY } from "../../theme";
+import { THEME_KEY, ThemeToggle } from "../../theme";
+import { getKajianStatus, formatTimeRange } from "../../utils/kajianStatus";
+import { distanceKm } from "../../utils/geo";
 
 const Popup = withReactContent(Swal);
 
@@ -77,13 +84,92 @@ const locationCache = {
   }
 };
 
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+// Status → pill label + token classes (shared by the peek card and carousel).
+const STATUS_PILL = {
+  ongoing: { label: "Berlangsung", cls: "bg-ok-bg text-ok", dot: "bg-ok" },
+  upcoming: { label: "Akan datang", cls: "bg-soon-bg text-soon", dot: "bg-soon" },
+  passed: { label: "Selesai", cls: "bg-done-bg text-done", dot: "bg-done" },
+};
+
+function StatusPill({ status, size = "sm" }) {
+  const meta = status && STATUS_PILL[status];
+  if (!meta) return null;
+  const pad = size === "xs" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]";
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full font-bold ${pad} ${meta.cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+      {meta.label}
+    </span>
+  );
+}
+
+StatusPill.propTypes = { status: PropTypes.string, size: PropTypes.string };
+
+// Square poster thumbnail; falls back to a striped placeholder with the first tag.
+function PosterThumb({ info, className = "" }) {
+  const cat = String(info.tags || "").split(",")[0]?.trim();
+  if (info.src_image) {
+    return <img src={`${BASE_URL}/${info.src_image}`} alt="" className={`object-cover ${className}`} />;
+  }
+  return (
+    <div
+      className={`flex items-end p-1.5 ${className}`}
+      style={{
+        background:
+          "repeating-linear-gradient(135deg, var(--kn-surface-2) 0 10px, var(--kn-amber-soft) 10px 20px)",
+      }}
+    >
+      {cat && (
+        <span className="rounded bg-surface/80 px-1.5 py-0.5 text-[9px] font-semibold text-ink-dim">{cat}</span>
+      )}
+    </div>
+  );
+}
+
+PosterThumb.propTypes = { info: PropTypes.object.isRequired, className: PropTypes.string };
+
+// Floating round-square control button used in the home map chrome.
+function IconButton({ icon, onClick, label, active = false, dot = false, spin = false, disabled = false }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      className={`relative w-11 h-11 flex items-center justify-center rounded-2xl border shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform disabled:opacity-70 ${
+        active ? "bg-accent text-accent-ink border-accent" : "bg-surface text-ink border-line"
+      }`}
+    >
+      <FontAwesomeIcon icon={icon} spin={spin} />
+      {dot && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-ok border-2 border-surface" />}
+    </button>
+  );
+}
+
+IconButton.propTypes = {
+  icon: PropTypes.object.isRequired,
+  onClick: PropTypes.func,
+  label: PropTypes.string,
+  active: PropTypes.bool,
+  dot: PropTypes.bool,
+  spin: PropTypes.bool,
+  disabled: PropTypes.bool,
+};
+
 const Home = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState();
   const [showAllInfo, setShowAllInfo] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
+  // Home layout: "a" = floating controls (default), "b" = app-bar + carousel.
+  const [homeVariant, setHomeVariant] = useState("a");
+  // Variant-B quick status chip: "all" | "ongoing" | "upcoming".
+  const [quickStatus, setQuickStatus] = useState("all");
   // A pending notification deep link (kajian to auto-open), captured once on mount.
   const deepLinkRef = useRef(readDeepLink());
   // Once the deep-linked kajian is centered, keep the map there (don't let a late
@@ -438,8 +524,35 @@ const Home = () => {
     });
   };
 
+  // Markers/cards reflect the variant-B quick status chip (all/ongoing/upcoming).
+  const mapData = useMemo(() => {
+    if (quickStatus === "all") return filteredData;
+    return filteredData.filter((it) => getKajianStatus(it) === quickStatus);
+  }, [filteredData, quickStatus]);
+
+  // Nearest-first ordering for the peek card + carousel.
+  const sortedByDistance = useMemo(() => {
+    if (!userLocation) return mapData;
+    return [...mapData].sort((a, b) => distanceKm(userLocation, a) - distanceKm(userLocation, b));
+  }, [mapData, userLocation]);
+  const nearest = sortedByDistance[0] || null;
+  const carousel = sortedByDistance.slice(0, 12);
+  const locCount = useMemo(() => new Set(mapData.map((d) => `${d.lat},${d.lng}`)).size, [mapData]);
+  const cityLabel = selectedCity || data[0]?.city || "Indonesia";
+
+  const openKajian = useCallback(
+    (item) => ShowPopupInfo({ location: item, group: groupTopicsByLocation(item.lat, item.lng, data) }),
+    [data]
+  );
+
+  const QUICK = [
+    { key: "all", label: "Semua" },
+    { key: "ongoing", label: "Berlangsung" },
+    { key: "upcoming", label: "Akan datang" },
+  ];
+
   return (
-    <div className="content">
+    <div className="fixed inset-0 overflow-hidden bg-bg text-ink">
       {/* Test-observable geolocation state (hidden; harmless in production) */}
       <div
         data-testid="geo-state"
@@ -450,165 +563,213 @@ const Home = () => {
         data-center-lng={mapCenter?.lng ?? ""}
         style={{ display: "none" }}
       />
-      <div className="date-nav mb-3 flex items-center justify-center gap-2 select-none">
-        <button
-          onClick={() => changeDay(-1)}
-          aria-label="Hari sebelumnya"
-          className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform"
-        >
-          <FontAwesomeIcon icon={faChevronLeft} />
-        </button>
-        <button
-          onClick={showFilter}
-          aria-label="Pilih tanggal"
-          className="min-w-0 flex-shrink px-4 h-11 flex items-center rounded-2xl bg-surface border border-line text-accent font-bold text-sm md:text-base whitespace-nowrap truncate shadow-[0_8px_18px_-12px_rgba(60,40,10,.5)] active:scale-95 transition-transform"
-        >
-          {showDate}
-        </button>
-        <button
-          onClick={() => changeDay(1)}
-          aria-label="Hari berikutnya"
-          className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform"
-        >
-          <FontAwesomeIcon icon={faChevronRight} />
-        </button>
-      </div>
 
-      {/* Result summary: how many kajian are shown for the chosen date/filters. */}
-      <div className="results-bar mb-2 flex items-center justify-center gap-2 text-sm min-h-[20px]">
-        {loading ? (
-          <span className="flex items-center gap-2 text-ink-dim">
-            <FontAwesomeIcon icon={faSpinner} spin />
-            Memuat kajian…
-          </span>
-        ) : (
-          <span className="text-ink-dim">
-            <span className="font-bold text-accent">{filteredData.length}</span> kajian
-            {hasActiveFilters ? " (tersaring)" : " ditampilkan"}
-            {dayLabel && <span className="text-ink-dim/70"> • {dayLabel}</span>}
-          </span>
-        )}
-      </div>
-
-      {mapCenter && (
-        <div className="relative">
+      {/* Full-bleed map hero */}
+      <div className="absolute inset-0">
+        {mapCenter ? (
           <KajianMap
-            locations={filteredData}
+            locations={mapData}
             ref={mapRef}
             showAllInfo={showAllInfo}
             center={[mapCenter.lat, mapCenter.lng]}
             zoom={zoom}
             userLocation={userLocation ? [userLocation.lat, userLocation.lng] : null}
           />
-          {/* Empty state — nothing to show for this date/filter. */}
-          {!loading && filteredData.length === 0 && (
-            <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center p-4">
-              <div className="pointer-events-auto max-w-[300px] rounded-2xl bg-surface border border-line px-5 py-4 text-center shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)]">
-                <FontAwesomeIcon icon={faCalendarXmark} className="text-2xl text-accent" />
-                <p className="mt-2 font-bold text-ink">
-                  {hasActiveFilters ? "Tidak ada kajian yang cocok" : "Belum ada kajian pada tanggal ini"}
-                </p>
-                <p className="mt-1 text-[12px] text-ink-dim">
-                  {hasActiveFilters
-                    ? "Coba ubah atau hapus filter Anda."
-                    : "Coba pilih tanggal lain atau periksa kembali nanti."}
-                </p>
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearFilters}
-                    className="mt-3 rounded-full bg-accent px-4 py-1.5 text-[12px] font-bold text-accent-ink active:scale-95 transition-transform"
-                  >
-                    Hapus filter
-                  </button>
-                )}
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-ink-dim">
+            <FontAwesomeIcon icon={faSpinner} spin className="mr-2" /> Memuat peta…
+          </div>
+        )}
+      </div>
+
+      {/* ===================== VARIANT A — floating controls ===================== */}
+      {homeVariant === "a" && (
+        <>
+          <div className="absolute top-3 left-3 right-[60px] z-[1000]">
+            <button
+              onClick={showFilter}
+              aria-label="Saring kajian dan pilih tanggal"
+              className="w-full flex items-center gap-2.5 bg-surface border border-line rounded-2xl px-3.5 py-3 shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] text-left active:scale-[.99] transition-transform"
+            >
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-accent" />
+              <span className="flex-1 truncate text-ink-dim text-sm">{showDate || "Cari kajian, topik, masjid…"}</span>
+              <FontAwesomeIcon icon={faSliders} className={hasActiveFilters ? "text-accent" : "text-ink"} />
+            </button>
+          </div>
+
+          <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
+            <IconButton icon={faBell} onClick={showNotifySettings} label="Notifikasi" dot={notifySettings.enabled} />
+            <IconButton
+              icon={showAllInfo ? faEyeSlash : faEye}
+              onClick={() => setShowAllInfo(!showAllInfo)}
+              label={showAllInfo ? "Sembunyikan info" : "Tampilkan info"}
+              active={showAllInfo}
+            />
+            <IconButton icon={faCircleInfo} onClick={() => navigate("/about")} label="Tentang" />
+            <ThemeToggle />
+          </div>
+
+          {/* Lapor pill + locate FAB */}
+          <button
+            onClick={showReport}
+            className="absolute left-3 bottom-[150px] z-[1000] h-12 px-4 flex items-center gap-2 rounded-2xl bg-surface border border-line text-ink font-bold text-sm shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-95 transition-transform"
+          >
+            <FontAwesomeIcon icon={faPlus} className="text-accent" /> Lapor
+          </button>
+          <button
+            onClick={handleSetCenter}
+            disabled={isLocating}
+            aria-label="Arahkan peta ke lokasi Anda"
+            className="absolute right-3 bottom-[150px] z-[1000] w-12 h-12 flex items-center justify-center rounded-2xl bg-accent text-accent-ink shadow-[0_12px_26px_-10px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
+          >
+            <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} />
+          </button>
+
+          {/* Nearest peek card */}
+          {nearest && (
+            <div className="absolute left-3 right-3 bottom-3 z-[1000]">
+              <div className="mb-1.5 ml-1.5 text-[11px] font-extrabold tracking-wide uppercase text-ink-dim drop-shadow-[0_1px_2px_rgba(0,0,0,.25)]">
+                Kajian terdekat
               </div>
+              <button
+                onClick={() => openKajian(nearest)}
+                className="w-full flex gap-3 items-stretch bg-surface border border-line rounded-2xl p-2.5 shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)] text-left active:scale-[.99] transition-transform"
+              >
+                <PosterThumb info={nearest} className="w-14 h-14 flex-none rounded-xl" />
+                <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
+                  <StatusPill status={getKajianStatus(nearest)} size="xs" />
+                  <div className="truncate text-sm font-bold text-ink">{nearest.topic}</div>
+                  <div className="flex items-center gap-1.5 text-[12px] text-ink-dim">
+                    <FontAwesomeIcon icon={faClock} className="text-[11px]" />
+                    <span className="truncate">{formatTimeRange(nearest, { endFallback: "Selesai" })}</span>
+                  </div>
+                </div>
+              </button>
             </div>
           )}
+        </>
+      )}
+
+      {/* ===================== VARIANT B — app-bar + carousel ===================== */}
+      {homeVariant === "b" && (
+        <>
+          <div className="absolute top-0 left-0 right-0 z-[1000] bg-surface border-b border-line shadow-[0_8px_24px_-16px_rgba(60,40,10,.5)] px-4 pt-3 pb-3">
+            <div className="flex items-center justify-between mb-2.5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-lg bg-accent text-accent-ink flex items-center justify-center">
+                    <FontAwesomeIcon icon={faMosque} className="text-[12px]" />
+                  </span>
+                  <span className="text-lg font-extrabold">KajianNow</span>
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5 text-[12px] font-semibold text-ink-dim">
+                  <FontAwesomeIcon icon={faLocationDot} className="text-accent" /> {cityLabel} · {locCount} lokasi
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <IconButton icon={faBell} onClick={showNotifySettings} label="Notifikasi" dot={notifySettings.enabled} />
+                <ThemeToggle />
+              </div>
+            </div>
+            <button
+              onClick={showFilter}
+              className="w-full flex items-center gap-2.5 bg-surface-2 border border-line rounded-xl px-3 py-2.5 text-left"
+            >
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-accent" />
+              <span className="flex-1 truncate text-ink-dim text-[13px]">{showDate || "Cari kajian, topik, masjid…"}</span>
+            </button>
+            <div className="flex gap-2 overflow-x-auto mt-2.5 pb-0.5 kn-noscroll">
+              {QUICK.map((c) => {
+                const on = quickStatus === c.key;
+                return (
+                  <button
+                    key={c.key}
+                    onClick={() => setQuickStatus(c.key)}
+                    className={`flex-none px-3 py-1.5 rounded-full text-[12px] font-bold border transition-colors ${
+                      on ? "bg-accent text-accent-ink border-accent" : "bg-surface-2 text-ink border-line"
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <button
+            onClick={handleSetCenter}
+            disabled={isLocating}
+            aria-label="Arahkan peta ke lokasi Anda"
+            className="absolute right-3 bottom-[170px] z-[1000] w-12 h-12 flex items-center justify-center rounded-2xl bg-accent text-accent-ink shadow-[0_12px_26px_-10px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
+          >
+            <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} />
+          </button>
+
+          {/* Bottom carousel */}
+          {carousel.length > 0 && (
+            <div className="absolute left-0 right-0 bottom-3 z-[1000] flex gap-3 overflow-x-auto px-3 pb-1 kn-noscroll">
+              {carousel.map((item, i) => (
+                <button
+                  key={item.id ?? i}
+                  onClick={() => openKajian(item)}
+                  className="flex-none w-[230px] flex gap-2.5 bg-surface border border-line rounded-2xl p-2.5 shadow-[0_14px_30px_-16px_rgba(60,40,10,.55)] text-left active:scale-[.99] transition-transform"
+                >
+                  <PosterThumb info={item} className="w-14 h-14 flex-none rounded-xl" />
+                  <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
+                    <StatusPill status={getKajianStatus(item)} size="xs" />
+                    <div className="truncate text-[13px] font-bold text-ink">{item.topic}</div>
+                    <div className="truncate text-[11px] text-ink-dim">{item.loc_name}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* A/B layout switch (dev/preview) */}
+      <div className="absolute left-1/2 -translate-x-1/2 bottom-[150px] z-[1000] flex items-center rounded-full bg-surface border border-line p-0.5 text-[11px] font-bold shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)]">
+        {["a", "b"].map((v) => (
+          <button
+            key={v}
+            onClick={() => setHomeVariant(v)}
+            aria-label={`Tata letak ${v.toUpperCase()}`}
+            className={`px-3 py-1 rounded-full uppercase transition-colors ${
+              homeVariant === v ? "bg-accent text-accent-ink" : "text-ink-dim"
+            }`}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+
+      {/* Empty state */}
+      {!loading && mapCenter && mapData.length === 0 && (
+        <div className="pointer-events-none absolute inset-0 z-[900] flex items-center justify-center p-4">
+          <div className="pointer-events-auto max-w-[300px] rounded-2xl bg-surface border border-line px-5 py-4 text-center shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)]">
+            <FontAwesomeIcon icon={faMagnifyingGlass} className="text-2xl text-accent" />
+            <p className="mt-2 font-bold text-ink">
+              {hasActiveFilters || quickStatus !== "all" ? "Tidak ada kajian yang cocok" : "Belum ada kajian pada tanggal ini"}
+            </p>
+            <p className="mt-1 text-[12px] text-ink-dim">
+              {hasActiveFilters || quickStatus !== "all"
+                ? "Coba ubah atau hapus filter Anda."
+                : "Coba pilih tanggal lain atau periksa kembali nanti."}
+            </p>
+            {(hasActiveFilters || quickStatus !== "all") && (
+              <button
+                onClick={() => {
+                  clearFilters();
+                  setQuickStatus("all");
+                }}
+                className="mt-3 rounded-full bg-accent px-4 py-1.5 text-[12px] font-bold text-accent-ink active:scale-95 transition-transform"
+              >
+                Hapus filter
+              </button>
+            )}
+          </div>
         </div>
       )}
-      <div className="last-update text-sm text-center text-ink-dim mt-3">Terakhir Update: {lastUpdate}</div>
-
-      <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
-        <button
-          onClick={showInfo}
-          title="Petunjuk penggunaan"
-          aria-label="Petunjuk penggunaan"
-          className="relative w-11 h-11 text-[40px] rounded-full bg-accent text-accent-ink cursor-pointer overflow-hidden shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform"
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <FontAwesomeIcon icon={faInfoCircle} />
-          </span>
-        </button>
-
-        <button
-          onClick={() => setShowAllInfo(!showAllInfo)}
-          title={showAllInfo ? "Sembunyikan semua info" : "Tampilkan semua info"}
-          aria-label={showAllInfo ? "Sembunyikan semua info" : "Tampilkan semua info"}
-          aria-pressed={showAllInfo}
-          className={`relative w-11 h-11 text-lg p-2 rounded-full cursor-pointer overflow-hidden shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform ${
-            showAllInfo ? "bg-accent text-accent-ink" : "bg-surface border border-line text-ink"
-          }`}
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            {showAllInfo ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
-          </span>
-        </button>
-
-        <button
-          onClick={showFilter}
-          title="Saring & pilih tanggal"
-          className={`relative w-11 h-11 text-lg p-2 rounded-full cursor-pointer overflow-hidden shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform ${
-            hasActiveFilters
-              ? "bg-accent text-accent-ink ring-2 ring-offset-1 ring-ok"
-              : "bg-surface border border-line text-ink"
-          }`}
-          aria-label="Saring kajian dan pilih tanggal"
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <FontAwesomeIcon icon={faFilter} className="text-sm" />
-          </span>
-        </button>
-
-        <button
-          onClick={showReport}
-          title="Lapor / pesan ke pengembang"
-          className="relative w-11 h-11 text-lg p-2 rounded-full bg-surface border border-line text-ink cursor-pointer overflow-hidden shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform"
-          aria-label="Lapor atau kirim pesan ke pengembang"
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <FontAwesomeIcon icon={faCommentDots} className="text-sm" />
-          </span>
-        </button>
-
-        <button
-          onClick={showNotifySettings}
-          title="Notifikasi kajian terdekat"
-          className={`relative w-11 h-11 text-lg p-2 rounded-full cursor-pointer overflow-hidden shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform ${
-            notifySettings.enabled
-              ? "bg-accent text-accent-ink ring-2 ring-offset-1 ring-ok"
-              : "bg-surface border border-line text-ink"
-          }`}
-          aria-label="Pengaturan notifikasi kajian terdekat"
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <FontAwesomeIcon icon={faBell} className="text-sm" />
-          </span>
-        </button>
-
-        <button
-          onClick={handleSetCenter}
-          title="Arahkan peta ke lokasi Anda"
-          disabled={isLocating}
-          className="my-3 py-2.5 px-5 flex items-center gap-2 rounded-2xl bg-accent text-accent-ink font-bold shadow-[0_10px_24px_-12px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
-        >
-          <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} className="text-sm" />
-          {isLocating ? "Mencari…" : "Lokasi Saya"}
-        </button>
-      </div>
-
-      <div className="quotes text-center my-4 md:mt-12 mb-8 text-[12px] md:text-base">
-        <i>Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju surga. (HR. Muslim)</i>
-      </div>
     </div>
   );
 };

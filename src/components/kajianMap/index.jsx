@@ -6,26 +6,6 @@ import "leaflet/dist/leaflet.css";
 import UserMarker from "./UserMarker";
 import KajianMarker from "./KajianMarker";
 
-// Marker status legend (colors mirror STATUS_COLORS in KajianMarker).
-const LEGEND_ITEMS = [
-  { color: "#1f8a5b", label: "Berlangsung" },
-  { color: "#2f6fb0", label: "Akan datang" },
-  { color: "#8a8478", label: "Selesai" },
-];
-
-function StatusLegend() {
-  return (
-    <div className="absolute bottom-3 left-3 z-[1000] rounded-lg bg-surface border border-line px-2.5 py-2 shadow-md text-[11px] leading-tight text-ink pointer-events-none">
-      {LEGEND_ITEMS.map((item) => (
-        <div key={item.label} className="flex items-center gap-1.5 my-0.5">
-          <span className="inline-block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-          <span>{item.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 // Use userLocation prop from parent to avoid duplicate geolocation calls
 const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userLocation }, ref) => {
   const mapInstance = useRef(null);
@@ -64,16 +44,12 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userL
   );
 
   return (
-    <div style={{ position: "relative", marginBottom: 12 }}>
     <MapContainer
       ref={mapInstance}
-      style={{
-        width: "100%",
-        height: "calc(83vh - 185px)",
-        borderRadius: 12,
-      }}
+      style={{ width: "100%", height: "100%" }}
       center={center}
       zoom={zoom}
+      zoomControl={false}
       scrollWheelZoom={true}
     >
       <TileLayer
@@ -91,8 +67,6 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userL
         />
       ))}
     </MapContainer>
-    <StatusLegend />
-    </div>
   );
 });
 
