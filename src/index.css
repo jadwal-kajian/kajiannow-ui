@@ -122,6 +122,19 @@ body {
   overflow: hidden;
 }
 
+/* Soft status-colored glow behind each map pin (opacity + transform only). */
+@keyframes kn-glow {
+  0%,
+  100% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.32;
+  }
+}
+
 /* Pulse halo for the user-location dot. */
 @keyframes kn-pulse {
   0% {
