@@ -415,7 +415,7 @@ function KajianPopup({ info, group, close }) {
             </div>
           </div>
           <button
-            className="w-9 h-9 flex-none bg-surface-2 text-ink-dim hover:text-ink border border-line rounded-xl flex items-center justify-center"
+            className="w-10 h-10 flex-none bg-surface-2 text-ink-dim hover:text-ink border border-line rounded-xl flex items-center justify-center"
             onClick={close}
             aria-label="Tutup"
           >
@@ -477,7 +477,7 @@ function KajianPopup({ info, group, close }) {
             type="button"
             onClick={close}
             aria-label="Tutup"
-            className="w-9 h-9 flex-none rounded-xl bg-surface-2 border border-line text-ink-dim hover:text-ink flex items-center justify-center"
+            className="w-10 h-10 flex-none rounded-xl bg-surface-2 border border-line text-ink-dim hover:text-ink flex items-center justify-center"
           >
             <FontAwesomeIcon icon={faTimes} />
           </button>

@@ -68,7 +68,7 @@ export function CloseButton({ onClose, sticky = false }) {
   const pos = sticky ? "sticky top-3 right-3 ml-auto" : "absolute top-3 right-3";
   return (
     <button
-      className={`${pos} w-8 h-8 bg-surface-2 text-ink-dim hover:text-ink border border-line rounded-full flex items-center justify-center z-10`}
+      className={`${pos} w-10 h-10 bg-surface-2 text-ink-dim hover:text-ink border border-line rounded-full flex items-center justify-center z-10`}
       onClick={onClose}
       aria-label="Tutup"
     >

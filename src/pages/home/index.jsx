@@ -541,7 +541,7 @@ const Home = () => {
             <button
               onClick={() => changeDay(-1)}
               aria-label="Hari sebelumnya"
-              className="flex-none w-9 h-12 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-90 transition-transform"
+              className="flex-none w-10 h-12 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-90 transition-transform"
             >
               <FontAwesomeIcon icon={faChevronLeft} />
             </button>
@@ -557,7 +557,7 @@ const Home = () => {
             <button
               onClick={() => changeDay(1)}
               aria-label="Hari berikutnya"
-              className="flex-none w-9 h-12 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-90 transition-transform"
+              className="flex-none w-10 h-12 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-90 transition-transform"
             >
               <FontAwesomeIcon icon={faChevronRight} />
             </button>
