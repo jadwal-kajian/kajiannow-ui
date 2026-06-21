@@ -204,7 +204,7 @@ function StatusBadge({ info }) {
   const meta = status && STATUS_META[status];
   if (!meta) return null;
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${meta.cls}`}>
+    <span className={`self-start inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${meta.cls}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
       {meta.label}
     </span>
@@ -399,7 +399,7 @@ function KajianPopup({ info, group, close }) {
     );
     const loc = group[0];
     return (
-      <div className="relative flex flex-col bg-surface text-ink">
+      <div className="relative flex flex-col bg-surface text-ink text-left">
         {lightboxEl}
         {/* Grab handle */}
         <div className="flex justify-center pt-2.5 pb-1">
@@ -468,7 +468,7 @@ function KajianPopup({ info, group, close }) {
     const cat = String(info.tags || "").split(",")[0]?.trim();
     const posterUrl = info.src_image ? `${BASE_URL}/${info.src_image}` : null;
     return (
-      <div className="relative flex flex-col bg-surface text-ink">
+      <div className="relative flex flex-col bg-surface text-ink text-left">
         {lightboxEl}
         {/* Sticky header: close · title · A/B toggle */}
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-line">
