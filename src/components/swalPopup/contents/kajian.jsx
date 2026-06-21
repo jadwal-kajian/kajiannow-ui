@@ -510,38 +510,36 @@ function KajianPopup({ info, group, close }) {
 
         {/* Scrollable body */}
         <div ref={scrollRef} className="overflow-y-auto px-4 py-4 scroll-smooth" style={{ maxHeight: "calc(92vh - 168px)" }}>
-          {/* Hero — variant A: poster-forward; variant B: compact card */}
+          {/* Hero — variant A: poster-forward; variant B: compact card.
+              Title sits BELOW the poster (real flyers already carry their own
+              title, so overlaying ours doubles up / collides). */}
           {cardVariant === "a" ? (
-            posterUrl ? (
-              <div className="relative rounded-2xl overflow-hidden mb-4 aspect-[4/5]">
-                <img
-                  src={posterUrl}
-                  alt="poster"
-                  className="absolute inset-0 w-full h-full object-cover cursor-zoom-in"
-                  onClick={() => setLightboxSrc(posterUrl)}
-                />
-                <div className="absolute top-3 left-3">
-                  <StatusBadge info={info} />
-                </div>
-                {cat && (
-                  <div className="absolute top-3 right-3">
-                    <span className="rounded-lg bg-surface/80 px-2 py-1 text-[10px] font-mono text-ink-dim">poster · {cat}</span>
+            <>
+              {posterUrl ? (
+                <div className="relative rounded-2xl overflow-hidden mb-3 aspect-[4/5]">
+                  <img
+                    src={posterUrl}
+                    alt="poster"
+                    className="absolute inset-0 w-full h-full object-cover cursor-zoom-in"
+                    onClick={() => setLightboxSrc(posterUrl)}
+                  />
+                  <div className="absolute top-3 left-3">
+                    <StatusBadge info={info} />
                   </div>
-                )}
-                <div
-                  className="absolute inset-x-0 bottom-0 p-4 pt-12"
-                  style={{ background: "linear-gradient(to top, rgba(20,12,4,.62), rgba(20,12,4,0))" }}
-                >
-                  <div className="text-[22px] font-extrabold leading-tight text-white">{info.topic}</div>
+                  {cat && (
+                    <div className="absolute top-3 right-3">
+                      <span className="rounded-lg bg-surface/80 px-2 py-1 text-[10px] font-mono text-ink-dim">poster · {cat}</span>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ) : (
-              <div className="rounded-2xl bg-surface-2 border border-line p-5 mb-4">
-                <StatusBadge info={info} />
-                {cat && <div className="mt-2 text-[10px] font-mono text-ink-dim">tanpa poster · {cat}</div>}
-                <div className="mt-1 text-[22px] font-extrabold leading-tight">{info.topic}</div>
-              </div>
-            )
+              ) : (
+                <div className="rounded-2xl bg-surface-2 border border-line p-5 mb-3">
+                  <StatusBadge info={info} />
+                  {cat && <div className="mt-2 text-[10px] font-mono text-ink-dim">tanpa poster · {cat}</div>}
+                </div>
+              )}
+              <div className="text-[22px] font-extrabold leading-tight mb-4">{info.topic}</div>
+            </>
           ) : (
             <div className="flex gap-3 bg-surface-2 border border-line rounded-2xl p-3 mb-4">
               <Thumb

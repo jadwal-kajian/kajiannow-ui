@@ -489,13 +489,20 @@ const Home = () => {
     return filteredData.filter((it) => getKajianStatus(it) === quickStatus);
   }, [filteredData, quickStatus]);
 
-  // Nearest-first ordering for the peek card + carousel.
-  const sortedByDistance = useMemo(() => {
-    if (!userLocation) return mapData;
-    return [...mapData].sort((a, b) => distanceKm(userLocation, a) - distanceKm(userLocation, b));
+  // Ordering for the peek list + carousel: status first (ongoing → upcoming →
+  // finished/unknown), then nearest within each — so finished kajian sink to the
+  // end and the user sees what's live or coming up first.
+  const sortedForDisplay = useMemo(() => {
+    const rank = { ongoing: 0, upcoming: 1, passed: 2 };
+    return [...mapData].sort((a, b) => {
+      const ra = rank[getKajianStatus(a)] ?? 3;
+      const rb = rank[getKajianStatus(b)] ?? 3;
+      if (ra !== rb) return ra - rb;
+      if (!userLocation) return 0;
+      return distanceKm(userLocation, a) - distanceKm(userLocation, b);
+    });
   }, [mapData, userLocation]);
-  const nearest = sortedByDistance[0] || null;
-  const carousel = sortedByDistance.slice(0, 12);
+  const carousel = sortedForDisplay.slice(0, 12);
   const locCount = useMemo(() => new Set(mapData.map((d) => `${d.lat},${d.lng}`)).size, [mapData]);
   const cityLabel = selectedCity || data[0]?.city || "Indonesia";
 
@@ -584,26 +591,32 @@ const Home = () => {
             <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} />
           </button>
 
-          {/* Nearest peek card */}
-          {nearest && (
-            <div className="absolute left-3 right-3 bottom-3 z-[1000]">
-              <div className="mb-1.5 ml-1.5 text-[11px] font-extrabold tracking-wide uppercase text-ink-dim drop-shadow-[0_1px_2px_rgba(0,0,0,.25)]">
+          {/* Nearby kajian — horizontal list, status-first (ongoing/upcoming
+              before finished), then nearest. */}
+          {carousel.length > 0 && (
+            <div className="absolute left-0 right-0 bottom-3 z-[1000]">
+              <div className="mb-1.5 ml-4 text-[11px] font-extrabold tracking-wide uppercase text-ink-dim drop-shadow-[0_1px_2px_rgba(0,0,0,.25)]">
                 Kajian terdekat
               </div>
-              <button
-                onClick={() => openKajian(nearest)}
-                className="w-full flex gap-3 items-stretch bg-surface border border-line rounded-2xl p-2.5 shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)] text-left active:scale-[.99] transition-transform"
-              >
-                <PosterThumb info={nearest} className="w-14 h-14 flex-none rounded-xl" />
-                <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
-                  <StatusPill status={getKajianStatus(nearest)} size="xs" />
-                  <div className="truncate text-sm font-bold text-ink">{nearest.topic}</div>
-                  <div className="flex items-center gap-1.5 text-[12px] text-ink-dim">
-                    <FontAwesomeIcon icon={faClock} className="text-[11px]" />
-                    <span className="truncate">{formatTimeRange(nearest, { endFallback: "Selesai" })}</span>
-                  </div>
-                </div>
-              </button>
+              <div className="flex gap-3 overflow-x-auto px-3 pb-1 kn-noscroll">
+                {carousel.map((item, i) => (
+                  <button
+                    key={item.id ?? i}
+                    onClick={() => openKajian(item)}
+                    className="flex-none w-[260px] flex gap-3 items-stretch bg-surface border border-line rounded-2xl p-2.5 shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)] text-left active:scale-[.99] transition-transform"
+                  >
+                    <PosterThumb info={item} className="w-14 h-14 flex-none rounded-xl" />
+                    <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
+                      <StatusPill status={getKajianStatus(item)} size="xs" />
+                      <div className="truncate text-sm font-bold text-ink">{item.topic}</div>
+                      <div className="flex items-center gap-1.5 text-[12px] text-ink-dim">
+                        <FontAwesomeIcon icon={faClock} className="text-[11px]" />
+                        <span className="truncate">{formatTimeRange(item, { endFallback: "Selesai" })}</span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </>
