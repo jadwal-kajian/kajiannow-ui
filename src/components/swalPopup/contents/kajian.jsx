@@ -471,17 +471,16 @@ function KajianPopup({ info, group, close }) {
       <div className="relative flex flex-col bg-surface text-ink text-left">
         {lightboxEl}
         {/* Sticky header: close · title · A/B toggle */}
-        <div className="flex items-center gap-2 px-3 py-2.5 border-b border-line">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-line">
+          <span className="flex-1 font-bold">Detail Kajian</span>
           <button
             type="button"
             onClick={close}
             aria-label="Tutup"
-            className="w-9 h-9 flex-none rounded-xl bg-surface-2 border border-line text-ink flex items-center justify-center"
+            className="w-9 h-9 flex-none rounded-xl bg-surface-2 border border-line text-ink-dim hover:text-ink flex items-center justify-center"
           >
             <FontAwesomeIcon icon={faTimes} />
           </button>
-          <span className="flex-1 text-center font-bold">Detail Kajian</span>
-          <span className="w-9 flex-none" aria-hidden="true" />
         </div>
 
         {/* Scrollable body */}

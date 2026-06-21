@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEye, faEyeSlash, faBell, faSpinner, faLocationCrosshairs, faMagnifyingGlass,
-  faSliders, faPlus, faCircleInfo, faClock,
+  faSliders, faPlus, faCircleInfo, faClock, faChevronLeft, faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -407,6 +407,15 @@ const Home = () => {
     setSelectedCategories([]);
   };
 
+  // Step the selected date by whole days (quick prev/next-day nav).
+  const changeDay = (delta) => {
+    setSelectedDate((prev) => {
+      const next = new Date(prev);
+      next.setDate(next.getDate() + delta);
+      return next;
+    });
+  };
+
   const showFilter = () => {
     const filterProps = {
       filteredData,
@@ -522,15 +531,29 @@ const Home = () => {
       {/* Floating map controls */}
       {(
         <>
-          <div className="absolute top-3 left-3 right-[60px] z-[1000]">
+          <div className="absolute top-3 left-3 right-[60px] z-[1000] flex items-center gap-1.5">
+            <button
+              onClick={() => changeDay(-1)}
+              aria-label="Hari sebelumnya"
+              className="flex-none w-9 h-12 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-90 transition-transform"
+            >
+              <FontAwesomeIcon icon={faChevronLeft} />
+            </button>
             <button
               onClick={showFilter}
               aria-label="Saring kajian dan pilih tanggal"
-              className="w-full flex items-center gap-2.5 bg-surface border border-line rounded-2xl px-3.5 py-3 shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] text-left active:scale-[.99] transition-transform"
+              className="flex-1 min-w-0 flex items-center gap-2 h-12 bg-surface border border-line rounded-2xl px-3 shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] text-left active:scale-[.99] transition-transform"
             >
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-accent" />
-              <span className="flex-1 truncate text-ink-dim text-sm">{showDate || "Cari kajian, topik, masjid…"}</span>
-              <FontAwesomeIcon icon={faSliders} className={hasActiveFilters ? "text-accent" : "text-ink"} />
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-accent shrink-0" />
+              <span className="flex-1 truncate text-ink-dim text-sm">{showDate || "Cari kajian…"}</span>
+              <FontAwesomeIcon icon={faSliders} className={`shrink-0 ${hasActiveFilters ? "text-accent" : "text-ink"}`} />
+            </button>
+            <button
+              onClick={() => changeDay(1)}
+              aria-label="Hari berikutnya"
+              className="flex-none w-9 h-12 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-90 transition-transform"
+            >
+              <FontAwesomeIcon icon={faChevronRight} />
             </button>
           </div>
 
