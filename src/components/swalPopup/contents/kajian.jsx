@@ -24,26 +24,17 @@ import { REACT } from "../../../services/api";
 import { hasReacted, setReacted, getCounts, setCounts } from "../../../utils/reactions";
 import { ShowPopupInfo } from "../../kajianMap/ShowPopupInfo";
 
-// Square poster thumbnail; striped placeholder with the first tag when imageless.
+// Square poster thumbnail. Nothing renders when there's no poster — the card's
+// text just fills the width (cleaner than an empty placeholder).
 function Thumb({ info, className = "", onClick }) {
-  const cat = String(info.tags || "").split(",")[0]?.trim();
-  if (info.src_image) {
-    return (
-      <img
-        src={`${BASE_URL}/${info.src_image}`}
-        alt=""
-        onClick={onClick}
-        className={`object-cover ${onClick ? "cursor-zoom-in" : ""} ${className}`}
-      />
-    );
-  }
+  if (!info.src_image) return null;
   return (
-    <div
-      className={`flex items-end p-1.5 ${className}`}
-      style={{ background: "repeating-linear-gradient(135deg, var(--kn-surface-2) 0 10px, var(--kn-amber-soft) 10px 20px)" }}
-    >
-      {cat && <span className="rounded bg-surface/80 px-1.5 py-0.5 text-[9px] font-semibold text-ink-dim">{cat}</span>}
-    </div>
+    <img
+      src={`${BASE_URL}/${info.src_image}`}
+      alt=""
+      onClick={onClick}
+      className={`object-cover ${onClick ? "cursor-zoom-in" : ""} ${className}`}
+    />
   );
 }
 

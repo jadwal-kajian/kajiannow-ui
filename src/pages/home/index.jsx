@@ -107,25 +107,11 @@ function StatusPill({ status, size = "sm" }) {
 
 StatusPill.propTypes = { status: PropTypes.string, size: PropTypes.string };
 
-// Square poster thumbnail; falls back to a striped placeholder with the first tag.
+// Square poster thumbnail. Nothing renders when there's no poster — the card's
+// text just fills the width (cleaner than an empty placeholder).
 function PosterThumb({ info, className = "" }) {
-  const cat = String(info.tags || "").split(",")[0]?.trim();
-  if (info.src_image) {
-    return <img src={`${BASE_URL}/${info.src_image}`} alt="" className={`object-cover ${className}`} />;
-  }
-  return (
-    <div
-      className={`flex items-end p-1.5 ${className}`}
-      style={{
-        background:
-          "repeating-linear-gradient(135deg, var(--kn-surface-2) 0 10px, var(--kn-amber-soft) 10px 20px)",
-      }}
-    >
-      {cat && (
-        <span className="rounded bg-surface/80 px-1.5 py-0.5 text-[9px] font-semibold text-ink-dim">{cat}</span>
-      )}
-    </div>
-  );
+  if (!info.src_image) return null;
+  return <img src={`${BASE_URL}/${info.src_image}`} alt="" className={`object-cover ${className}`} />;
 }
 
 PosterThumb.propTypes = { info: PropTypes.object.isRequired, className: PropTypes.string };
