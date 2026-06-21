@@ -489,15 +489,15 @@ const Home = () => {
     return filteredData.filter((it) => getKajianStatus(it) === quickStatus);
   }, [filteredData, quickStatus]);
 
-  // Ordering for the peek list + carousel: status first (ongoing → upcoming →
-  // finished/unknown), then nearest within each — so finished kajian sink to the
-  // end and the user sees what's live or coming up first.
+  // "Kajian terdekat" ordering: nearest first (by distance to the user), but
+  // finished (Selesai) kajian always sink below the still-relevant ones. So it's
+  // distance-sorted among ongoing/upcoming, then distance-sorted finished.
   const sortedForDisplay = useMemo(() => {
-    const rank = { ongoing: 0, upcoming: 1, passed: 2 };
+    const finished = (it) => (getKajianStatus(it) === "passed" ? 1 : 0);
     return [...mapData].sort((a, b) => {
-      const ra = rank[getKajianStatus(a)] ?? 3;
-      const rb = rank[getKajianStatus(b)] ?? 3;
-      if (ra !== rb) return ra - rb;
+      const fa = finished(a);
+      const fb = finished(b);
+      if (fa !== fb) return fa - fb;
       if (!userLocation) return 0;
       return distanceKm(userLocation, a) - distanceKm(userLocation, b);
     });
