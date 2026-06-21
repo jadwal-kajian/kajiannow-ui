@@ -537,7 +537,7 @@ const Home = () => {
       {/* Floating map controls */}
       {(
         <>
-          <div className="absolute top-3 left-3 right-[60px] z-[1000] flex items-center gap-1.5">
+          <div className="absolute top-[calc(env(safe-area-inset-top)+0.75rem)] left-3 right-[60px] max-w-[520px] z-[1000] flex items-center gap-1.5">
             <button
               onClick={() => changeDay(-1)}
               aria-label="Hari sebelumnya"
@@ -563,7 +563,7 @@ const Home = () => {
             </button>
           </div>
 
-          <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
+          <div className="absolute top-[calc(env(safe-area-inset-top)+0.75rem)] right-3 z-[1000] flex flex-col gap-2">
             <IconButton icon={faBell} onClick={showNotifySettings} label="Pengaturan notifikasi kajian terdekat" dot={notifySettings.enabled} />
             <IconButton
               icon={showAllInfo ? faEyeSlash : faEye}
@@ -578,7 +578,7 @@ const Home = () => {
           {/* Lapor pill + locate FAB */}
           <button
             onClick={showReport}
-            className="absolute left-3 bottom-[150px] z-[1000] h-12 px-4 flex items-center gap-2 rounded-2xl bg-surface border border-line text-ink font-bold text-sm shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-95 transition-transform"
+            className="absolute left-3 bottom-[calc(env(safe-area-inset-bottom)+150px)] z-[1000] h-12 px-4 flex items-center gap-2 rounded-2xl bg-surface border border-line text-ink font-bold text-sm shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-95 transition-transform"
           >
             <FontAwesomeIcon icon={faPlus} className="text-accent" /> Lapor
           </button>
@@ -586,7 +586,7 @@ const Home = () => {
             onClick={handleSetCenter}
             disabled={isLocating}
             aria-label="Lokasi Saya"
-            className="absolute right-3 bottom-[150px] z-[1000] w-12 h-12 flex items-center justify-center rounded-2xl bg-accent text-accent-ink shadow-[0_12px_26px_-10px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
+            className="absolute right-3 bottom-[calc(env(safe-area-inset-bottom)+150px)] z-[1000] w-12 h-12 flex items-center justify-center rounded-2xl bg-accent text-accent-ink shadow-[0_12px_26px_-10px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
           >
             <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} />
           </button>
@@ -594,7 +594,7 @@ const Home = () => {
           {/* Nearby kajian — horizontal list, status-first (ongoing/upcoming
               before finished), then nearest. */}
           {carousel.length > 0 && (
-            <div className="absolute left-0 right-0 bottom-3 z-[1000]">
+            <div className="absolute left-0 right-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-[1000]">
               <div className="mb-2 ml-4">
                 <span className="inline-block rounded-full bg-surface border border-line px-3 py-1 text-[11px] font-extrabold tracking-wide uppercase text-ink shadow-[0_8px_18px_-10px_rgba(60,40,10,.5)]">
                   Kajian terdekat
