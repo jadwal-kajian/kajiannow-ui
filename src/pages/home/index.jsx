@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEye, faEyeSlash, faBell, faSpinner, faLocationCrosshairs, faMagnifyingGlass,
-  faSliders, faPlus, faCircleInfo, faClock, faChevronLeft, faChevronRight,
+  faSliders, faPlus, faCircleInfo, faClock, faChevronLeft, faChevronRight, faLocationDot,
 } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -85,6 +85,12 @@ const locationCache = {
 };
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+// Human distance: "850 m" under 1 km, else "1.2 km". Null when unknown.
+const fmtDist = (km) => {
+  if (km == null || !isFinite(km)) return null;
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+};
 
 // Status → pill label + token classes (shared by the peek card and carousel).
 const STATUS_PILL = {
@@ -589,27 +595,40 @@ const Home = () => {
               before finished), then nearest. */}
           {carousel.length > 0 && (
             <div className="absolute left-0 right-0 bottom-3 z-[1000]">
-              <div className="mb-1.5 ml-4 text-[11px] font-extrabold tracking-wide uppercase text-ink-dim drop-shadow-[0_1px_2px_rgba(0,0,0,.25)]">
-                Kajian terdekat
+              <div className="mb-2 ml-4">
+                <span className="inline-block rounded-full bg-surface border border-line px-3 py-1 text-[11px] font-extrabold tracking-wide uppercase text-ink shadow-[0_8px_18px_-10px_rgba(60,40,10,.5)]">
+                  Kajian terdekat
+                </span>
               </div>
               <div className="flex gap-3 overflow-x-auto px-3 pb-1 kn-noscroll">
-                {carousel.map((item, i) => (
-                  <button
-                    key={item.id ?? i}
-                    onClick={() => openKajian(item)}
-                    className="flex-none w-[260px] flex gap-3 items-stretch bg-surface border border-line rounded-2xl p-2.5 shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)] text-left active:scale-[.99] transition-transform"
-                  >
-                    <PosterThumb info={item} className="w-14 h-14 flex-none rounded-xl" />
-                    <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
-                      <StatusPill status={getKajianStatus(item)} size="xs" />
-                      <div className="truncate text-sm font-bold text-ink">{item.topic}</div>
-                      <div className="flex items-center gap-1.5 text-[12px] text-ink-dim">
-                        <FontAwesomeIcon icon={faClock} className="text-[11px]" />
-                        <span className="truncate">{formatTimeRange(item, { endFallback: "Selesai" })}</span>
+                {carousel.map((item, i) => {
+                  const dist = userLocation ? fmtDist(distanceKm(userLocation, item)) : null;
+                  return (
+                    <button
+                      key={item.id ?? i}
+                      onClick={() => openKajian(item)}
+                      className="flex-none w-[260px] flex gap-3 items-stretch bg-surface border border-line rounded-2xl p-2.5 shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)] text-left active:scale-[.99] transition-transform"
+                    >
+                      <PosterThumb info={item} className="w-14 h-14 flex-none rounded-xl" />
+                      <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
+                        <div className="flex items-center gap-2">
+                          <StatusPill status={getKajianStatus(item)} size="xs" />
+                          {dist && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-accent shrink-0">
+                              <FontAwesomeIcon icon={faLocationDot} className="text-[10px]" />
+                              {dist}
+                            </span>
+                          )}
+                        </div>
+                        <div className="truncate text-sm font-bold text-ink">{item.topic}</div>
+                        <div className="flex items-center gap-1.5 text-[12px] text-ink-dim">
+                          <FontAwesomeIcon icon={faClock} className="text-[11px]" />
+                          <span className="truncate">{formatTimeRange(item, { endFallback: "Selesai" })}</span>
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
