@@ -326,8 +326,6 @@ function KajianPopup({ info, group, close }) {
   const [showScrollHint, setShowScrollHint] = useState(false);
   // Full-size poster lightbox; holds the image URL when open, null when closed.
   const [lightboxSrc, setLightboxSrc] = useState(null);
-  // Flyer layout: "a" = poster-forward hero on top, "b" = compact side thumbnail.
-  const [cardVariant, setCardVariant] = useState("a");
 
   useEffect(() => {
     const checkScroll = () => {
@@ -482,7 +480,7 @@ function KajianPopup({ info, group, close }) {
       <div className="relative flex flex-col bg-surface text-ink">
         {lightboxEl}
         {/* Sticky header: close · title · A/B toggle */}
-        <div className="flex items-center justify-between gap-2 px-3 py-2.5 border-b border-line">
+        <div className="flex items-center gap-2 px-3 py-2.5 border-b border-line">
           <button
             type="button"
             onClick={close}
@@ -491,69 +489,38 @@ function KajianPopup({ info, group, close }) {
           >
             <FontAwesomeIcon icon={faTimes} />
           </button>
-          <span className="font-bold">Detail Kajian</span>
-          <div className="flex items-center rounded-full bg-surface-2 border border-line p-0.5 text-[11px] font-bold">
-            {["a", "b"].map((v) => (
-              <button
-                key={v}
-                onClick={() => setCardVariant(v)}
-                aria-label={`Tampilan ${v.toUpperCase()}`}
-                className={`px-2.5 py-1 rounded-full uppercase transition-colors ${
-                  cardVariant === v ? "bg-accent text-accent-ink" : "text-ink-dim"
-                }`}
-              >
-                {v}
-              </button>
-            ))}
-          </div>
+          <span className="flex-1 text-center font-bold">Detail Kajian</span>
+          <span className="w-9 flex-none" aria-hidden="true" />
         </div>
 
         {/* Scrollable body */}
         <div ref={scrollRef} className="overflow-y-auto px-4 py-4 scroll-smooth" style={{ maxHeight: "calc(92vh - 168px)" }}>
-          {/* Hero — variant A: poster-forward; variant B: compact card.
-              Title sits BELOW the poster (real flyers already carry their own
-              title, so overlaying ours doubles up / collides). */}
-          {cardVariant === "a" ? (
-            <>
-              {posterUrl ? (
-                <div className="relative rounded-2xl overflow-hidden mb-3 aspect-[4/5]">
-                  <img
-                    src={posterUrl}
-                    alt="poster"
-                    className="absolute inset-0 w-full h-full object-cover cursor-zoom-in"
-                    onClick={() => setLightboxSrc(posterUrl)}
-                  />
-                  <div className="absolute top-3 left-3">
-                    <StatusBadge info={info} />
-                  </div>
-                  {cat && (
-                    <div className="absolute top-3 right-3">
-                      <span className="rounded-lg bg-surface/80 px-2 py-1 text-[10px] font-mono text-ink-dim">poster · {cat}</span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="rounded-2xl bg-surface-2 border border-line p-5 mb-3">
-                  <StatusBadge info={info} />
-                  {cat && <div className="mt-2 text-[10px] font-mono text-ink-dim">tanpa poster · {cat}</div>}
+          {/* Poster-forward hero. Title sits BELOW the poster (real flyers carry
+              their own title, so overlaying ours doubles up / collides). */}
+          {posterUrl ? (
+            <div className="relative rounded-2xl overflow-hidden mb-3 aspect-[4/5]">
+              <img
+                src={posterUrl}
+                alt="poster"
+                className="absolute inset-0 w-full h-full object-cover cursor-zoom-in"
+                onClick={() => setLightboxSrc(posterUrl)}
+              />
+              <div className="absolute top-3 left-3">
+                <StatusBadge info={info} />
+              </div>
+              {cat && (
+                <div className="absolute top-3 right-3">
+                  <span className="rounded-lg bg-surface/80 px-2 py-1 text-[10px] font-mono text-ink-dim">poster · {cat}</span>
                 </div>
               )}
-              <div className="text-[22px] font-extrabold leading-tight mb-4">{info.topic}</div>
-            </>
+            </div>
           ) : (
-            <div className="flex gap-3 bg-surface-2 border border-line rounded-2xl p-3 mb-4">
-              <Thumb
-                info={info}
-                onClick={posterUrl ? () => setLightboxSrc(posterUrl) : undefined}
-                className="w-24 h-24 flex-none rounded-xl"
-              />
-              <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-                <StatusBadge info={info} />
-                <div className="text-lg font-extrabold leading-tight">{info.topic}</div>
-                {cat && <div className="text-[13px] font-semibold text-ink-dim">{cat}</div>}
-              </div>
+            <div className="rounded-2xl bg-surface-2 border border-line p-5 mb-3">
+              <StatusBadge info={info} />
+              {cat && <div className="mt-2 text-[10px] font-mono text-ink-dim">tanpa poster · {cat}</div>}
             </div>
           )}
+          <div className="text-[22px] font-extrabold leading-tight mb-4">{info.topic}</div>
 
           {/* Pemateri */}
           <div className="flex items-center gap-3 mb-4">

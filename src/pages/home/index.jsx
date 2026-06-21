@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEye, faEyeSlash, faBell, faSpinner, faLocationCrosshairs, faMagnifyingGlass,
-  faSliders, faPlus, faLocationDot, faMosque, faCircleInfo, faClock,
+  faSliders, faPlus, faCircleInfo, faClock,
 } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -165,10 +165,6 @@ const Home = () => {
   const [showAllInfo, setShowAllInfo] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
-  // Home layout: "a" = floating controls (default), "b" = app-bar + carousel.
-  const [homeVariant, setHomeVariant] = useState("a");
-  // Variant-B quick status chip: "all" | "ongoing" | "upcoming".
-  const [quickStatus, setQuickStatus] = useState("all");
   // A pending notification deep link (kajian to auto-open), captured once on mount.
   const deepLinkRef = useRef(readDeepLink());
   // Once the deep-linked kajian is centered, keep the map there (don't let a late
@@ -484,10 +480,7 @@ const Home = () => {
   };
 
   // Markers/cards reflect the variant-B quick status chip (all/ongoing/upcoming).
-  const mapData = useMemo(() => {
-    if (quickStatus === "all") return filteredData;
-    return filteredData.filter((it) => getKajianStatus(it) === quickStatus);
-  }, [filteredData, quickStatus]);
+  const mapData = filteredData;
 
   // "Kajian terdekat" ordering: nearest first (by distance to the user), but
   // finished (Selesai) kajian always sink below the still-relevant ones. So it's
@@ -503,19 +496,11 @@ const Home = () => {
     });
   }, [mapData, userLocation]);
   const carousel = sortedForDisplay.slice(0, 12);
-  const locCount = useMemo(() => new Set(mapData.map((d) => `${d.lat},${d.lng}`)).size, [mapData]);
-  const cityLabel = selectedCity || data[0]?.city || "Indonesia";
 
   const openKajian = useCallback(
     (item) => ShowPopupInfo({ location: item, group: groupTopicsByLocation(item.lat, item.lng, data) }),
     [data]
   );
-
-  const QUICK = [
-    { key: "all", label: "Semua" },
-    { key: "ongoing", label: "Berlangsung" },
-    { key: "upcoming", label: "Akan datang" },
-  ];
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-bg text-ink">
@@ -548,8 +533,8 @@ const Home = () => {
         )}
       </div>
 
-      {/* ===================== VARIANT A — floating controls ===================== */}
-      {homeVariant === "a" && (
+      {/* Floating map controls */}
+      {(
         <>
           <div className="absolute top-3 left-3 right-[60px] z-[1000]">
             <button
@@ -622,118 +607,22 @@ const Home = () => {
         </>
       )}
 
-      {/* ===================== VARIANT B — app-bar + carousel ===================== */}
-      {homeVariant === "b" && (
-        <>
-          <div className="absolute top-0 left-0 right-0 z-[1000] bg-surface border-b border-line shadow-[0_8px_24px_-16px_rgba(60,40,10,.5)] px-4 pt-3 pb-3">
-            <div className="flex items-center justify-between mb-2.5">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-accent text-accent-ink flex items-center justify-center">
-                    <FontAwesomeIcon icon={faMosque} className="text-[12px]" />
-                  </span>
-                  <span className="text-lg font-extrabold">KajianNow</span>
-                </div>
-                <div className="flex items-center gap-1.5 mt-0.5 text-[12px] font-semibold text-ink-dim">
-                  <FontAwesomeIcon icon={faLocationDot} className="text-accent" /> {cityLabel} · {locCount} lokasi
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <IconButton icon={faBell} onClick={showNotifySettings} label="Pengaturan notifikasi kajian terdekat" dot={notifySettings.enabled} />
-                <ThemeToggle />
-              </div>
-            </div>
-            <button
-              onClick={showFilter}
-              className="w-full flex items-center gap-2.5 bg-surface-2 border border-line rounded-xl px-3 py-2.5 text-left"
-            >
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-accent" />
-              <span className="flex-1 truncate text-ink-dim text-[13px]">{showDate || "Cari kajian, topik, masjid…"}</span>
-            </button>
-            <div className="flex gap-2 overflow-x-auto mt-2.5 pb-0.5 kn-noscroll">
-              {QUICK.map((c) => {
-                const on = quickStatus === c.key;
-                return (
-                  <button
-                    key={c.key}
-                    onClick={() => setQuickStatus(c.key)}
-                    className={`flex-none px-3 py-1.5 rounded-full text-[12px] font-bold border transition-colors ${
-                      on ? "bg-accent text-accent-ink border-accent" : "bg-surface-2 text-ink border-line"
-                    }`}
-                  >
-                    {c.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <button
-            onClick={handleSetCenter}
-            disabled={isLocating}
-            aria-label="Lokasi Saya"
-            className="absolute right-3 bottom-[170px] z-[1000] w-12 h-12 flex items-center justify-center rounded-2xl bg-accent text-accent-ink shadow-[0_12px_26px_-10px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
-          >
-            <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} />
-          </button>
-
-          {/* Bottom carousel */}
-          {carousel.length > 0 && (
-            <div className="absolute left-0 right-0 bottom-3 z-[1000] flex gap-3 overflow-x-auto px-3 pb-1 kn-noscroll">
-              {carousel.map((item, i) => (
-                <button
-                  key={item.id ?? i}
-                  onClick={() => openKajian(item)}
-                  className="flex-none w-[230px] flex gap-2.5 bg-surface border border-line rounded-2xl p-2.5 shadow-[0_14px_30px_-16px_rgba(60,40,10,.55)] text-left active:scale-[.99] transition-transform"
-                >
-                  <PosterThumb info={item} className="w-14 h-14 flex-none rounded-xl" />
-                  <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
-                    <StatusPill status={getKajianStatus(item)} size="xs" />
-                    <div className="truncate text-[13px] font-bold text-ink">{item.topic}</div>
-                    <div className="truncate text-[11px] text-ink-dim">{item.loc_name}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-
-      {/* A/B layout switch (dev/preview) */}
-      <div className="absolute left-1/2 -translate-x-1/2 bottom-[150px] z-[1000] flex items-center rounded-full bg-surface border border-line p-0.5 text-[11px] font-bold shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)]">
-        {["a", "b"].map((v) => (
-          <button
-            key={v}
-            onClick={() => setHomeVariant(v)}
-            aria-label={`Tata letak ${v.toUpperCase()}`}
-            className={`px-3 py-1 rounded-full uppercase transition-colors ${
-              homeVariant === v ? "bg-accent text-accent-ink" : "text-ink-dim"
-            }`}
-          >
-            {v}
-          </button>
-        ))}
-      </div>
-
       {/* Empty state */}
       {!loading && mapCenter && mapData.length === 0 && (
         <div className="pointer-events-none absolute inset-0 z-[900] flex items-center justify-center p-4">
           <div className="pointer-events-auto max-w-[300px] rounded-2xl bg-surface border border-line px-5 py-4 text-center shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)]">
             <FontAwesomeIcon icon={faMagnifyingGlass} className="text-2xl text-accent" />
             <p className="mt-2 font-bold text-ink">
-              {hasActiveFilters || quickStatus !== "all" ? "Tidak ada kajian yang cocok" : "Belum ada kajian pada tanggal ini"}
+              {hasActiveFilters ? "Tidak ada kajian yang cocok" : "Belum ada kajian pada tanggal ini"}
             </p>
             <p className="mt-1 text-[12px] text-ink-dim">
-              {hasActiveFilters || quickStatus !== "all"
+              {hasActiveFilters
                 ? "Coba ubah atau hapus filter Anda."
                 : "Coba pilih tanggal lain atau periksa kembali nanti."}
             </p>
-            {(hasActiveFilters || quickStatus !== "all") && (
+            {hasActiveFilters && (
               <button
-                onClick={() => {
-                  clearFilters();
-                  setQuickStatus("all");
-                }}
+                onClick={clearFilters}
                 className="mt-3 rounded-full bg-accent px-4 py-1.5 text-[12px] font-bold text-accent-ink active:scale-95 transition-transform"
               >
                 Hapus filter

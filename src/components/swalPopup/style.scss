@@ -10,9 +10,9 @@
 }
 
 .swal2-container {
-  padding: 0;
-  // Bottom-anchored, horizontally centered (so it reads as a sheet on phones
-  // and a centered card-sheet on wide screens).
+  // Bottom-anchored, horizontally centered. A little inset so the sheet floats
+  // as a fully-rounded card (no square bottom corners flush to the edge).
+  padding: 0 8px 12px;
   align-items: flex-end;
   justify-items: center;
 }
@@ -23,7 +23,7 @@
   max-width: 520px;
   margin: 0;
   max-height: 92vh;
-  border-radius: 26px 26px 0 0;
+  border-radius: 24px;
   // Match the design tokens so the popup chrome follows the active theme
   // (no white sliver behind dark-mode content).
   background: var(--kn-surface);
