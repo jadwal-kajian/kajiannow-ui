@@ -483,22 +483,34 @@ const Home = () => {
     });
   };
 
-  // Markers/cards reflect the variant-B quick status chip (all/ongoing/upcoming).
   const mapData = filteredData;
 
+  // Precompute status + distance ONCE per item (O(n)) so the sort comparator and
+  // the card render do O(1) lookups instead of recomputing moments/PrayerTimes
+  // (status) and great-circle math (distance) on every comparison.
+  const statusByItem = useMemo(() => {
+    const m = new Map();
+    for (const it of mapData) m.set(it, getKajianStatus(it));
+    return m;
+  }, [mapData]);
+  const distByItem = useMemo(() => {
+    const m = new Map();
+    if (userLocation) for (const it of mapData) m.set(it, distanceKm(userLocation, it));
+    return m;
+  }, [mapData, userLocation]);
+
   // "Kajian terdekat" ordering: nearest first (by distance to the user), but
-  // finished (Selesai) kajian always sink below the still-relevant ones. So it's
-  // distance-sorted among ongoing/upcoming, then distance-sorted finished.
+  // finished (Selesai) kajian always sink below the still-relevant ones.
   const sortedForDisplay = useMemo(() => {
-    const finished = (it) => (getKajianStatus(it) === "passed" ? 1 : 0);
+    const finished = (it) => (statusByItem.get(it) === "passed" ? 1 : 0);
     return [...mapData].sort((a, b) => {
       const fa = finished(a);
       const fb = finished(b);
       if (fa !== fb) return fa - fb;
       if (!userLocation) return 0;
-      return distanceKm(userLocation, a) - distanceKm(userLocation, b);
+      return (distByItem.get(a) ?? Infinity) - (distByItem.get(b) ?? Infinity);
     });
-  }, [mapData, userLocation]);
+  }, [mapData, userLocation, statusByItem, distByItem]);
   const carousel = sortedForDisplay.slice(0, 12);
 
   const openKajian = useCallback(
@@ -605,7 +617,7 @@ const Home = () => {
               </div>
               <div className="flex gap-3 overflow-x-auto px-3 pb-1 kn-noscroll">
                 {carousel.map((item, i) => {
-                  const dist = userLocation ? fmtDist(distanceKm(userLocation, item)) : null;
+                  const dist = fmtDist(distByItem.get(item));
                   return (
                     <button
                       key={item.id ?? i}
@@ -615,7 +627,7 @@ const Home = () => {
                       <PosterThumb info={item} className="w-14 h-14 flex-none rounded-xl" />
                       <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
                         <div className="flex items-center gap-2">
-                          <StatusPill status={getKajianStatus(item)} size="xs" />
+                          <StatusPill status={statusByItem.get(item)} size="xs" />
                           {dist && (
                             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-accent shrink-0">
                               <FontAwesomeIcon icon={faLocationDot} className="text-[10px]" />

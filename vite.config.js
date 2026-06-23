@@ -23,7 +23,10 @@ export default defineConfig({
           react: ['react', 'react-dom', 'react-router-dom'],
           leaflet: ['leaflet', 'react-leaflet'],
           datetime: ['moment', 'date-fns', 'adhan'],
-          ui: ['sweetalert2', 'sweetalert2-react-content', 'react-select', 'react-datepicker'],
+          // react-select + react-datepicker are NOT here on purpose: they're used
+          // only inside the filter sheet, which is lazy-loaded (see swalPopup/index),
+          // so they split into their own on-demand chunk off the initial path.
+          ui: ['sweetalert2', 'sweetalert2-react-content'],
         },
       },
     },
