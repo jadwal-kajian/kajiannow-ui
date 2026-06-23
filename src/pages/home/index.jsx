@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEye, faEyeSlash, faBell, faSpinner, faLocationCrosshairs, faMagnifyingGlass,
-  faSliders, faPlus, faCircleInfo, faClock, faChevronLeft, faChevronRight, faLocationDot,
+  faSliders, faPlus, faCircleInfo, faClock, faChevronLeft, faChevronRight, faLocationDot, faCalendar,
 } from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -256,7 +256,9 @@ const Home = () => {
     deepLinkDoneRef.current = true;
     setMapCenter({ lat: item.lat, lng: item.lng });
     setZoom(16);
-    ShowPopupInfo({ location: item, group: groupTopicsByLocation(item.lat, item.lng, data) });
+    // A notification targets ONE kajian — open its flyer directly (group:[item]),
+    // not the multi-session location sheet for a shared venue.
+    ShowPopupInfo({ location: item, group: [item] });
   }, [data]);
 
   const getUserLocation = useCallback((forceRefresh = false, requestHighAccuracy = false, silent = false) => {
@@ -409,8 +411,9 @@ const Home = () => {
     // Force refresh location with high accuracy when user clicks "Lokasi Saya"
     locationCache.clear();
     getUserLocation(true, true); // forceRefresh=true, requestHighAccuracy=true
-    setSelectedCity("");
-    setSelectedCategories([]);
+    // Route through clearFilters so the PERSISTED filter is wiped too — otherwise
+    // an untouched city dropdown silently resurrects the old city on next apply.
+    clearFilters();
   };
 
   // Step the selected date by whole days (quick prev/next-day nav).
@@ -550,9 +553,9 @@ const Home = () => {
               aria-label="Saring kajian dan pilih tanggal"
               className="flex-1 min-w-0 flex items-center gap-2 h-12 bg-surface border border-line rounded-2xl px-3 shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] text-left active:scale-[.99] transition-transform"
             >
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="text-accent shrink-0" />
-              <span className="flex-1 truncate text-ink-dim text-sm">{showDate || "Cari kajian…"}</span>
-              <FontAwesomeIcon icon={faSliders} className={`shrink-0 ${hasActiveFilters ? "text-accent" : "text-ink"}`} />
+              <FontAwesomeIcon icon={faCalendar} className="text-accent shrink-0" />
+              <span className="flex-1 truncate text-sm font-semibold text-ink">{showDate || "Pilih tanggal"}</span>
+              <FontAwesomeIcon icon={faSliders} className={`shrink-0 ${hasActiveFilters ? "text-accent" : "text-ink-dim"}`} />
             </button>
             <button
               onClick={() => changeDay(1)}
@@ -623,7 +626,7 @@ const Home = () => {
                         <div className="truncate text-sm font-bold text-ink">{item.topic}</div>
                         <div className="flex items-center gap-1.5 text-[12px] text-ink-dim">
                           <FontAwesomeIcon icon={faClock} className="text-[11px]" />
-                          <span className="truncate">{formatTimeRange(item, { endFallback: "Selesai" })}</span>
+                          <span className="truncate">{formatTimeRange(item, { endFallback: "selesai" })}</span>
                         </div>
                       </div>
                     </button>

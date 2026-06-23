@@ -53,6 +53,10 @@ const likeCountOf = (info) => {
   return c ? c.likes : Number(info.likes) || 0;
 };
 
+// Compact count (e.g. 1.284 → "1,3 rb"); small numbers render unchanged.
+const fmtCount = (n) =>
+  new Intl.NumberFormat("id", { notation: "compact", maximumFractionDigits: 1 }).format(Number(n) || 0);
+
 // Suka (like) + Akan Hadir (going) reactions for one kajian. Optimistic with a
 // localStorage-backed toggle, reconciled with the server's returned counts.
 function ReactionBar({ info }) {
@@ -117,10 +121,10 @@ function ReactionBar({ info }) {
   return (
     <div className="flex gap-2 pt-1">
       <button className={pill(liked, "ok")} onClick={() => toggle("like")} disabled={busy} aria-pressed={liked}>
-        <FontAwesomeIcon icon={faThumbsUp} /> Suka <span className="tabular-nums">{likes}</span>
+        <FontAwesomeIcon icon={faThumbsUp} /> Suka <span className="tabular-nums">{fmtCount(likes)}</span>
       </button>
       <button className={pill(attending, "accent")} onClick={() => toggle("going")} disabled={busy} aria-pressed={attending}>
-        <FontAwesomeIcon icon={faUserCheck} /> Akan Hadir <span className="tabular-nums">{going}</span>
+        <FontAwesomeIcon icon={faUserCheck} /> Akan Hadir <span className="tabular-nums">{fmtCount(going)}</span>
       </button>
     </div>
   );
@@ -446,11 +450,11 @@ function KajianPopup({ info, group, close }) {
                 <div className="flex items-center gap-3 text-[12px] text-ink-dim mt-0.5">
                   <span className="inline-flex items-center gap-1">
                     <FontAwesomeIcon icon={faClock} className="text-[11px]" />
-                    {formatTimeRange(info, { endFallback: "Selesai" })}
+                    {formatTimeRange(info, { endFallback: "selesai" })}
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <FontAwesomeIcon icon={faThumbsUp} className="text-[11px]" />
-                    {likeCountOf(info)}
+                    {fmtCount(likeCountOf(info))}
                   </span>
                 </div>
               </div>
@@ -548,7 +552,7 @@ function KajianPopup({ info, group, close }) {
             <div className="flex items-center gap-3 px-4 py-3.5">
               <FontAwesomeIcon icon={faClock} className="w-5 text-accent flex-none" />
               <div className="min-w-0">
-                <div className="font-bold">{formatTimeRange(info, { endFallback: "Selesai" })}</div>
+                <div className="font-bold">{formatTimeRange(info, { endFallback: "selesai" })}</div>
                 {isPrayerRelative(info) && (
                   <div className="text-[12px] font-bold text-amber mt-0.5">Waktu mengikuti jadwal shalat</div>
                 )}
