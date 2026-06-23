@@ -17,8 +17,10 @@ export const ID_FormattedDate = (date) => {
 }
 
 export const formatDate = (dateString) => {
+  const d = new Date(dateString);
+  if (isNaN(d)) return "";
   const options = { day: "numeric", month: "long", year: "numeric" };
-  return new Date(dateString).toLocaleDateString("id-ID", options);
+  return d.toLocaleDateString("id-ID", options);
 }
 
 export const convertToDDMMYYYY = (date) => {
@@ -55,7 +57,7 @@ export const serialize = (obj) => {
 export const getDynamicCategory = (data) => {
   const alltags = [];
   data.forEach(el => {
-    const itemTags = el.tags.split(",").map((tag) => tag.trim());
+    const itemTags = String(el.tags || "").split(",").map((tag) => tag.trim());
     alltags.push(...itemTags)
   });
   const tags = [...new Set(alltags)];

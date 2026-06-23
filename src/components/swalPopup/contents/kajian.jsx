@@ -44,6 +44,13 @@ Thumb.propTypes = { info: PropTypes.object.isRequired, className: PropTypes.stri
 const isPrayerRelative = (info) =>
   /ba'?da|subuh|dzuhur|zuhur|ashar|maghrib|isya|jum'?at/i.test(`${info.time_start || ""} ${info.time || ""}`);
 
+// Like count, preferring the session-cached value (a reaction made this session)
+// over the page-load snapshot — keeps the location sheet in sync with the flyer.
+const likeCountOf = (info) => {
+  const c = info.id ? getCounts(info.id) : null;
+  return c ? c.likes : Number(info.likes) || 0;
+};
+
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 // Suka (like) + Akan Hadir (going) reactions for one kajian. Optimistic with a
@@ -443,7 +450,7 @@ function KajianPopup({ info, group, close }) {
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <FontAwesomeIcon icon={faThumbsUp} className="text-[11px]" />
-                    {Number(info.likes) || 0}
+                    {likeCountOf(info)}
                   </span>
                 </div>
               </div>
@@ -532,10 +539,12 @@ function KajianPopup({ info, group, close }) {
                 {!isBlank(info.addr) && <div className="text-[13px] text-ink-dim leading-tight mt-0.5">{info.addr}{info.city ? `, ${info.city}` : ""}</div>}
               </div>
             </div>
-            <div className="flex items-center gap-3 px-4 py-3.5 border-b border-line">
-              <FontAwesomeIcon icon={faCalendar} className="w-5 text-accent flex-none" />
-              <div className="font-bold">{formatDate(info.date)}</div>
-            </div>
+            {formatDate(info.date) && (
+              <div className="flex items-center gap-3 px-4 py-3.5 border-b border-line">
+                <FontAwesomeIcon icon={faCalendar} className="w-5 text-accent flex-none" />
+                <div className="font-bold">{formatDate(info.date)}</div>
+              </div>
+            )}
             <div className="flex items-center gap-3 px-4 py-3.5">
               <FontAwesomeIcon icon={faClock} className="w-5 text-accent flex-none" />
               <div className="min-w-0">
@@ -563,12 +572,12 @@ function KajianPopup({ info, group, close }) {
           )}
 
           {/* Contact + source */}
-          {(info.contact !== "" && info.contact !== "-") || hasSourceInfo(info) ? (
+          {(!isBlank(info.contact) && String(info.contact).trim() !== "-") || hasSourceInfo(info) ? (
             <div className="flex items-start gap-2 text-[12px] text-ink-dim mb-4">
               <FontAwesomeIcon icon={faCircleInfo} className="mt-0.5 flex-none" />
               <div className="min-w-0 space-y-0.5">
                 {hasSourceInfo(info) && <div>Sumber: <SourceInfo info={info} /></div>}
-                {info.contact !== "" && info.contact !== "-" && <div>Kontak {info.contact}</div>}
+                {!isBlank(info.contact) && String(info.contact).trim() !== "-" && <div>Kontak {info.contact}</div>}
               </div>
             </div>
           ) : null}

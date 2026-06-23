@@ -34,13 +34,14 @@
   --kn-border: #ece0cb;
   --kn-accent: #0d6b6e;
   --kn-accent-ink: #ffffff;
-  --kn-amber: #c98a2b;
+  /* Darkened for WCAG-AA text contrast on their light pill/surface backgrounds. */
+  --kn-amber: #946010;
   --kn-amber-soft: #ffe7be;
-  --kn-ok: #1f8a5b;
+  --kn-ok: #167a4e;
   --kn-ok-bg: #e3f3ea;
-  --kn-soon: #2f6fb0;
+  --kn-soon: #2a649f;
   --kn-soon-bg: #e6eef7;
-  --kn-done: #8a8478;
+  --kn-done: #645e55;
   --kn-done-bg: #efe9df;
   --kn-map-base: #f0dcb8;
 }
