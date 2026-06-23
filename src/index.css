@@ -150,3 +150,22 @@ body {
     opacity: 0;
   }
 }
+
+/* Keyboard focus ring — visible only for keyboard users (WCAG 2.4.7). */
+:focus-visible {
+  outline: 2px solid var(--kn-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Respect reduced-motion: stop the pin glow, user-dot pulse, sheet slide, etc. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

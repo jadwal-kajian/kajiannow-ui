@@ -24,6 +24,8 @@ import { REACT } from "../../../services/api";
 import { hasReacted, setReacted, getCounts, setCounts } from "../../../utils/reactions";
 import { ShowPopupInfo } from "../../kajianMap/ShowPopupInfo";
 
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 // Square poster thumbnail. Nothing renders when there's no poster — the card's
 // text just fills the width (cleaner than an empty placeholder).
 function Thumb({ info, className = "", onClick }) {
@@ -50,8 +52,6 @@ const likeCountOf = (info) => {
   const c = info.id ? getCounts(info.id) : null;
   return c ? c.likes : Number(info.likes) || 0;
 };
-
-const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 // Suka (like) + Akan Hadir (going) reactions for one kajian. Optimistic with a
 // localStorage-backed toggle, reconciled with the server's returned counts.
@@ -380,7 +380,7 @@ function KajianPopup({ info, group, close }) {
         onClick={() => setLightboxSrc(null)}
       >
         <button
-          className="absolute top-4 right-4 px-2 p-[6px] bg-white/20 text-white rounded-full flex items-center justify-center"
+          className="absolute top-4 right-4 w-10 h-10 bg-white/20 text-white rounded-full flex items-center justify-center"
           onClick={() => setLightboxSrc(null)}
           aria-label="Tutup"
         >
@@ -388,7 +388,7 @@ function KajianPopup({ info, group, close }) {
         </button>
         <img
           src={lightboxSrc}
-          alt="poster"
+          alt="Poster kajian"
           className="max-w-full max-h-full object-contain"
           onClick={(e) => e.stopPropagation()}
         />
@@ -498,7 +498,7 @@ function KajianPopup({ info, group, close }) {
             <div className="relative rounded-2xl overflow-hidden mb-3 aspect-[4/5]">
               <img
                 src={posterUrl}
-                alt="poster"
+                alt={`Poster: ${info.topic || "kajian"}`}
                 className="absolute inset-0 w-full h-full object-cover cursor-zoom-in"
                 onClick={() => setLightboxSrc(posterUrl)}
               />
@@ -506,7 +506,7 @@ function KajianPopup({ info, group, close }) {
                 <StatusBadge info={info} />
               </div>
               {cat && (
-                <div className="absolute top-3 right-3">
+                <div className="absolute top-3 right-3" aria-hidden="true">
                   <span className="rounded-lg bg-surface/80 px-2 py-1 text-[10px] font-mono text-ink-dim">poster · {cat}</span>
                 </div>
               )}

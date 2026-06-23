@@ -31,9 +31,15 @@ const getPinIcon = (status, count) => {
       count > 1
         ? `<div style="position:absolute;top:-7px;right:-9px;min-width:21px;height:21px;padding:0 5px;border-radius:11px;background:#0d6b6e;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid #fffdf8;z-index:2;">${count}</div>`
         : "";
+    // Glow only for still-relevant kajian — no signal (and no wasted compositor
+    // work) on finished ones, and none at all under prefers-reduced-motion (CSS).
+    const halo =
+      status && status !== "passed"
+        ? `<span style="position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:${c};animation:kn-glow 2.8s ease-in-out infinite;pointer-events:none;"></span>`
+        : "";
     const html = `<div style="position:relative;width:44px;display:flex;flex-direction:column;align-items:center;">
       <div style="position:relative;width:44px;height:44px;">
-        <span style="position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:${c};animation:kn-glow 2.8s ease-in-out infinite;pointer-events:none;"></span>
+        ${halo}
         <div style="position:relative;z-index:1;width:44px;height:44px;border-radius:50%;background:#fffdf8;border:3px solid ${c};box-shadow:0 7px 16px -5px rgba(60,40,10,.45);display:flex;align-items:center;justify-content:center;">
           ${quran(c)}${badge}
         </div>
@@ -76,6 +82,15 @@ const KajianMarker = ({ location, group, showAllInfo }) => {
       icon={markerIcon}
       eventHandlers={{
         click: () => ShowPopupInfo({ location, group }),
+        // Leaflet focuses divIcon markers (keyboard:true) but doesn't fire click
+        // on Enter/Space — wire it so keyboard users can open the flyer (WCAG 2.1.1).
+        keydown: (e) => {
+          const k = e.originalEvent?.key;
+          if (k === "Enter" || k === " " || k === "Spacebar") {
+            e.originalEvent.preventDefault();
+            ShowPopupInfo({ location, group });
+          }
+        },
       }}
     >
       <Popup autoPan={false} closeButton={false} offset={[0, -20]} autoClose={false} className="custom-leaflet-popup">

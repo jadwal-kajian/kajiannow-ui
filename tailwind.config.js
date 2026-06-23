@@ -33,17 +33,6 @@ export default {
         ok: { DEFAULT: "var(--kn-ok)", bg: "var(--kn-ok-bg)" },
         soon: { DEFAULT: "var(--kn-soon)", bg: "var(--kn-soon-bg)" },
         done: { DEFAULT: "var(--kn-done)", bg: "var(--kn-done-bg)" },
-
-        // ── Legacy palette (kept during the design migration) ──
-        "custom-gray": {
-          1: "#545454",
-        },
-        "custom-yellow": {
-          1: "#ffe7be",
-          2: "#edce93",
-          3: "#f1dcb7",
-          4: "#e1cca6"
-        },
       },
     },
   },
