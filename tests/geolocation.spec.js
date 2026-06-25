@@ -188,6 +188,59 @@ test.describe("Geolocation — in-app browser (Threads/Instagram)", () => {
   });
 });
 
+test.describe("Geolocation — notification deep link", () => {
+  // A kajian far from the user's location so "centered on kajian" vs
+  // "centered on user" is unambiguous.
+  const KAJIAN = {
+    id: "k1",
+    lat: -6.9,
+    lng: 107.6,
+    city: "Bandung",
+    tags: "Umum",
+    date: "2026-06-25",
+    time: "19:00",
+    title: "Kajian Test",
+    topic: "Topik Test",
+    speaker: "Ustadz Test",
+    mosque: "Masjid Test",
+  };
+
+  test("opening from a notification then clicking Lokasi Saya recenters on the user (not the kajian)", async ({ page }) => {
+    await mockApi(page, { schedule: [KAJIAN] });
+    await installGeoMock(page, {
+      // initial silent fix -> NETWORK_FIX; the button's request -> COARSE (distinct).
+      getCurrentPosition: [
+        { type: "success", coords: NETWORK_FIX, delay: 50 },
+        { type: "success", coords: COARSE, delay: 30 },
+      ],
+      watch: { type: "hang" },
+    });
+
+    // Arrive via the notification deep link.
+    await page.goto(`/?k=${KAJIAN.id}&d=${KAJIAN.date}&lat=${KAJIAN.lat}&lng=${KAJIAN.lng}`);
+
+    // The deep link centers the map on the kajian and opens its flyer.
+    await expect
+      .poll(async () => (await readGeoState(page)).centerLat)
+      .toBeCloseTo(KAJIAN.lat, 3);
+
+    // Close the flyer (the "schedule" popup) — while it's open, SweetAlert marks
+    // the rest of the page aria-hidden, so the button below is unreachable.
+    await page.getByRole("button", { name: "Tutup" }).first().click();
+
+    // Now click "Lokasi Saya": the map must move to the user's real location,
+    // not stay pinned on the deep-linked kajian.
+    await lokasiSayaBtn(page).click();
+
+    await expect
+      .poll(async () => (await readGeoState(page)).centerLat, { timeout: 5000 })
+      .toBeCloseTo(COARSE.latitude, 3);
+    const state = await readGeoState(page);
+    near(state.centerLng, COARSE.longitude);
+    near(state.userLat, COARSE.latitude);
+  });
+});
+
 test.describe("Geolocation — edge details", () => {
   test.beforeEach(async ({ page }) => {
     await mockApi(page);
