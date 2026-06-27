@@ -8,6 +8,8 @@ import {
   faDesktop,
   faTriangleExclamation,
   faChevronDown,
+  faMobileScreen,
+  faArrowUpFromBracket,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   MODAL_SHELL,
@@ -20,6 +22,27 @@ import {
 } from "./modalStyles";
 
 const supported = typeof window !== "undefined" && "Notification" in window;
+
+// iPhone/iPad detection (incl. iPadOS, which reports as "Macintosh" but has touch).
+const isIOS = () => {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return (
+    /iPad|iPhone|iPod/.test(ua) ||
+    (/Macintosh/.test(ua) && typeof document !== "undefined" && "ontouchend" in document)
+  );
+};
+
+// True when running as an installed PWA (added to Home Screen) — the only context
+// where iOS Safari exposes the Notification / Web Push API.
+const isStandalone = () =>
+  (typeof window !== "undefined" && !!window.matchMedia?.("(display-mode: standalone)").matches) ||
+  (typeof navigator !== "undefined" && navigator.standalone === true);
+
+// On iPhone, a missing Notification API isn't a dead end — it just means the site
+// must be added to the Home Screen first. Distinguish that from a truly
+// unsupported browser so we can show actionable steps instead of a red dead-end.
+const iosNeedsInstall = !supported && isIOS() && !isStandalone();
 
 // Reads the live OS-level permission ("default" | "granted" | "denied").
 const currentPermission = () => (supported ? Notification.permission : "denied");
@@ -142,9 +165,23 @@ const NotifySettingsPopup = ({ settings, onSave, close, userLocation, push = {} 
       />
 
       <div className={MODAL_CONTENT}>
-        {!supported && (
+        {iosNeedsInstall ? (
+          <div className="flex items-start gap-2 text-[12px] text-sky-900 bg-sky-50 border border-sky-200 rounded-xl p-3">
+            <FontAwesomeIcon icon={faMobileScreen} className="mt-0.5 shrink-0" />
+            <div className="text-left space-y-1">
+              <p className="font-semibold">Tambahkan ke Layar Utama dulu</p>
+              <p>Di iPhone, notifikasi hanya bisa diaktifkan bila situs dibuka dari ikon di Layar Utama (butuh iOS 16.4 atau lebih baru).</p>
+              <ol className="list-decimal pl-4 space-y-0.5">
+                <li>Buka situs ini di <span className="font-semibold">Safari</span> (bukan Chrome atau browser dalam aplikasi).</li>
+                <li>Ketuk tombol <span className="font-semibold">Bagikan</span> <FontAwesomeIcon icon={faArrowUpFromBracket} className="mx-0.5" /> di bilah bawah.</li>
+                <li>Pilih <span className="font-semibold">Tambah ke Layar Utama</span>.</li>
+                <li>Buka aplikasi dari ikon baru itu, lalu aktifkan notifikasi di sini.</li>
+              </ol>
+            </div>
+          </div>
+        ) : !supported ? (
           <p className="text-center text-[13px] text-red-700">Browser Anda tidak mendukung notifikasi.</p>
-        )}
+        ) : null}
         {blocked && (
           <div className="flex items-start gap-2 text-[12px] text-red-800 bg-red-100/70 border border-red-200 rounded-xl p-3">
             <FontAwesomeIcon icon={faTriangleExclamation} className="mt-0.5 shrink-0" />
