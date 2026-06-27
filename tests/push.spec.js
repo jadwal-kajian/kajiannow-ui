@@ -158,3 +158,34 @@ test.describe("Web Push subscription", () => {
     expect(await page.evaluate(() => window.__push.subscribeCalls)).toBe(0);
   });
 });
+
+test.describe("iPhone (Safari tab, not installed)", () => {
+  // Real iPhone Safari UA (iOS 16.4).
+  test.use({
+    userAgent:
+      "Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1",
+  });
+
+  test("shows 'Add to Home Screen' steps instead of a dead-end unsupported message", async ({ page }) => {
+    await mockApi(page, { schedule: [] });
+    await installGeoMock(page, {
+      getCurrentPosition: { type: "success", coords: USER, delay: 30 },
+    });
+    // iOS Safari tab: the Notification API is absent until the site is installed.
+    await page.addInitScript(() => {
+      try {
+        delete window.Notification;
+      } catch {
+        /* ignore */
+      }
+    });
+
+    await page.goto("/");
+    await page.getByRole("button", { name: "Pengaturan notifikasi kajian terdekat" }).click();
+
+    // Actionable install guidance, not the generic "browser tidak mendukung" dead end.
+    await expect(page.getByText("Tambahkan ke Layar Utama dulu")).toBeVisible();
+    await expect(page.getByText("Tambah ke Layar Utama")).toBeVisible();
+    await expect(page.getByText("Browser Anda tidak mendukung notifikasi.")).toHaveCount(0);
+  });
+});
