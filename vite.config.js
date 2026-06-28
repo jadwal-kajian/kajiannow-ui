@@ -18,6 +18,13 @@ export default defineConfig({
     // Split big, rarely-changing vendors into their own chunks so they download
     // in parallel and stay cached across app deploys (faster repeat visits).
     rollupOptions: {
+      // Two apps from one build: "/" = classic UI (index.html), "/new/" = redesign
+      // preview (new/index.html → src/new/main.jsx). Rollup mirrors each html's path
+      // into dist/, so new/index.html emits dist/new/index.html. nginx routes both.
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        new: path.resolve(__dirname, 'new/index.html'),
+      },
       output: {
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],

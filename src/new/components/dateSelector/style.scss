@@ -1,0 +1,85 @@
+/* Custom styles for the datepicker popup */
+.custom-datepicker-popup {
+  background-color: var(--kn-surface-2);
+  border-radius: 16px;
+  border-color: var(--kn-border);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  padding: 10px;
+}
+
+/* Custom header styles */
+.custom-datepicker-popup .react-datepicker__header {
+  background-color: var(--kn-surface-2);
+  color: var(--kn-text);
+  padding: 10px 15px;
+  border-radius: 6px 6px 0 0;
+  border-color: var(--kn-border);
+  text-align: center;
+  font-weight: bold;
+  .react-datepicker__current-month,
+  .react-datepicker__day-name {
+    color: var(--kn-text);
+  }
+}
+
+/* Navigation buttons in the header (previous/next month arrows) */
+.custom-datepicker-popup .react-datepicker__navigation {
+  background-color: var(--kn-accent);
+  color: var(--kn-accent-ink);
+  border-radius: 50%;
+}
+
+.custom-datepicker-popup .react-datepicker__navigation--previous,
+.custom-datepicker-popup .react-datepicker__navigation--next {
+  font-size: 18px;
+  padding: 5px;
+}
+
+.custom-datepicker-popup .react-datepicker__navigation--previous {
+  .react-datepicker__navigation-icon--previous::before {
+    right: -4px;
+    top: 8px;
+  }
+}
+
+.custom-datepicker-popup .react-datepicker__navigation--next {
+  .react-datepicker__navigation-icon--next::before {
+    left: -5px;
+    top: 8px;
+  }
+}
+
+.react-datepicker__year-read-view--down-arrow,
+.react-datepicker__month-read-view--down-arrow,
+.react-datepicker__month-year-read-view--down-arrow,
+.react-datepicker__navigation-icon::before {
+  border-color: var(--kn-surface-2);
+}
+
+/* Custom styling for the days */
+.custom-datepicker-popup .react-datepicker__day {
+  color: var(--kn-text);
+  font-size: 14px;
+}
+
+.custom-datepicker-popup .react-datepicker__day:hover {
+  background-color: var(--kn-surface);
+  color: var(--kn-text);
+}
+
+/* Style the selected day */
+.custom-datepicker-popup .react-datepicker__day--selected {
+  background-color: var(--kn-accent);
+  color: var(--kn-accent-ink);
+}
+
+/* Style the month/year picker */
+.custom-datepicker-popup .react-datepicker__current-month {
+  color: var(--kn-text);
+  font-weight: bold;
+}
+
+.react-datepicker-popper[data-placement^="bottom"] .react-datepicker__triangle {
+  fill: var(--kn-surface-2);
+  color: var(--kn-surface-2);
+}

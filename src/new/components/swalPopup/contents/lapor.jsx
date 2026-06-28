@@ -1,0 +1,42 @@
+import React, { useState } from "react";
+import { faCommentDots } from "@fortawesome/free-solid-svg-icons";
+import { MODAL_SHELL, MODAL_CONTENT, MODAL_ACTIONS, BTN_PRIMARY, ModalHeader, CloseButton } from "./modalStyles";
+
+const LaporPopup = ({ close }) => {
+  const [message, setMessage] = useState("");
+
+  const handleSend = () => {
+    const phoneNumber = "+6287712607883"; // Replace with the actual phone number
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  return (
+    <div className={MODAL_SHELL}>
+      <CloseButton onClose={close} />
+      <ModalHeader
+        icon={faCommentDots}
+        title="Laporkan Masalah / Saran"
+        subtitle="Untuk jadwal atau kajian di aplikasi ini."
+      />
+      <div className={MODAL_CONTENT}>
+        <p className="text-center">Silakan laporkan masalah / saran yang Anda temui di aplikasi ini.</p>
+        <p className="text-center">Semoga Allah membalas kebaikan atas kontribusi Anda.</p>
+        <textarea
+          className="w-full p-3 border border-line rounded-xl mb-4 bg-surface-2 text-ink placeholder-ink-dim"
+          rows="4"
+          placeholder={`Contoh:\n- Ada kekeliruan jadwal kajian di lokasi x tidak sesuai...\n- Bisakah menambahkan kajian di lokasi z, saya ada grup whatsappnya...`}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+        ></textarea>
+      </div>
+      <div className={MODAL_ACTIONS}>
+        <button className={BTN_PRIMARY} onClick={handleSend}>
+          Kirim
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default LaporPopup;

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Plus Jakarta Sans is self-hosted via @font-face in src/new/index.css (bundled, offline). -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/plus-jakarta-sans-latin.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/plus-jakarta-sans-latin-ext.woff2" />
+    <title>Kajian Now — Tampilan Baru</title>
+    <!-- Apply the saved theme before paint to avoid a light/dark flash on load. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("kn_theme");
+          if (t !== "light" && t !== "dark") {
+            t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          }
+          document.documentElement.dataset.theme = t;
+        } catch (e) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/new/main.jsx"></script>
+  </body>
+</html>
