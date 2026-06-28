@@ -13,7 +13,7 @@ import LocationLoadingPopup from "../../components/swalPopup/contents/locationLo
 import LaporPopup from "../../components/swalPopup/contents/lapor";
 import NotifySettingsPopup from "../../components/swalPopup/contents/notifySettings";
 import { useGeolocation, isInAppBrowser } from "../../hooks/useGeolocation";
-import { useNearbyKajianNotifications } from "../../hooks/useNearbyKajianNotifications";
+import { useNearbyKajianNotifications, NOTIFIED_KEY } from "../../hooks/useNearbyKajianNotifications";
 import { usePushSubscription } from "../../hooks/usePushSubscription";
 import { REACTIONS_KEY } from "../../utils/reactions";
 
@@ -151,7 +151,7 @@ const Home = () => {
   useEffect(() => {
     fetchLastUpdate();
     // Clear stale caches but keep settings that must survive reloads.
-    const keep = [NOTIFY_KEY, REACTIONS_KEY].map((k) => [k, localStorage.getItem(k)]);
+    const keep = [NOTIFY_KEY, REACTIONS_KEY, NOTIFIED_KEY].map((k) => [k, localStorage.getItem(k)]);
     localStorage.clear();
     keep.forEach(([k, v]) => { if (v != null) localStorage.setItem(k, v); });
   }, []);
