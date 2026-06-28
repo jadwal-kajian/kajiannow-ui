@@ -5,7 +5,39 @@ import { distanceKm } from "../utils/geo";
 // How often we re-scan the loaded kajian for ones that just entered the window.
 const POLL_MS = 60 * 1000;
 
-// Stable identity for a kajian, used to notify each one at most once per session.
+// Persisted "already notified" set, so a kajian fires at most ONCE PER DAY even
+// if the app is reloaded/relaunched. Crucial on iOS, where an installed PWA
+// reboots from scratch every time it's reopened — an in-memory Set would reset
+// and re-fire every in-window kajian on each launch. Stored as { key: date }
+// so we can prune entries for days that have already passed.
+// (home/index.jsx preserves this key across its on-mount localStorage.clear().)
+export const NOTIFIED_KEY = "kn_notified";
+
+const todayStr = () => {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+};
+
+// Load the persisted notified-map, dropping entries for past dates so it can't
+// grow without bound. Returns { map, sent:Set<key> }.
+const loadNotified = () => {
+  try {
+    const raw = localStorage.getItem(NOTIFIED_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    const today = todayStr();
+    const map = {};
+    for (const [key, date] of Object.entries(parsed)) {
+      if (typeof date === "string" && date >= today) map[key] = date; // keep today + future
+    }
+    return { map, sent: new Set(Object.keys(map)) };
+  } catch {
+    return { map: {}, sent: new Set() };
+  }
+};
+
+// Stable identity for a kajian, used to notify each one at most once per day.
 const kajianKey = (item) =>
   item.id || `${item.date}|${item.lat},${item.lng}|${item.time_start}|${item.topic}`;
 
@@ -88,8 +120,22 @@ export function useNearbyKajianNotifications({
   data,
   userLocation,
 }) {
-  // Kajian already notified this session — avoids repeat pings on each poll.
-  const sentRef = useRef(new Set());
+  // Kajian already notified — seeded from localStorage so the dedup survives
+  // reloads/relaunches (each kajian fires at most once per day).
+  const storeRef = useRef(null);
+  if (storeRef.current === null) storeRef.current = loadNotified();
+
+  // Record a kajian as notified, in memory and persisted.
+  const markNotified = (key, date) => {
+    const store = storeRef.current;
+    store.sent.add(key);
+    store.map[key] = date && date >= todayStr() ? date : todayStr();
+    try {
+      localStorage.setItem(NOTIFIED_KEY, JSON.stringify(store.map));
+    } catch {
+      // ignore storage failures (private mode, quota) — in-memory dedup still holds
+    }
+  };
 
   useEffect(() => {
     if (!enabled) return;
@@ -97,7 +143,7 @@ export function useNearbyKajianNotifications({
     if (typeof window === "undefined" || !("Notification" in window)) return;
     if (Notification.permission !== "granted") return;
 
-    const sent = sentRef.current;
+    const sent = storeRef.current.sent;
 
     const check = () => {
       // Defensive: this runs synchronously inside the effect, so a throw here
@@ -115,7 +161,7 @@ export function useNearbyKajianNotifications({
 
           const key = kajianKey(item);
           if (sent.has(key)) continue;
-          sent.add(key);
+          markNotified(key, item.date);
           fireNotification(item, mins, km);
         }
       } catch (err) {
