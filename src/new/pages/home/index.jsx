@@ -1,21 +1,29 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import PropTypes from "prop-types";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEye, faEyeSlash, faFilter, faInfoCircle, faCommentDots, faChevronLeft, faChevronRight, faBell, faSpinner, faCalendarXmark, faLocationCrosshairs, faPalette } from "@fortawesome/free-solid-svg-icons";
+import {
+  faEye, faEyeSlash, faBell, faSpinner, faLocationCrosshairs, faMagnifyingGlass,
+  faSliders, faPlus, faCircleInfo, faClock, faChevronLeft, faChevronRight, faLocationDot, faCalendar, faArrowLeft,
+} from "@fortawesome/free-solid-svg-icons";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import { GET_ALL_KAJIAN, GET_LAST_UPDATE } from "../../services/api";
+import { GET_ALL_KAJIAN } from "../../services/api";
 import SwalPopup from "../../components/swalPopup/index";
 import { convertToYYYYMMDD, ID_FormattedDate, groupTopicsByLocation } from "../../utils/helpers";
-import KajianMap from "components/kajianMap";
+import KajianMap from "../../components/kajianMap";
 import { ShowPopupInfo } from "../../components/kajianMap/ShowPopupInfo";
 import LocationErrorPopup from "../../components/swalPopup/contents/locationError";
 import LocationLoadingPopup from "../../components/swalPopup/contents/locationLoading";
 import LaporPopup from "../../components/swalPopup/contents/lapor";
 import NotifySettingsPopup from "../../components/swalPopup/contents/notifySettings";
 import { useGeolocation, isInAppBrowser } from "../../hooks/useGeolocation";
-import { useNearbyKajianNotifications, NOTIFIED_KEY } from "../../hooks/useNearbyKajianNotifications";
+import { useNearbyKajianNotifications } from "../../hooks/useNearbyKajianNotifications";
 import { usePushSubscription } from "../../hooks/usePushSubscription";
 import { REACTIONS_KEY } from "../../utils/reactions";
+import { THEME_KEY, ThemeToggle } from "../../theme";
+import { getKajianStatus, formatTimeRange } from "../../utils/kajianStatus";
+import { distanceKm } from "../../utils/geo";
 
 const Popup = withReactContent(Swal);
 
@@ -76,10 +84,76 @@ const locationCache = {
   }
 };
 
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+
+// Human distance: "850 m" under 1 km, else "1.2 km". Null when unknown.
+const fmtDist = (km) => {
+  if (km == null || !isFinite(km)) return null;
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+};
+
+// Status → pill label + token classes (shared by the peek card and carousel).
+const STATUS_PILL = {
+  ongoing: { label: "Berlangsung", cls: "bg-ok-bg text-ok", dot: "bg-ok" },
+  upcoming: { label: "Akan datang", cls: "bg-soon-bg text-soon", dot: "bg-soon" },
+  passed: { label: "Selesai", cls: "bg-done-bg text-done", dot: "bg-done" },
+};
+
+function StatusPill({ status, size = "sm" }) {
+  const meta = status && STATUS_PILL[status];
+  if (!meta) return null;
+  const pad = size === "xs" ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]";
+  return (
+    <span className={`self-start inline-flex items-center gap-1.5 rounded-full font-bold ${pad} ${meta.cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
+      {meta.label}
+    </span>
+  );
+}
+
+StatusPill.propTypes = { status: PropTypes.string, size: PropTypes.string };
+
+// Square poster thumbnail. Nothing renders when there's no poster — the card's
+// text just fills the width (cleaner than an empty placeholder).
+function PosterThumb({ info, className = "" }) {
+  if (!info.src_image) return null;
+  return <img src={`${BASE_URL}/${info.src_image}`} alt="" className={`object-cover ${className}`} />;
+}
+
+PosterThumb.propTypes = { info: PropTypes.object.isRequired, className: PropTypes.string };
+
+// Floating round-square control button used in the home map chrome.
+function IconButton({ icon, onClick, label, active = false, dot = false, spin = false, disabled = false }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      title={label}
+      className={`relative w-11 h-11 flex items-center justify-center rounded-2xl border shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform disabled:opacity-70 ${
+        active ? "bg-accent text-accent-ink border-accent" : "bg-surface text-ink border-line"
+      }`}
+    >
+      <FontAwesomeIcon icon={icon} spin={spin} />
+      {dot && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-ok border-2 border-surface" />}
+    </button>
+  );
+}
+
+IconButton.propTypes = {
+  icon: PropTypes.object.isRequired,
+  onClick: PropTypes.func,
+  label: PropTypes.string,
+  active: PropTypes.bool,
+  dot: PropTypes.bool,
+  spin: PropTypes.bool,
+  disabled: PropTypes.bool,
+};
+
 const Home = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState();
   const [showAllInfo, setShowAllInfo] = useState(false);
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -138,20 +212,9 @@ const Home = () => {
     }
   };
 
-  const fetchLastUpdate = async () => {
-    try {
-      const getDate = await GET_LAST_UPDATE();
-      const date = new Date(getDate.last_update.replace(" ", "T"));
-      setLastUpdate(ID_FormattedDate(date));
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
-
   useEffect(() => {
-    fetchLastUpdate();
     // Clear stale caches but keep settings that must survive reloads.
-    const keep = [NOTIFY_KEY, REACTIONS_KEY, NOTIFIED_KEY].map((k) => [k, localStorage.getItem(k)]);
+    const keep = [NOTIFY_KEY, REACTIONS_KEY, THEME_KEY].map((k) => [k, localStorage.getItem(k)]);
     localStorage.clear();
     keep.forEach(([k, v]) => { if (v != null) localStorage.setItem(k, v); });
   }, []);
@@ -193,7 +256,9 @@ const Home = () => {
     deepLinkDoneRef.current = true;
     setMapCenter({ lat: item.lat, lng: item.lng });
     setZoom(16);
-    ShowPopupInfo({ location: item, group: groupTopicsByLocation(item.lat, item.lng, data) });
+    // A notification targets ONE kajian — open its flyer directly (group:[item]),
+    // not the multi-session location sheet for a shared venue.
+    ShowPopupInfo({ location: item, group: [item] });
   }, [data]);
 
   const getUserLocation = useCallback((forceRefresh = false, requestHighAccuracy = false, silent = false) => {
@@ -311,7 +376,7 @@ const Home = () => {
   const filteredData = useMemo(() => {
     return data.filter((item) => {
       const cityMatch = selectedCity ? item.city === selectedCity : true;
-      const itemTags = item.tags.split(",").map((tag) => tag.trim());
+      const itemTags = String(item.tags || "").split(",").map((tag) => tag.trim());
       const categoryMatch = selectedCategories.length === 0 || selectedCategories.every((category) => itemTags.includes(category));
       return cityMatch && categoryMatch;
     });
@@ -332,19 +397,6 @@ const Home = () => {
 
   const hasActiveFilters = !!selectedCity || selectedCategories.length > 0;
 
-  // Relative-day label for the selected date (Kemarin / Hari ini / Besok), or null.
-  const dayLabel = useMemo(() => {
-    const d = new Date(selectedDate);
-    d.setHours(0, 0, 0, 0);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diff = Math.round((d - today) / 86400000);
-    if (diff === 0) return "Hari ini";
-    if (diff === 1) return "Besok";
-    if (diff === -1) return "Kemarin";
-    return null;
-  }, [selectedDate]);
-
   const clearFilters = () => {
     setSelectedCity("");
     setSelectedCategories([]);
@@ -358,23 +410,13 @@ const Home = () => {
   const handleSetCenter = () => {
     // Force refresh location with high accuracy when user clicks "Lokasi Saya"
     locationCache.clear();
-    // Release the deep-link lock: the user is explicitly asking to recenter on
-    // their own location, so let applyLocation move the map off the kajian that
-    // a notification deep link had pinned it to.
-    deepLinkDoneRef.current = false;
     getUserLocation(true, true); // forceRefresh=true, requestHighAccuracy=true
-    setSelectedCity("");
-    setSelectedCategories([]);
+    // Route through clearFilters so the PERSISTED filter is wiped too — otherwise
+    // an untouched city dropdown silently resurrects the old city on next apply.
+    clearFilters();
   };
 
-  const showInfo = () => {
-    Popup.fire({
-      html: <SwalPopup type="petunjuk" close={() => Popup.close()} />,
-      showConfirmButton: false,
-    });
-  };
-
-  // Shift the selected date by whole days (negative = back, positive = forward).
+  // Step the selected date by whole days (quick prev/next-day nav).
   const changeDay = (delta) => {
     setSelectedDate((prev) => {
       const next = new Date(prev);
@@ -441,8 +483,43 @@ const Home = () => {
     });
   };
 
+  const mapData = filteredData;
+
+  // Precompute status + distance ONCE per item (O(n)) so the sort comparator and
+  // the card render do O(1) lookups instead of recomputing moments/PrayerTimes
+  // (status) and great-circle math (distance) on every comparison.
+  const statusByItem = useMemo(() => {
+    const m = new Map();
+    for (const it of mapData) m.set(it, getKajianStatus(it));
+    return m;
+  }, [mapData]);
+  const distByItem = useMemo(() => {
+    const m = new Map();
+    if (userLocation) for (const it of mapData) m.set(it, distanceKm(userLocation, it));
+    return m;
+  }, [mapData, userLocation]);
+
+  // "Kajian terdekat" ordering: nearest first (by distance to the user), but
+  // finished (Selesai) kajian always sink below the still-relevant ones.
+  const sortedForDisplay = useMemo(() => {
+    const finished = (it) => (statusByItem.get(it) === "passed" ? 1 : 0);
+    return [...mapData].sort((a, b) => {
+      const fa = finished(a);
+      const fb = finished(b);
+      if (fa !== fb) return fa - fb;
+      if (!userLocation) return 0;
+      return (distByItem.get(a) ?? Infinity) - (distByItem.get(b) ?? Infinity);
+    });
+  }, [mapData, userLocation, statusByItem, distByItem]);
+  const carousel = sortedForDisplay.slice(0, 12);
+
+  const openKajian = useCallback(
+    (item) => ShowPopupInfo({ location: item, group: groupTopicsByLocation(item.lat, item.lng, data) }),
+    [data]
+  );
+
   return (
-    <div className="content">
+    <div className="fixed inset-0 overflow-hidden bg-bg text-ink">
       {/* Test-observable geolocation state (hidden; harmless in production) */}
       <div
         data-testid="geo-state"
@@ -453,178 +530,156 @@ const Home = () => {
         data-center-lng={mapCenter?.lng ?? ""}
         style={{ display: "none" }}
       />
-      <div className="date-nav mb-3 flex items-center justify-center gap-2 select-none">
-        <button
-          onClick={() => changeDay(-1)}
-          aria-label="Hari sebelumnya"
-          className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-full bg-custom-yellow-1 text-custom-gray-1 shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
-        >
-          <FontAwesomeIcon icon={faChevronLeft} />
-        </button>
-        <button
-          onClick={showFilter}
-          aria-label="Pilih tanggal"
-          className="min-w-0 flex-shrink px-4 h-11 flex items-center rounded-full bg-white/5 ring-1 ring-custom-yellow-1/40 text-custom-yellow-1 font-semibold text-sm md:text-base whitespace-nowrap truncate active:scale-95 transition-transform"
-        >
-          {showDate}
-        </button>
-        <button
-          onClick={() => changeDay(1)}
-          aria-label="Hari berikutnya"
-          className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-full bg-custom-yellow-1 text-custom-gray-1 shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
-        >
-          <FontAwesomeIcon icon={faChevronRight} />
-        </button>
-      </div>
 
-      {/* Result summary: how many kajian are shown for the chosen date/filters. */}
-      <div className="results-bar mb-2 flex items-center justify-center gap-2 text-sm min-h-[20px]">
-        {loading ? (
-          <span className="flex items-center gap-2 text-[#f1dcb7]">
-            <FontAwesomeIcon icon={faSpinner} spin />
-            Memuat kajian…
-          </span>
-        ) : (
-          <span className="text-[#f1dcb7]">
-            <span className="font-bold text-custom-yellow-1">{filteredData.length}</span> kajian
-            {hasActiveFilters ? " (tersaring)" : " ditampilkan"}
-            {dayLabel && <span className="text-[#f1dcb7]/70"> • {dayLabel}</span>}
-          </span>
-        )}
-      </div>
-
-      {mapCenter && (
-        <div className="relative">
+      {/* Full-bleed map hero */}
+      <div className="absolute inset-0">
+        {mapCenter ? (
           <KajianMap
-            locations={filteredData}
+            locations={mapData}
             ref={mapRef}
             showAllInfo={showAllInfo}
             center={[mapCenter.lat, mapCenter.lng]}
             zoom={zoom}
             userLocation={userLocation ? [userLocation.lat, userLocation.lng] : null}
           />
-          {/* Empty state — nothing to show for this date/filter. */}
-          {!loading && filteredData.length === 0 && (
-            <div className="pointer-events-none absolute inset-0 z-[1000] flex items-center justify-center p-4">
-              <div className="pointer-events-auto max-w-[300px] rounded-2xl bg-black/75 backdrop-blur-sm px-5 py-4 text-center shadow-[0_8px_24px_-6px_#000]">
-                <FontAwesomeIcon icon={faCalendarXmark} className="text-2xl text-custom-yellow-1" />
-                <p className="mt-2 font-semibold text-custom-yellow-1">
-                  {hasActiveFilters ? "Tidak ada kajian yang cocok" : "Belum ada kajian pada tanggal ini"}
-                </p>
-                <p className="mt-1 text-[12px] text-[#f1dcb7]/80">
-                  {hasActiveFilters
-                    ? "Coba ubah atau hapus filter Anda."
-                    : "Coba pilih tanggal lain atau periksa kembali nanti."}
-                </p>
-                {hasActiveFilters && (
-                  <button
-                    onClick={clearFilters}
-                    className="mt-3 rounded-full bg-custom-yellow-1 px-4 py-1.5 text-[12px] font-semibold text-custom-gray-1 active:scale-95 transition-transform"
-                  >
-                    Hapus filter
-                  </button>
-                )}
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-ink-dim">
+            <FontAwesomeIcon icon={faSpinner} spin className="mr-2" /> Memuat peta…
+          </div>
+        )}
+      </div>
+
+      {/* Floating map controls */}
+      {(
+        <>
+          <div className="absolute top-[calc(env(safe-area-inset-top)+0.75rem)] left-3 right-[60px] max-w-[520px] z-[1000] flex items-center gap-1.5">
+            <button
+              onClick={() => changeDay(-1)}
+              aria-label="Hari sebelumnya"
+              className="flex-none w-10 h-12 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-90 transition-transform"
+            >
+              <FontAwesomeIcon icon={faChevronLeft} />
+            </button>
+            <button
+              onClick={showFilter}
+              aria-label="Saring kajian dan pilih tanggal"
+              className="flex-1 min-w-0 flex items-center gap-2 h-12 bg-surface border border-line rounded-2xl px-3 shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] text-left active:scale-[.99] transition-transform"
+            >
+              <FontAwesomeIcon icon={faCalendar} className="text-accent shrink-0" />
+              <span className="flex-1 truncate text-sm font-semibold text-ink">{showDate || "Pilih tanggal"}</span>
+              <FontAwesomeIcon icon={faSliders} className={`shrink-0 ${hasActiveFilters ? "text-accent" : "text-ink-dim"}`} />
+            </button>
+            <button
+              onClick={() => changeDay(1)}
+              aria-label="Hari berikutnya"
+              className="flex-none w-10 h-12 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-90 transition-transform"
+            >
+              <FontAwesomeIcon icon={faChevronRight} />
+            </button>
+          </div>
+
+          <div className="absolute top-[calc(env(safe-area-inset-top)+0.75rem)] right-3 z-[1000] flex flex-col gap-2">
+            <IconButton icon={faBell} onClick={showNotifySettings} label="Pengaturan notifikasi kajian terdekat" dot={notifySettings.enabled} />
+            <IconButton
+              icon={showAllInfo ? faEyeSlash : faEye}
+              onClick={() => setShowAllInfo(!showAllInfo)}
+              label={showAllInfo ? "Sembunyikan info" : "Tampilkan info"}
+              active={showAllInfo}
+            />
+            <IconButton icon={faCircleInfo} onClick={() => navigate("/about")} label="Tentang" />
+            <ThemeToggle />
+            {/* Leave the preview: full page load back to the classic UI at "/". */}
+            <IconButton
+              icon={faArrowLeft}
+              onClick={() => window.location.assign("/")}
+              label="Kembali ke tampilan lama"
+            />
+          </div>
+
+          {/* Lapor pill + locate FAB */}
+          <button
+            onClick={showReport}
+            className="absolute left-3 bottom-[calc(env(safe-area-inset-bottom)+150px)] z-[1000] h-12 px-4 flex items-center gap-2 rounded-2xl bg-surface border border-line text-ink font-bold text-sm shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-95 transition-transform"
+          >
+            <FontAwesomeIcon icon={faPlus} className="text-accent" /> Lapor
+          </button>
+          <button
+            onClick={handleSetCenter}
+            disabled={isLocating}
+            aria-label="Lokasi Saya"
+            className="absolute right-3 bottom-[calc(env(safe-area-inset-bottom)+150px)] z-[1000] w-12 h-12 flex items-center justify-center rounded-2xl bg-accent text-accent-ink shadow-[0_12px_26px_-10px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
+          >
+            <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} />
+          </button>
+
+          {/* Nearby kajian — horizontal list, status-first (ongoing/upcoming
+              before finished), then nearest. */}
+          {carousel.length > 0 && (
+            <div className="absolute left-0 right-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-[1000]">
+              <div className="mb-2 ml-4">
+                <span className="inline-block rounded-full bg-surface border border-line px-3 py-1 text-[11px] font-extrabold tracking-wide uppercase text-ink shadow-[0_8px_18px_-10px_rgba(60,40,10,.5)]">
+                  Kajian terdekat
+                </span>
+              </div>
+              <div className="flex gap-3 overflow-x-auto px-3 pb-1 kn-noscroll">
+                {carousel.map((item, i) => {
+                  const dist = fmtDist(distByItem.get(item));
+                  return (
+                    <button
+                      key={item.id ?? i}
+                      onClick={() => openKajian(item)}
+                      className="flex-none w-[260px] flex gap-3 items-stretch bg-surface border border-line rounded-2xl p-2.5 shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)] text-left active:scale-[.99] transition-transform"
+                    >
+                      <PosterThumb info={item} className="w-14 h-14 flex-none rounded-xl" />
+                      <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
+                        <div className="flex items-center gap-2">
+                          <StatusPill status={statusByItem.get(item)} size="xs" />
+                          {dist && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-accent shrink-0">
+                              <FontAwesomeIcon icon={faLocationDot} className="text-[10px]" />
+                              {dist}
+                            </span>
+                          )}
+                        </div>
+                        <div className="truncate text-sm font-bold text-ink">{item.topic}</div>
+                        <div className="flex items-center gap-1.5 text-[12px] text-ink-dim">
+                          <FontAwesomeIcon icon={faClock} className="text-[11px]" />
+                          <span className="truncate">{formatTimeRange(item, { endFallback: "selesai" })}</span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
+        </>
+      )}
+
+      {/* Empty state */}
+      {!loading && mapCenter && mapData.length === 0 && (
+        <div className="pointer-events-none absolute inset-0 z-[900] flex items-center justify-center p-4">
+          <div className="pointer-events-auto max-w-[300px] rounded-2xl bg-surface border border-line px-5 py-4 text-center shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)]">
+            <FontAwesomeIcon icon={faMagnifyingGlass} className="text-2xl text-accent" />
+            <p className="mt-2 font-bold text-ink">
+              {hasActiveFilters ? "Tidak ada kajian yang cocok" : "Belum ada kajian pada tanggal ini"}
+            </p>
+            <p className="mt-1 text-[12px] text-ink-dim">
+              {hasActiveFilters
+                ? "Coba ubah atau hapus filter Anda."
+                : "Coba pilih tanggal lain atau periksa kembali nanti."}
+            </p>
+            {hasActiveFilters && (
+              <button
+                onClick={clearFilters}
+                className="mt-3 rounded-full bg-accent px-4 py-1.5 text-[12px] font-bold text-accent-ink active:scale-95 transition-transform"
+              >
+                Hapus filter
+              </button>
+            )}
+          </div>
         </div>
       )}
-      <div className="last-update text-sm text-center text-[#f1dcb7] mt-3">Terakhir Update: {lastUpdate}</div>
-
-      <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
-        {/* Opt-in preview of the redesigned UI. Plain link → full page load to
-            the /new/ app (separate build entry); never a react-router Link. */}
-        <a
-          href="/new/"
-          title="Coba tampilan baru (pratinjau)"
-          aria-label="Coba tampilan baru (pratinjau)"
-          className="relative w-11 h-11 text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <FontAwesomeIcon icon={faPalette} className="text-sm" />
-          </span>
-        </a>
-
-        <button
-          onClick={showInfo}
-          title="Petunjuk penggunaan"
-          aria-label="Petunjuk penggunaan"
-          className="relative w-11 h-11 text-[40px] border-none rounded-full bg-custom-gray-1 text-custom-yellow-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <FontAwesomeIcon icon={faInfoCircle} />
-          </span>
-        </button>
-
-        <button
-          onClick={() => setShowAllInfo(!showAllInfo)}
-          title={showAllInfo ? "Sembunyikan semua info" : "Tampilkan semua info"}
-          aria-label={showAllInfo ? "Sembunyikan semua info" : "Tampilkan semua info"}
-          aria-pressed={showAllInfo}
-          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
-            showAllInfo ? "bg-custom-gray-1 text-custom-yellow-1" : "bg-custom-yellow-1 text-custom-gray-1"
-          }`}
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            {showAllInfo ? <FontAwesomeIcon icon={faEyeSlash} /> : <FontAwesomeIcon icon={faEye} />}
-          </span>
-        </button>
-
-        <button
-          onClick={showFilter}
-          title="Saring & pilih tanggal"
-          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
-            hasActiveFilters
-              ? "bg-custom-gray-1 text-custom-yellow-1 outline outline-2 outline-offset-1 outline-green-400"
-              : "bg-custom-yellow-1 text-custom-gray-1"
-          }`}
-          aria-label="Saring kajian dan pilih tanggal"
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <FontAwesomeIcon icon={faFilter} className="text-sm" />
-          </span>
-        </button>
-
-        <button
-          onClick={showReport}
-          title="Lapor / pesan ke pengembang"
-          className="relative w-11 h-11 text-lg p-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform"
-          aria-label="Lapor atau kirim pesan ke pengembang"
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <FontAwesomeIcon icon={faCommentDots} className="text-sm" />
-          </span>
-        </button>
-
-        <button
-          onClick={showNotifySettings}
-          title="Notifikasi kajian terdekat"
-          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
-            notifySettings.enabled
-              ? "bg-custom-gray-1 text-custom-yellow-1 outline outline-2 outline-offset-1 outline-green-400"
-              : "bg-custom-yellow-1 text-custom-gray-1"
-          }`}
-          aria-label="Pengaturan notifikasi kajian terdekat"
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <FontAwesomeIcon icon={faBell} className="text-sm" />
-          </span>
-        </button>
-
-        <button
-          onClick={handleSetCenter}
-          title="Arahkan peta ke lokasi Anda"
-          disabled={isLocating}
-          className="my-3 py-2 px-5 flex items-center gap-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 font-semibold shadow-[inset_0_0_12px_-2px_#000] active:scale-95 transition-transform disabled:opacity-70"
-        >
-          <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} className="text-sm" />
-          {isLocating ? "Mencari…" : "Lokasi Saya"}
-        </button>
-      </div>
-
-      <div className="quotes text-center my-4 md:mt-12 mb-8 text-[12px] md:text-base">
-        <i>Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju surga. (HR. Muslim)</i>
-      </div>
     </div>
   );
 };
