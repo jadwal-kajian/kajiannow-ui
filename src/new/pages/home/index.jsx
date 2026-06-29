@@ -175,6 +175,43 @@ const Home = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [zoom, setZoom] = useState(12);
   const [isLocating, setIsLocating] = useState(false);
+
+  // Google-Maps-style draggable bottom sheet for "Kajian terdekat": a small peek
+  // by default; drag the handle up to expand, then the list scrolls. Snaps to the
+  // nearer of peek/expanded on release; a tap toggles between them.
+  const SHEET_PEEK = 150;
+  const sheetMaxH = () =>
+    Math.round((typeof window !== "undefined" ? window.innerHeight : 800) * 0.7);
+  const [sheetH, setSheetH] = useState(SHEET_PEEK);
+  const [sheetDragging, setSheetDragging] = useState(false);
+  const sheetDragRef = useRef(null);
+
+  const onSheetDown = (e) => {
+    sheetDragRef.current = { startY: e.clientY, startH: sheetH, moved: 0 };
+    setSheetDragging(true);
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* unsupported */ }
+  };
+  const onSheetMove = (e) => {
+    const d = sheetDragRef.current;
+    if (!d) return;
+    const dy = d.startY - e.clientY; // up = grow
+    d.moved = Math.max(d.moved, Math.abs(dy));
+    setSheetH(Math.min(sheetMaxH(), Math.max(SHEET_PEEK, d.startH + dy)));
+  };
+  const onSheetUp = () => {
+    const d = sheetDragRef.current;
+    if (!d) return;
+    sheetDragRef.current = null;
+    setSheetDragging(false);
+    const max = sheetMaxH();
+    if (d.moved < 6) {
+      // Treat as a tap → toggle.
+      setSheetH((h) => (h > SHEET_PEEK + 4 ? SHEET_PEEK : max));
+    } else {
+      // Drag → snap to nearer stop.
+      setSheetH((h) => (h > (SHEET_PEEK + max) / 2 ? max : SHEET_PEEK));
+    }
+  };
   const mapRef = useRef(null);
   const locatingRef = useRef(false); // synchronous guard against overlapping requests
   const { locate } = useGeolocation();
@@ -621,12 +658,26 @@ const Home = () => {
             {/* Nearby kajian — vertical scroll list, status-first
                 (ongoing/upcoming before finished), then nearest. */}
             {carousel.length > 0 && (
-              <div className="pointer-events-auto mx-2 flex max-h-[42vh] flex-col overflow-hidden rounded-2xl bg-surface border border-line shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)]">
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-line">
-                  <span className="text-[11px] font-extrabold tracking-wide uppercase text-ink">Kajian terdekat</span>
-                  <span className="text-[11px] font-bold text-ink-dim">{carousel.length}</span>
+              <div
+                className={`pointer-events-auto mx-2 flex flex-col overflow-hidden rounded-2xl bg-surface border border-line shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)] ${sheetDragging ? "" : "transition-[height] duration-200 ease-out"}`}
+                style={{ height: sheetH }}
+              >
+                {/* Drag handle + header — drag to resize, tap to toggle. touch-none
+                    so the gesture resizes the sheet instead of scrolling the page. */}
+                <div
+                  onPointerDown={onSheetDown}
+                  onPointerMove={onSheetMove}
+                  onPointerUp={onSheetUp}
+                  onPointerCancel={onSheetUp}
+                  className="flex-none cursor-grab touch-none select-none active:cursor-grabbing"
+                >
+                  <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-line" />
+                  <div className="flex items-center justify-between px-4 py-2">
+                    <span className="text-[11px] font-extrabold tracking-wide uppercase text-ink">Kajian terdekat</span>
+                    <span className="text-[11px] font-bold text-ink-dim">{carousel.length}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-2 overflow-y-auto px-2 py-2 kn-noscroll">
+                <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-y-auto px-2 pb-2 kn-noscroll">
                   {carousel.map((item, i) => {
                     const dist = fmtDist(distByItem.get(item));
                     return (
