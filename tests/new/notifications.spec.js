@@ -92,6 +92,26 @@ test.describe("Nearby kajian notifications", () => {
     expect(notifs[0].body).toContain("Kajian Tauhid");
   });
 
+  test("does NOT re-notify the same kajian after a reload (persisted dedup)", async ({ page }) => {
+    await mockApi(page, { schedule: [kajianStartingIn(30)] });
+    await installNotificationMock(page);
+    await enableNotifySettings(page, { radiusKm: 5, leadMinutes: 60 });
+    await installGeoMock(page, {
+      getCurrentPosition: { type: "success", coords: USER, delay: 30 },
+    });
+
+    // First visit: fires once.
+    await page.goto("/new/");
+    await expect.poll(() => notifCount(page), { timeout: 8000 }).toBeGreaterThan(0);
+    expect(await notifCount(page)).toBe(1);
+
+    // Reload (simulates relaunching the installed PWA, which resets in-memory state).
+    await page.reload();
+    // Give the poller time to scan again; the persisted set must suppress a re-fire.
+    await page.waitForTimeout(2000);
+    expect(await notifCount(page)).toBe(0);
+  });
+
   test("does NOT notify when the kajian is outside the radius", async ({ page }) => {
     // ~550 km east — well outside a 5 km radius, same time window.
     const far = kajianStartingIn(30, { id: "far", lng: USER.longitude + 5 });
