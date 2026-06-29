@@ -73,6 +73,10 @@ const KajianMarker = ({ location, group, showAllInfo }) => {
       ref={markerRef}
       position={[location.lat, location.lng]}
       icon={markerIcon}
+      // Leaflet stacks markers by latitude, so a neighbor can paint over this
+      // pin's count badge (it pokes outside the circle, top-right). Lift grouped
+      // pins above plain ones so the badge is never occluded.
+      zIndexOffset={group.length > 1 ? 1000 : 0}
       eventHandlers={{
         click: () => ShowPopupInfo({ location, group }),
         // Leaflet focuses divIcon markers (keyboard:true) but doesn't fire click
