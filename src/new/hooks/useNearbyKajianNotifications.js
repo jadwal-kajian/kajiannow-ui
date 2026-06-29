@@ -41,6 +41,12 @@ const loadNotified = () => {
 const kajianKey = (item) =>
   item.id || `${item.date}|${item.lat},${item.lng}|${item.time_start}|${item.topic}`;
 
+// App base for deep links: a notification opened from the redesign (served under
+// /new/) returns there; the classic UI returns to "/". Detected from the current
+// location so the shared hook stays identical in both apps.
+const appBase = () =>
+  typeof window !== "undefined" && window.location.pathname.startsWith("/new") ? "/new" : "";
+
 // Deep link that opens this kajian's flyer and centers the map on its location
 // when the notification is clicked (parsed on load in pages/home). Carries lat/lng
 // as a fallback so it still resolves when the kajian has no stable id.
@@ -49,7 +55,7 @@ const deepLinkUrl = (item) => {
   if (item.date) params.set("d", String(item.date));
   if (typeof item.lat === "number") params.set("lat", String(item.lat));
   if (typeof item.lng === "number") params.set("lng", String(item.lng));
-  return `/?${params.toString()}`;
+  return `${appBase()}/?${params.toString()}`;
 };
 
 // "45 menit lagi" / "1 jam lagi" / "1 jam 20 menit lagi".

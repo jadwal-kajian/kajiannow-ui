@@ -40,7 +40,7 @@ const installNotificationMock = async (page) => {
       constructor(title, opts) {
         this.title = title;
         this.opts = opts;
-        window.__notifs.push({ title, body: opts && opts.body });
+        window.__notifs.push({ title, body: opts && opts.body, url: opts && opts.data && opts.data.url });
       }
       close() {}
     }
@@ -52,7 +52,7 @@ const installNotificationMock = async (page) => {
     // Android Chrome); capture that path too.
     const reg = {
       showNotification(title, opts) {
-        window.__notifs.push({ title, body: opts && opts.body });
+        window.__notifs.push({ title, body: opts && opts.body, url: opts && opts.data && opts.data.url });
         return Promise.resolve();
       },
     };
@@ -75,6 +75,19 @@ const enableNotifySettings = async (page, { radiusKm, leadMinutes }) => {
 const notifCount = (page) => page.evaluate(() => (window.__notifs || []).length);
 
 test.describe("Nearby kajian notifications", () => {
+  test("notification deep link targets the redesign (/new) UI", async ({ page }) => {
+    await mockApi(page, { schedule: [kajianStartingIn(30)] });
+    await installNotificationMock(page);
+    await enableNotifySettings(page, { radiusKm: 5, leadMinutes: 60 });
+    await installGeoMock(page, {
+      getCurrentPosition: { type: "success", coords: USER, delay: 30 },
+    });
+    await page.goto("/new/");
+    await expect.poll(() => notifCount(page), { timeout: 8000 }).toBeGreaterThan(0);
+    const url = await page.evaluate(() => window.__notifs[0].url);
+    expect(url).toMatch(/^\/new\/\?/);
+  });
+
   test("notifies for a kajian that is near and starting soon", async ({ page }) => {
     await mockApi(page, { schedule: [kajianStartingIn(30)] });
     await installNotificationMock(page);
