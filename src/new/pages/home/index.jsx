@@ -596,63 +596,69 @@ const Home = () => {
             />
           </div>
 
-          {/* Lapor pill + locate FAB */}
-          <button
-            onClick={showReport}
-            className="absolute left-3 bottom-[calc(env(safe-area-inset-bottom)+150px)] z-[1000] h-12 px-4 flex items-center gap-2 rounded-2xl bg-surface border border-line text-ink font-bold text-sm shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-95 transition-transform"
-          >
-            <FontAwesomeIcon icon={faPlus} className="text-accent" /> Lapor
-          </button>
-          <button
-            onClick={handleSetCenter}
-            disabled={isLocating}
-            aria-label="Lokasi Saya"
-            className="absolute right-3 bottom-[calc(env(safe-area-inset-bottom)+150px)] z-[1000] w-12 h-12 flex items-center justify-center rounded-2xl bg-accent text-accent-ink shadow-[0_12px_26px_-10px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
-          >
-            <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} />
-          </button>
-
-          {/* Nearby kajian — horizontal list, status-first (ongoing/upcoming
-              before finished), then nearest. */}
-          {carousel.length > 0 && (
-            <div className="absolute left-0 right-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-[1000]">
-              <div className="mb-2 ml-4">
-                <span className="inline-block rounded-full bg-surface border border-line px-3 py-1 text-[11px] font-extrabold tracking-wide uppercase text-ink shadow-[0_8px_18px_-10px_rgba(60,40,10,.5)]">
-                  Kajian terdekat
-                </span>
-              </div>
-              <div className="flex gap-3 overflow-x-auto px-3 pb-1 kn-noscroll">
-                {carousel.map((item, i) => {
-                  const dist = fmtDist(distByItem.get(item));
-                  return (
-                    <button
-                      key={item.id ?? i}
-                      onClick={() => openKajian(item)}
-                      className="flex-none w-[260px] flex gap-3 items-stretch bg-surface border border-line rounded-2xl p-2.5 shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)] text-left active:scale-[.99] transition-transform"
-                    >
-                      <PosterThumb info={item} className="w-14 h-14 flex-none rounded-xl" />
-                      <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
-                        <div className="flex items-center gap-2">
-                          <StatusPill status={statusByItem.get(item)} size="xs" />
-                          {dist && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-accent shrink-0">
-                              <FontAwesomeIcon icon={faLocationDot} className="text-[10px]" />
-                              {dist}
-                            </span>
-                          )}
-                        </div>
-                        <div className="truncate text-sm font-bold text-ink">{item.topic}</div>
-                        <div className="flex items-center gap-1.5 text-[12px] text-ink-dim">
-                          <FontAwesomeIcon icon={faClock} className="text-[11px]" />
-                          <span className="truncate">{formatTimeRange(item, { endFallback: "selesai" })}</span>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Bottom overlay: Lapor + locate controls riding directly above a
+              vertical, scrollable "Kajian terdekat" sheet. pointer-events is
+              gated so the map stays draggable through the gaps, and the controls
+              sit above the sheet for any list length (no overlap). */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1000] flex flex-col pb-[calc(env(safe-area-inset-bottom)+0.5rem)]">
+            <div className="flex items-center justify-between gap-2 px-3 pb-2">
+              <button
+                onClick={showReport}
+                className="pointer-events-auto h-12 px-4 flex items-center gap-2 rounded-2xl bg-surface border border-line text-ink font-bold text-sm shadow-[0_10px_24px_-12px_rgba(60,40,10,.5)] active:scale-95 transition-transform"
+              >
+                <FontAwesomeIcon icon={faPlus} className="text-accent" /> Lapor
+              </button>
+              <button
+                onClick={handleSetCenter}
+                disabled={isLocating}
+                aria-label="Lokasi Saya"
+                className="pointer-events-auto w-12 h-12 flex items-center justify-center rounded-2xl bg-accent text-accent-ink shadow-[0_12px_26px_-10px_rgba(13,107,110,.6)] active:scale-95 transition-transform disabled:opacity-70"
+              >
+                <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} />
+              </button>
             </div>
-          )}
+
+            {/* Nearby kajian — vertical scroll list, status-first
+                (ongoing/upcoming before finished), then nearest. */}
+            {carousel.length > 0 && (
+              <div className="pointer-events-auto mx-2 flex max-h-[42vh] flex-col overflow-hidden rounded-2xl bg-surface border border-line shadow-[0_16px_34px_-16px_rgba(60,40,10,.55)]">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-line">
+                  <span className="text-[11px] font-extrabold tracking-wide uppercase text-ink">Kajian terdekat</span>
+                  <span className="text-[11px] font-bold text-ink-dim">{carousel.length}</span>
+                </div>
+                <div className="flex flex-col gap-2 overflow-y-auto px-2 py-2 kn-noscroll">
+                  {carousel.map((item, i) => {
+                    const dist = fmtDist(distByItem.get(item));
+                    return (
+                      <button
+                        key={item.id ?? i}
+                        onClick={() => openKajian(item)}
+                        className="w-full flex gap-3 items-stretch bg-surface border border-line rounded-2xl p-2.5 text-left active:scale-[.99] transition-transform"
+                      >
+                        <PosterThumb info={item} className="w-14 h-14 flex-none rounded-xl" />
+                        <div className="flex-1 min-w-0 flex flex-col gap-1 justify-center">
+                          <div className="flex items-center gap-2">
+                            <StatusPill status={statusByItem.get(item)} size="xs" />
+                            {dist && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-accent shrink-0">
+                                <FontAwesomeIcon icon={faLocationDot} className="text-[10px]" />
+                                {dist}
+                              </span>
+                            )}
+                          </div>
+                          <div className="truncate text-sm font-bold text-ink">{item.topic}</div>
+                          <div className="flex items-center gap-1.5 text-[12px] text-ink-dim">
+                            <FontAwesomeIcon icon={faClock} className="text-[11px]" />
+                            <span className="truncate">{formatTimeRange(item, { endFallback: "selesai" })}</span>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </>
       )}
 
