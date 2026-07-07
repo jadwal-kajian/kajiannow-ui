@@ -1,44 +1,28 @@
-import { forwardRef, useImperativeHandle, useRef, useEffect, useMemo, useState, memo } from "react";
+import { forwardRef, useImperativeHandle, useRef, useEffect, useMemo, memo } from "react";
 import PropTypes from "prop-types";
-import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
+import { divIcon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 import UserMarker from "./UserMarker";
 import KajianMarker from "./KajianMarker";
 
-// Pad the culling window by half a viewport on every side so pins slide into
-// view mid-pan instead of popping in right at the edge.
-const BOUNDS_PAD = 0.5;
-
-// Mount only the markers inside the current (padded) viewport. Each kajian pin
-// is a multi-element divIcon with blurred shadows that the browser has to move
-// on every drag frame, so mounting the whole country while the user looks at
-// one city makes panning visibly laggy. moveend fires once per completed
-// drag/zoom/flyTo — the cull is one O(n) pass per interaction, not per frame.
-function VisibleMarkers({ groups, showAllInfo }) {
-  const map = useMap();
-  const [bounds, setBounds] = useState(() => map.getBounds().pad(BOUNDS_PAD));
-  const update = () => setBounds(map.getBounds().pad(BOUNDS_PAD));
-  useMapEvents({ moveend: update, resize: update });
-
-  const visible = useMemo(
-    () => groups.filter((group) => bounds.contains([group[0].lat, group[0].lng])),
-    [groups, bounds]
-  );
-
-  return visible.map((group) => (
-    <KajianMarker
-      key={group[0].id ?? `${group[0].lat},${group[0].lng}`}
-      location={group[0]}
-      group={group}
-      showAllInfo={showAllInfo}
-    />
-  ));
-}
-
-VisibleMarkers.propTypes = {
-  groups: PropTypes.array.isRequired,
-  showAllInfo: PropTypes.bool,
+// Cluster bubble in the same visual language as the kajian pins: teal disc,
+// warm-white ring, cheap 3px shadow. Sized up a little as the count grows.
+// The count is total KAJIAN (summed from each pin's kajianCount), matching the
+// per-pin badge semantics, not just the number of venues.
+const clusterIcon = (cluster) => {
+  const count = cluster
+    .getAllChildMarkers()
+    .reduce((n, m) => n + (m.options.kajianCount || 1), 0);
+  const size = count < 10 ? 40 : count < 50 ? 46 : 52;
+  return divIcon({
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#0d6b6e;border:3px solid #fffdf8;box-shadow:0 2px 3px rgba(60,40,10,.4);color:#fffdf8;font-weight:800;font-size:${count < 100 ? 14 : 12}px;display:flex;align-items:center;justify-content:center;">${count}</div>`,
+    className: "kn-divpin kn-cluster",
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
 };
 
 // Use userLocation prop from parent to avoid duplicate geolocation calls
@@ -93,7 +77,25 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userL
       />
       {userLocation && <UserMarker position={userLocation} />}
 
-      <VisibleMarkers groups={groups} showAllInfo={showAllInfo} />
+      {/* Clustering keeps the mounted-marker count low however far the user
+          zooms out, and markercluster only attaches on-screen layers to the
+          map — so panning never drags the whole country's pins around. */}
+      <MarkerClusterGroup
+        chunkedLoading
+        showCoverageOnHover={false}
+        maxClusterRadius={60}
+        spiderfyOnMaxZoom
+        iconCreateFunction={clusterIcon}
+      >
+        {groups.map((group) => (
+          <KajianMarker
+            key={group[0].id ?? `${group[0].lat},${group[0].lng}`}
+            location={group[0]}
+            group={group}
+            showAllInfo={showAllInfo}
+          />
+        ))}
+      </MarkerClusterGroup>
     </MapContainer>
   );
 });

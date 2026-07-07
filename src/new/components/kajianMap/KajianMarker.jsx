@@ -33,7 +33,7 @@ const getPinIcon = (status, count) => {
         : "";
     const html = `<div style="position:relative;width:44px;display:flex;flex-direction:column;align-items:center;">
       <div style="position:relative;width:44px;height:44px;">
-        <div style="position:relative;z-index:1;width:44px;height:44px;border-radius:50%;background:${c};border:3px solid #fffdf8;box-shadow:0 7px 16px -5px rgba(60,40,10,.45);display:flex;align-items:center;justify-content:center;">
+        <div style="position:relative;z-index:1;width:44px;height:44px;border-radius:50%;background:${c};border:3px solid #fffdf8;box-shadow:0 2px 3px rgba(60,40,10,.4);display:flex;align-items:center;justify-content:center;">
           ${quran("#fffdf8")}${badge}
         </div>
       </div>
@@ -57,13 +57,15 @@ const KajianMarker = ({ location, group, showAllInfo }) => {
   const markerIcon = useMemo(() => getPinIcon(getGroupStatus(group), group.length), [group]);
 
   useEffect(() => {
-    if (markerRef.current) {
-      if (showAllInfo) {
-        markerRef.current.openPopup();
-        return;
-      }
-      markerRef.current.closePopup();
+    const marker = markerRef.current;
+    if (!marker) return;
+    if (showAllInfo) {
+      // A marker folded into a cluster isn't on the map; opening its popup
+      // would fail. The `add` eventHandler below covers it when it unclusters.
+      if (marker._map) marker.openPopup();
+      return;
     }
+    marker.closePopup();
   }, [showAllInfo]);
 
   if (!location.lat && !location.lng) return null;
@@ -73,12 +75,20 @@ const KajianMarker = ({ location, group, showAllInfo }) => {
       ref={markerRef}
       position={[location.lat, location.lng]}
       icon={markerIcon}
+      // Passed through to L.marker options so cluster bubbles can sum the
+      // number of kajian (not just venues) across their children.
+      kajianCount={group.length}
       // Leaflet stacks markers by latitude, so a neighbor can paint over this
       // pin's count badge (it pokes outside the circle, top-right). Lift grouped
       // pins above plain ones so the badge is never occluded.
       zIndexOffset={group.length > 1 ? 1000 : 0}
       eventHandlers={{
         click: () => ShowPopupInfo({ location, group }),
+        // Fires when the marker (re)joins the map — e.g. it unclusters on zoom-in.
+        // Reopen its info popup so "Tampilkan info" stays consistent.
+        add: (e) => {
+          if (showAllInfo) e.target.openPopup();
+        },
         // Leaflet focuses divIcon markers (keyboard:true) but doesn't fire click
         // on Enter/Space — wire it so keyboard users can open the flyer (WCAG 2.1.1).
         keydown: (e) => {
