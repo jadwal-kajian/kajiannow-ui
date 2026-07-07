@@ -31,7 +31,7 @@ jobs:
           cd ./ws/kajiannow-ui &&
           docker compose stop &&
           git checkout master &&
-          git pull &&
+          git pull origin master &&
           docker compose up --build -d --remove-orphans
         "
         rm ssh_key
