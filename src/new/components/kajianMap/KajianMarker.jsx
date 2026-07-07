@@ -5,7 +5,7 @@ import { divIcon } from "leaflet";
 import { ShowPopupInfo } from "./ShowPopupInfo";
 import { getGroupStatus } from "../../utils/kajianStatus";
 import { MarkerInfo } from "./MarkerInfo";
-import { useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 
 // Status → pin color (map tiles are always light, so these are fixed, not themed).
 const PIN_COLOR = {
@@ -114,4 +114,6 @@ KajianMarker.propTypes = {
   group: PropTypes.array.isRequired,
 };
 
-export default KajianMarker;
+// memo: `group` identities are stable (memoized in KajianMap), so parent
+// re-renders don't reconcile every mounted marker.
+export default memo(KajianMarker);

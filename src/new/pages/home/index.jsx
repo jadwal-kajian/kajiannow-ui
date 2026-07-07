@@ -522,6 +522,19 @@ const Home = () => {
 
   const mapData = filteredData;
 
+  // Stable array identities for the memoized KajianMap. Inline [lat, lng]
+  // literals would be new on every render, re-rendering the whole marker tree
+  // and re-firing the map's flyTo effect each time an overlay (bottom sheet,
+  // spinner, …) updates — flying the map back mid-pan and janking the drag.
+  const mapCenterArr = useMemo(
+    () => (mapCenter ? [mapCenter.lat, mapCenter.lng] : null),
+    [mapCenter]
+  );
+  const userLocationArr = useMemo(
+    () => (userLocation ? [userLocation.lat, userLocation.lng] : null),
+    [userLocation]
+  );
+
   // Precompute status + distance ONCE per item (O(n)) so the sort comparator and
   // the card render do O(1) lookups instead of recomputing moments/PrayerTimes
   // (status) and great-circle math (distance) on every comparison.
@@ -575,9 +588,9 @@ const Home = () => {
             locations={mapData}
             ref={mapRef}
             showAllInfo={showAllInfo}
-            center={[mapCenter.lat, mapCenter.lng]}
+            center={mapCenterArr}
             zoom={zoom}
-            userLocation={userLocation ? [userLocation.lat, userLocation.lng] : null}
+            userLocation={userLocationArr}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-ink-dim">

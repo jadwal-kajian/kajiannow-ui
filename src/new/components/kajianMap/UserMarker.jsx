@@ -1,3 +1,4 @@
+import { memo } from "react";
 import PropTypes from "prop-types";
 import { Marker } from "react-leaflet";
 import { divIcon } from "leaflet";
@@ -26,4 +27,4 @@ UserMarker.propTypes = {
   position: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
-export default UserMarker;
+export default memo(UserMarker);

@@ -1,10 +1,45 @@
-import { forwardRef, useImperativeHandle, useRef, useEffect, useMemo } from "react";
+import { forwardRef, useImperativeHandle, useRef, useEffect, useMemo, useState, memo } from "react";
 import PropTypes from "prop-types";
-import { MapContainer, TileLayer } from "react-leaflet";
+import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 import UserMarker from "./UserMarker";
 import KajianMarker from "./KajianMarker";
+
+// Pad the culling window by half a viewport on every side so pins slide into
+// view mid-pan instead of popping in right at the edge.
+const BOUNDS_PAD = 0.5;
+
+// Mount only the markers inside the current (padded) viewport. Each kajian pin
+// is a multi-element divIcon with blurred shadows that the browser has to move
+// on every drag frame, so mounting the whole country while the user looks at
+// one city makes panning visibly laggy. moveend fires once per completed
+// drag/zoom/flyTo — the cull is one O(n) pass per interaction, not per frame.
+function VisibleMarkers({ groups, showAllInfo }) {
+  const map = useMap();
+  const [bounds, setBounds] = useState(() => map.getBounds().pad(BOUNDS_PAD));
+  const update = () => setBounds(map.getBounds().pad(BOUNDS_PAD));
+  useMapEvents({ moveend: update, resize: update });
+
+  const visible = useMemo(
+    () => groups.filter((group) => bounds.contains([group[0].lat, group[0].lng])),
+    [groups, bounds]
+  );
+
+  return visible.map((group) => (
+    <KajianMarker
+      key={group[0].id ?? `${group[0].lat},${group[0].lng}`}
+      location={group[0]}
+      group={group}
+      showAllInfo={showAllInfo}
+    />
+  ));
+}
+
+VisibleMarkers.propTypes = {
+  groups: PropTypes.array.isRequired,
+  showAllInfo: PropTypes.bool,
+};
 
 // Use userLocation prop from parent to avoid duplicate geolocation calls
 const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userLocation }, ref) => {
@@ -58,14 +93,7 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userL
       />
       {userLocation && <UserMarker position={userLocation} />}
 
-      {groups.map((group) => (
-        <KajianMarker
-          key={group[0].id ?? `${group[0].lat},${group[0].lng}`}
-          location={group[0]}
-          group={group}
-          showAllInfo={showAllInfo}
-        />
-      ))}
+      <VisibleMarkers groups={groups} showAllInfo={showAllInfo} />
     </MapContainer>
   );
 });
@@ -87,4 +115,7 @@ KajianMap.propTypes = {
   userLocation: PropTypes.arrayOf(PropTypes.number),
 };
 
-export default KajianMap;
+// memo: Home re-renders often while its overlays animate (e.g. every pointermove
+// of the bottom-sheet drag). With stable center/userLocation identities from
+// Home, those re-renders skip the map subtree entirely.
+export default memo(KajianMap);
