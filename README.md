@@ -8,6 +8,15 @@ finished. It's built with React + Vite and is free to use, forever.
 
 > _Dibuat untuk umat, gratis selamanya._
 
+## Screenshots
+
+The app ships two UIs: the classic interface at `/` and a Google-Maps-style
+redesign at `/new/`.
+
+| Classic UI (`/`) | New UI (`/new/`) |
+|:---:|:---:|
+| <img src="docs/screenshots/old-ui.png" alt="Classic KajianNow UI" width="300"> | <img src="docs/screenshots/new-ui.png" alt="Redesigned KajianNow UI" width="300"> |
+
 ## Features
 
 - 🗺️ **Interactive map** — browse kajian near you on an interactive map (Leaflet / Google Maps).
