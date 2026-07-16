@@ -447,6 +447,10 @@ const Home = () => {
   const handleSetCenter = () => {
     // Force refresh location with high accuracy when user clicks "Lokasi Saya"
     locationCache.clear();
+    // Release the deep-link lock: the user is explicitly asking to recenter on
+    // their own location, so let applyLocation move the map off the kajian that
+    // a notification deep link had pinned it to.
+    deepLinkDoneRef.current = false;
     getUserLocation(true, true); // forceRefresh=true, requestHighAccuracy=true
     // Route through clearFilters so the PERSISTED filter is wiped too — otherwise
     // an untouched city dropdown silently resurrects the old city on next apply.

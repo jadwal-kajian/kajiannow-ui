@@ -87,6 +87,32 @@ test.describe("Notification deep link", () => {
     expect(geo.centerLng).toBeCloseTo(KAJIAN.lng, 3);
   });
 
+  test("Lokasi Saya after closing the flyer recenters the map on the user", async ({ page }) => {
+    await mockApi(page, { schedule: [KAJIAN] });
+    await installGeoMock(page, {
+      getCurrentPosition: { type: "success", coords: USER, delay: 30 },
+      watch: { type: "emit", emissions: [{ coords: USER, delay: 100 }] },
+    });
+
+    await page.goto(deepLink(KAJIAN));
+    await expect(page.locator(".swal2-popup").getByText("Kajian Tauhid")).toBeVisible({ timeout: 8000 });
+
+    // Deep link pinned the map to the kajian.
+    await expect.poll(async () => (await readGeoState(page)).centerLat).toBeCloseTo(KAJIAN.lat, 3);
+
+    // Close the flyer, then explicitly ask for the user's own location.
+    await page.getByRole("button", { name: "Tutup" }).click();
+    await page.getByRole("button", { name: "Lokasi Saya" }).click();
+
+    // The map must recenter on the USER — the deep-link lock is released
+    // (regression: it stayed pinned to the kajian).
+    await expect
+      .poll(async () => (await readGeoState(page)).centerLat, { timeout: 5000 })
+      .toBeCloseTo(USER.latitude, 3);
+    const geo = await readGeoState(page);
+    expect(geo.centerLng).toBeCloseTo(USER.longitude, 3);
+  });
+
   test("no deep link → normal load, no flyer, map follows the user", async ({ page }) => {
     await mockApi(page, { schedule: [KAJIAN] });
     await installGeoMock(page, {
