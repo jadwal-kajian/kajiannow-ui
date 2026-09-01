@@ -77,8 +77,9 @@ const openNotifySettings = async (page) => {
   await expect(page.getByText("Tetap diberi tahu walau situs ditutup")).toBeVisible();
 };
 
-const pushToggle = (page) =>
-  page.getByRole("switch").nth(1); // [0] = in-tab, [1] = background push
+// One switch now: push is how a notification is delivered, not a second
+// feature beside an in-tab one, so there is no longer an index to pick.
+const pushToggle = (page) => page.getByRole("switch").first();
 const saveBtn = (page) => page.getByRole("button", { name: /Simpan/ });
 
 test.describe("Web Push subscription", () => {
