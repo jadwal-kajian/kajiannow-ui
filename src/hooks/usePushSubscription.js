@@ -14,6 +14,23 @@ import {
  *
  * All methods no-op gracefully when push isn't supported/configured.
  */
+/** Whether a subscription was created with the VAPID key we sign with now. */
+export const usesCurrentKey = (sub) => {
+  const raw = sub?.options?.applicationServerKey;
+  // Older browsers do not expose it. Keep the subscription rather than
+  // unsubscribing on a guess, which would prompt for permission again for
+  // nothing. An empty value has to be checked before the comparison below,
+  // which would otherwise read it as a zero-length key and call it a mismatch.
+  if (!raw) return true;
+  try {
+    const got = new Uint8Array(raw);
+    const want = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+    return got.length === want.length && got.every((b, i) => b === want[i]);
+  } catch {
+    return true;
+  }
+};
+
 export function usePushSubscription() {
   const supported = isPushSupported();
 
@@ -32,6 +49,7 @@ export function usePushSubscription() {
    * Throws "no-location" if a location is required but missing, or "denied" if
    * the user blocks notifications.
    */
+
   const subscribePush = useCallback(
     async ({ lat, lng, radiusKm, leadMinutes }) => {
       if (!supported) return false;
@@ -45,8 +63,17 @@ export function usePushSubscription() {
       const reg = await registerServiceWorker();
       await navigator.serviceWorker.ready;
 
-      // Reuse an existing subscription; create one if there isn't any yet.
+      // Reuse an existing subscription, but only if it was created with the
+      // key we still sign with. A subscription is bound to the
+      // applicationServerKey it was made with, and the push service rejects a
+      // mismatch with 403 forever -- so reusing one blindly left those
+      // browsers permanently unable to receive anything, with re-enabling
+      // notifications changing nothing.
       let sub = await reg.pushManager.getSubscription();
+      if (sub && !usesCurrentKey(sub)) {
+        await sub.unsubscribe();
+        sub = null;
+      }
       if (!sub) {
         sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
