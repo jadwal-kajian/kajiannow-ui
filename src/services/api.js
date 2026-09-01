@@ -1,9 +1,12 @@
 import BASE_URL from "./config";
 import { serialize } from '../utils/helpers';
+import { getVid } from '../utils/visitor';
 
 export const GET_ALL_KAJIAN = async (date) => {
   try {
-    const response = await BASE_URL.get(`/schedule?date=${date}`);
+    // vid is what makes this countable as one visitor; without it the API
+    // hashes the client IP, which the proxy makes identical for everyone.
+    const response = await BASE_URL.get(`/schedule?date=${date}&vid=${encodeURIComponent(getVid())}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching data:", error);

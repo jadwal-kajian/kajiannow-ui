@@ -21,6 +21,7 @@ import { useGeolocation, isInAppBrowser } from "../../hooks/useGeolocation";
 import { useNearbyKajianNotifications, NOTIFIED_KEY } from "../../hooks/useNearbyKajianNotifications";
 import { usePushSubscription } from "../../hooks/usePushSubscription";
 import { REACTIONS_KEY } from "../../utils/reactions";
+import { VISITOR_KEY } from "../../utils/visitor";
 import { THEME_KEY, ThemeToggle } from "../../theme";
 import { getKajianStatus, formatTimeRange } from "../../utils/kajianStatus";
 import { distanceKm } from "../../utils/geo";
@@ -251,7 +252,7 @@ const Home = () => {
 
   useEffect(() => {
     // Clear stale caches but keep settings that must survive reloads.
-    const keep = [NOTIFY_KEY, REACTIONS_KEY, THEME_KEY, NOTIFIED_KEY].map((k) => [k, localStorage.getItem(k)]);
+    const keep = [NOTIFY_KEY, REACTIONS_KEY, THEME_KEY, NOTIFIED_KEY, VISITOR_KEY].map((k) => [k, localStorage.getItem(k)]);
     localStorage.clear();
     keep.forEach(([k, v]) => { if (v != null) localStorage.setItem(k, v); });
   }, []);
