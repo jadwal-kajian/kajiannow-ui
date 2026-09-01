@@ -18,6 +18,10 @@ import { usePushSubscription } from "../../hooks/usePushSubscription";
 import { REACTIONS_KEY } from "../../utils/reactions";
 import { VISITOR_KEY } from "../../utils/visitor";
 
+// Set once the visitor has been told push exists, so the hint is shown once
+// rather than on every visit. On the keep-list below for the same reason.
+const PUSH_HINT_KEY = "kn_push_hint_seen";
+
 const Popup = withReactContent(Swal);
 
 const DEFAULT_LOCATION = { lat: -6.2088, lng: 106.8456 }; // Jakarta
@@ -108,6 +112,52 @@ const Home = () => {
   const [notifySettings, setNotifySettings] = useState(readNotifySettings);
   const push = usePushSubscription();
 
+  // Offered only to someone who could actually get notifications and is not
+  // already getting them. getIsSubscribed is key-aware, so a browser holding a
+  // subscription we can no longer deliver to counts as not subscribed and is
+  // told about it -- which is the one nudge that gets it working again.
+  const [showPushHint, setShowPushHint] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    let observer;
+
+    // Sweetalert puts a fixed backdrop at z-index 1060 over the whole page, and
+    // one is already up on load asking about location. Revealing the hint under
+    // it would leave something the visitor can see the edge of and cannot click,
+    // so it waits for the page to be its own again.
+    const modalOpen = () => document.body.classList.contains("swal2-shown");
+
+    const reveal = () => {
+      if (cancelled) return;
+      if (modalOpen()) return;
+      setShowPushHint(true);
+      observer?.disconnect();
+    };
+
+    (async () => {
+      try {
+        if (!push.pushSupported) return;
+        if (localStorage.getItem(PUSH_HINT_KEY)) return;
+        const subscribed = await push.getIsSubscribed();
+        if (cancelled || subscribed) return;
+        reveal();
+        if (!cancelled && modalOpen()) {
+          observer = new MutationObserver(reveal);
+          observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+        }
+      } catch {
+        // Storage blocked or the check threw: say nothing rather than nag.
+      }
+    })();
+
+    return () => { cancelled = true; observer?.disconnect(); };
+  }, [push]);
+
+  const dismissPushHint = useCallback(() => {
+    setShowPushHint(false);
+    try { localStorage.setItem(PUSH_HINT_KEY, "1"); } catch { /* nothing to remember it with */ }
+  }, []);
+
   // Browser-notify about nearby kajian starting soon (while the tab is open).
   useNearbyKajianNotifications({
     enabled: notifySettings.enabled,
@@ -152,7 +202,7 @@ const Home = () => {
   useEffect(() => {
     fetchLastUpdate();
     // Clear stale caches but keep settings that must survive reloads.
-    const keep = [NOTIFY_KEY, REACTIONS_KEY, NOTIFIED_KEY, VISITOR_KEY].map((k) => [k, localStorage.getItem(k)]);
+    const keep = [NOTIFY_KEY, REACTIONS_KEY, NOTIFIED_KEY, VISITOR_KEY, PUSH_HINT_KEY].map((k) => [k, localStorage.getItem(k)]);
     localStorage.clear();
     keep.forEach(([k, v]) => { if (v != null) localStorage.setItem(k, v); });
   }, []);
@@ -597,20 +647,58 @@ const Home = () => {
           </span>
         </button>
 
-        <button
-          onClick={showNotifySettings}
-          title="Notifikasi kajian terdekat"
-          className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
-            notifySettings.enabled
-              ? "bg-custom-gray-1 text-custom-yellow-1 outline outline-2 outline-offset-1 outline-green-400"
-              : "bg-custom-yellow-1 text-custom-gray-1"
-          }`}
-          aria-label="Pengaturan notifikasi kajian terdekat"
-        >
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <FontAwesomeIcon icon={faBell} className="text-sm" />
-          </span>
-        </button>
+        {/* Wrapper exists so the hint can sit outside the button: the button
+            clips its own overflow, which would cut the bubble in half. Raised
+            above Leaflet's controls, which sit at z-index 1000 and otherwise
+            swallow clicks on it, and kept below Sweetalert's 1060 backdrop so
+            a dialog still covers it. */}
+        <div className="relative z-[1001]">
+          {showPushHint && (
+            <div
+              role="status"
+              // Anchored to the bell's right edge rather than centred on it: the bell
+              // is the last button in the row, so a centred bubble runs off the
+              // right of a phone screen. Growing leftwards keeps it on screen
+              // wherever the row wraps to.
+              className="absolute bottom-full right-0 z-[1001] mb-2 flex max-w-[min(72vw,14rem)] items-start gap-1 rounded-lg bg-custom-gray-1 px-2.5 py-1.5 text-xs leading-snug text-custom-yellow-1 shadow-lg"
+            >
+              <button
+                type="button"
+                onClick={() => { dismissPushHint(); showNotifySettings(); }}
+                className="text-left"
+              >
+                Dapatkan pemberitahuan kajian terdekat
+              </button>
+              <button
+                type="button"
+                onClick={dismissPushHint}
+                // Distinct from the dialog close buttons: "Tutup" alone is
+                // ambiguous when more than one thing on the page can be closed.
+                aria-label="Tutup info notifikasi"
+                className="-mr-1 shrink-0 px-1 opacity-70 hover:opacity-100"
+              >
+                &times;
+              </button>
+              {/* Caret, drawn as a rotated corner of the same bubble. */}
+              <span className="absolute right-4 top-full -mt-1 h-2 w-2 rotate-45 bg-custom-gray-1" />
+            </div>
+          )}
+
+          <button
+            onClick={() => { dismissPushHint(); showNotifySettings(); }}
+            title="Notifikasi kajian terdekat"
+            className={`relative w-11 h-11 text-lg p-2 border-none rounded-full cursor-pointer overflow-hidden shadow-[inset_0_0_8px_-2px_#000] active:scale-90 transition-transform ${
+              notifySettings.enabled
+                ? "bg-custom-gray-1 text-custom-yellow-1 outline outline-2 outline-offset-1 outline-green-400"
+                : "bg-custom-yellow-1 text-custom-gray-1"
+            }`}
+            aria-label="Pengaturan notifikasi kajian terdekat"
+          >
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <FontAwesomeIcon icon={faBell} className="text-sm" />
+            </span>
+          </button>
+        </div>
 
         <button
           onClick={handleSetCenter}
