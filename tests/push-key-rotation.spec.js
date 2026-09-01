@@ -39,3 +39,19 @@ test("keeps the subscription when the browser hides applicationServerKey", async
   const r = await evalWithKey(page, null);
   expect(r.noOptions).toBe(true);
 });
+
+test("a stale subscription reports as not subscribed", async ({ page }) => {
+  // Otherwise the settings toggle shows on, the user has no reason to touch
+  // it, and the one action that would restore notifications never happens.
+  await page.goto("/");
+  const r = await page.evaluate(async () => {
+    const { usesCurrentKey } = await import("/src/hooks/usePushSubscription.js");
+    const { VAPID_PUBLIC_KEY, urlBase64ToUint8Array } = await import("/src/utils/push.js");
+    const stale = "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUAM-Ijv1IyKk8Wcbxs";
+    const sub = { options: { applicationServerKey: urlBase64ToUint8Array(stale).buffer } };
+    // What getIsSubscribed now computes: present, but not usable.
+    return { present: !!sub, reported: !!sub && usesCurrentKey(sub) };
+  });
+  expect(r.present).toBe(true);
+  expect(r.reported).toBe(false);
+});

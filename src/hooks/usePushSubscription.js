@@ -40,7 +40,11 @@ export function usePushSubscription() {
     const reg = await navigator.serviceWorker.getRegistration();
     if (!reg) return false;
     const sub = await reg.pushManager.getSubscription();
-    return !!sub;
+    // A subscription made against an older VAPID key can never be delivered
+    // to, so reporting it as subscribed showed the toggle already on and gave
+    // the user no reason to re-enable -- the one action that would have fixed
+    // it. Treated as not subscribed, so the settings screen tells the truth.
+    return !!sub && usesCurrentKey(sub);
   }, [supported]);
 
   /**
