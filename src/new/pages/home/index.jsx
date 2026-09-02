@@ -22,6 +22,10 @@ import { useNearbyKajianNotifications, NOTIFIED_KEY } from "../../hooks/useNearb
 import { usePushSubscription } from "../../hooks/usePushSubscription";
 import { REACTIONS_KEY } from "../../utils/reactions";
 import { VISITOR_KEY } from "../../utils/visitor";
+
+// Set once the visitor has been told the bell can notify them, so the hint is
+// shown once rather than on every visit. On the keep-list below for that reason.
+const PUSH_HINT_KEY = "kn_push_hint_seen";
 import { THEME_KEY, ThemeToggle } from "../../theme";
 import { getKajianStatus, formatTimeRange } from "../../utils/kajianStatus";
 import { distanceKm } from "../../utils/geo";
@@ -219,6 +223,46 @@ const Home = () => {
   const [notifySettings, setNotifySettings] = useState(readNotifySettings);
   const push = usePushSubscription();
 
+  // Offered only to someone who could receive notifications and is not already
+  // receiving them. getIsSubscribed is key-aware, so a browser holding a
+  // subscription we can no longer deliver to counts as not subscribed and is
+  // told -- the one nudge that gets it working again.
+  const [showPushHint, setShowPushHint] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    let observer;
+    // A sweetalert backdrop covers the page at z-index 1060, and one is up on
+    // load asking about location. Revealing the hint under it would leave
+    // something visible at the edges and impossible to click.
+    const modalOpen = () => document.body.classList.contains("swal2-shown");
+    const reveal = () => {
+      if (cancelled || modalOpen()) return;
+      setShowPushHint(true);
+      observer?.disconnect();
+    };
+    (async () => {
+      try {
+        if (!push.pushSupported) return;
+        if (localStorage.getItem(PUSH_HINT_KEY)) return;
+        if (await push.getIsSubscribed()) return;
+        if (cancelled) return;
+        reveal();
+        if (!cancelled && modalOpen()) {
+          observer = new MutationObserver(reveal);
+          observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+        }
+      } catch {
+        // Storage blocked or the check threw: say nothing rather than nag.
+      }
+    })();
+    return () => { cancelled = true; observer?.disconnect(); };
+  }, [push]);
+
+  const dismissPushHint = useCallback(() => {
+    setShowPushHint(false);
+    try { localStorage.setItem(PUSH_HINT_KEY, "1"); } catch { /* nothing to remember it with */ }
+  }, []);
+
   // Browser-notify about nearby kajian starting soon (while the tab is open).
   useNearbyKajianNotifications({
     enabled: notifySettings.enabled,
@@ -252,7 +296,7 @@ const Home = () => {
 
   useEffect(() => {
     // Clear stale caches but keep settings that must survive reloads.
-    const keep = [NOTIFY_KEY, REACTIONS_KEY, THEME_KEY, NOTIFIED_KEY, VISITOR_KEY].map((k) => [k, localStorage.getItem(k)]);
+    const keep = [NOTIFY_KEY, REACTIONS_KEY, THEME_KEY, NOTIFIED_KEY, VISITOR_KEY, PUSH_HINT_KEY].map((k) => [k, localStorage.getItem(k)]);
     localStorage.clear();
     keep.forEach(([k, v]) => { if (v != null) localStorage.setItem(k, v); });
   }, []);
@@ -634,7 +678,36 @@ const Home = () => {
           </div>
 
           <div className="absolute top-[calc(env(safe-area-inset-top)+0.75rem)] right-3 z-[1000] flex flex-col gap-2">
-            <IconButton icon={faBell} onClick={showNotifySettings} label="Pengaturan notifikasi kajian terdekat" dot={notifySettings.enabled} />
+            {/* Wrapper so the hint is a sibling of the button rather than inside
+                it. The column is pinned to the right edge, so the bubble opens
+                leftwards -- above would run into the safe-area inset. */}
+            <div className="relative">
+              {showPushHint && (
+                <div
+                  role="status"
+                  style={{ animation: "kn-hint-in 420ms cubic-bezier(.22,1.4,.36,1) both" }}
+                  className="absolute right-full top-1/2 z-10 mr-2 flex w-max max-w-[min(60vw,13rem)] items-start gap-2 rounded-2xl border border-line bg-surface px-3 py-2 text-[13px] leading-snug text-ink shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)]"
+                >
+                  <button type="button" onClick={() => { dismissPushHint(); showNotifySettings(); }} className="text-left">
+                    Dapatkan pemberitahuan kajian terdekat
+                  </button>
+                  <button
+                    type="button"
+                    onClick={dismissPushHint}
+                    aria-label="Tutup info notifikasi"
+                    className="-mr-1 shrink-0 leading-none text-ink-dim hover:text-ink"
+                  >
+                    &times;
+                  </button>
+                </div>
+              )}
+              <IconButton
+                icon={faBell}
+                onClick={() => { dismissPushHint(); showNotifySettings(); }}
+                label="Pengaturan notifikasi kajian terdekat"
+                dot={notifySettings.enabled}
+              />
+            </div>
             <IconButton
               icon={showAllInfo ? faEyeSlash : faEye}
               onClick={() => setShowAllInfo(!showAllInfo)}

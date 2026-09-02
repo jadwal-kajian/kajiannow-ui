@@ -151,6 +151,32 @@ body {
   }
 }
 
+/* The notification hint arrives rather than blinking on: it spawns with a
+   spring overshoot while a blur clears, so the eye follows it to the bell it
+   points at. Adapted from beUI's tooltip motion (blur enter, spring spawn);
+   the blanket reduced-motion rule below collapses it to a plain appearance. */
+/* translateY(-50%) is repeated in every step on purpose: the element is
+   centred on the bell with top:50%, and an animation with `both` keeps its
+   final transform, so a Tailwind -translate-y-1/2 would be overwritten by the
+   last keyframe and the bubble would sit half its height too low. */
+@keyframes kn-hint-in {
+  0% {
+    opacity: 0;
+    transform: translate(10px, -50%) scale(0.94);
+    filter: blur(6px);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(-3px, -50%) scale(1.03);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+    filter: blur(0);
+  }
+}
+
 /* Keyboard focus ring — visible only for keyboard users (WCAG 2.4.7). */
 :focus-visible {
   outline: 2px solid var(--kn-accent);
