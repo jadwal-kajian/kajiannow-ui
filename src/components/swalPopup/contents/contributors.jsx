@@ -4,7 +4,7 @@ import { MODAL_SHELL, MODAL_CONTENT, ModalHeader, CloseButton } from "./modalSty
 
 function ContributorsPopup({ close }) {
   const contributors = [
-    { name: "@derrysigma", url: "https://instagram.com/derrysigma" },
+    { name: "@derryibndias", url: "https://instagram.com/derryibndias" },
     { name: "@ibnshadiq", url: "https://instagram.com/ibnshadiq" },
     { name: "@rejanuiss", url: "https://instagram.com/rejanuiss" },
     { name: "@installerpreview", url: "https://instagram.com/installerpreview" },
