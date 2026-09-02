@@ -54,7 +54,7 @@ function Toggle({ checked, disabled, onChange }) {
       aria-checked={checked}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative w-12 h-7 rounded-full shrink-0 transition-colors duration-200 disabled:opacity-40 ${
+      className={`group relative w-12 h-7 rounded-full shrink-0 transition-colors duration-200 disabled:opacity-40 ${
         checked ? "bg-[#7a5530]" : "bg-black/20"
       }`}
     >
@@ -63,7 +63,7 @@ function Toggle({ checked, disabled, onChange }) {
         // switch reads as a thing that moved instead of a value that
         // changed. Overshoot comes from the easing curve; the page's
         // reduced-motion rule collapses it to an instant change.
-        className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] ${
+        className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 group-active:scale-90 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           checked ? "translate-x-5" : "translate-x-0"
         }`}
       />

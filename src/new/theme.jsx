@@ -63,7 +63,7 @@ export const useTheme = () => useContext(ThemeContext);
 // Sun/moon toggle button matching the design's top-right control.
 /** One icon of the pair: present, or rotated out and blurred away. */
 const swapClass = (shown) =>
-  "absolute transition-all duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] " +
+  "absolute transition-all duration-300 ease-[var(--kn-ease-out)] " +
   (shown ? "opacity-100 rotate-0 scale-100 blur-0" : "opacity-0 -rotate-90 scale-75 blur-[2px]");
 
 export function ThemeToggle({ className = "" }) {
@@ -80,7 +80,7 @@ export function ThemeToggle({ className = "" }) {
         "shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform duration-200 " +
       // Same curve as the switch and the hint, so a press releases with the
       // same physics the rest of the app moves by.
-      "ease-[cubic-bezier(.34,1.56,.64,1)] " +
+      "ease-[var(--kn-ease-out)] " +
         className
       }
     >

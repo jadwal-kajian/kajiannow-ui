@@ -39,10 +39,10 @@ test("the notification switch springs rather than sliding at a constant rate", a
     const thumb = document.querySelector('.swal2-container [role="switch"] span');
     return getComputedStyle(thumb).transitionTimingFunction;
   });
-  // Overshoot means a control point above 1 — in cubic-bezier(x1,y1,x2,y2)
-  // that is y1. Tailwind's default curves top out at 1, so this distinguishes
-  // a spring from an ease.
-  expect(easing).toContain("cubic-bezier");
-  const [, y1] = easing.match(/cubic-bezier\(([^)]+)\)/)[1].split(",").map(Number);
-  expect(y1).toBeGreaterThan(1);
+  // beUI's EASE_OUT, not a bounce: every spring in that library sits at a
+  // damping ratio of 0.87-0.94, so the thumb arrives decisively and does not
+  // wobble. What this pins is that it is not a browser default either --
+  // their own note is that ease-in/ease-out "feel weak".
+  const [x1, y1, x2, y2] = easing.match(/cubic-bezier\(([^)]+)\)/)[1].split(",").map(Number);
+  expect([x1, y1, x2, y2]).toEqual([0.16, 1, 0.3, 1]);
 });

@@ -177,6 +177,44 @@ body {
   }
 }
 
+/* beUI's canonical ease-out (its lib/ease.ts EASE_OUT_CSS). Every spring in
+   that library sits at a damping ratio of 0.87-0.94 -- decisive rather than
+   bouncy -- and its own note is that the CSS defaults "feel weak". One token
+   so every control here moves the same way. */
+:root {
+  --kn-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* The notification hint, modelled on beUI's tooltip: scale and blur settle
+   over the spring while opacity runs its own faster track, so the bubble is
+   legible almost at once and still arrives rather than snapping on. No slide
+   and no overshoot -- neither is in the original.
+
+   translateY(-50%) is repeated in both steps because an animation with `both`
+   keeps its final transform: a Tailwind -translate-y-1/2 would be overwritten
+   by the last keyframe and leave the bubble half its height too low.
+
+   The blanket reduced-motion rule below collapses all of it. */
+@keyframes kn-hint-settle {
+  from {
+    transform: translateY(-50%) scale(0.9);
+    filter: blur(5px);
+  }
+  to {
+    transform: translateY(-50%) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes kn-hint-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Keyboard focus ring — visible only for keyboard users (WCAG 2.4.7). */
 :focus-visible {
   outline: 2px solid var(--kn-accent);

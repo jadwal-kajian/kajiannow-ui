@@ -135,7 +135,7 @@ function IconButton({ icon, onClick, label, active = false, dot = false, spin = 
       disabled={disabled}
       aria-label={label}
       title={label}
-      className={`relative w-11 h-11 flex items-center justify-center rounded-2xl border shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform duration-200 ease-[cubic-bezier(.34,1.56,.64,1)] disabled:opacity-70 ${
+      className={`relative w-11 h-11 flex items-center justify-center rounded-2xl border shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform duration-200 ease-[var(--kn-ease-out)] disabled:opacity-70 ${
         active ? "bg-accent text-accent-ink border-accent" : "bg-surface text-ink border-line"
       }`}
     >
@@ -685,7 +685,10 @@ const Home = () => {
               {showPushHint && (
                 <div
                   role="status"
-                  style={{ animation: "kn-hint-in 420ms cubic-bezier(.22,1.4,.36,1) both" }}
+                  style={{
+                    animation:
+                      "kn-hint-settle 260ms var(--kn-ease-out) both, kn-hint-fade 140ms var(--kn-ease-out) both",
+                  }}
                   className="absolute right-full top-1/2 z-10 mr-2 flex w-max max-w-[min(60vw,13rem)] items-start gap-2 rounded-2xl border border-line bg-surface px-3 py-2 text-[13px] leading-snug text-ink shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)]"
                 >
                   <button type="button" onClick={() => { dismissPushHint(); showNotifySettings(); }} className="text-left">
