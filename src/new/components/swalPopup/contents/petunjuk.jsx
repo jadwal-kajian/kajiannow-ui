@@ -110,7 +110,7 @@ function PetunjukPopup({ close }) {
         <Row
           icon={faBell}
           title="Notifikasi kajian terdekat"
-          desc="Aktifkan pemberitahuan saat ada kajian di dekat Anda yang akan segera dimulai — bisa berjalan walau situs ditutup. Atur radius dan waktu pengingat."
+          desc="Aktifkan pemberitahuan saat ada kajian di dekat Anda yang akan segera dimulai — tetap berjalan walau situs ditutup. Atur radius dan waktu pengingat."
         />
         <Row
           icon={faCommentDots}

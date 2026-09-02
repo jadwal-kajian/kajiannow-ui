@@ -4,8 +4,6 @@ import {
   faBell,
   faClock,
   faLocationDot,
-  faMoon,
-  faDesktop,
   faTriangleExclamation,
   faChevronDown,
 } from "@fortawesome/free-solid-svg-icons";
@@ -71,23 +69,27 @@ const NotifySettingsPopup = ({ settings, onSave, close, userLocation, push = {} 
   const [permission, setPermission] = useState(currentPermission());
   const [showHelp, setShowHelp] = useState(false);
 
-  // Background push (server-sent, works while the site is closed).
+  // Push is how a notification arrives, not a second feature to opt into: the
+  // service worker delivers whether or not the page is open, so it follows the
+  // one switch rather than having its own. Offering it separately implied you
+  // could be notified only while looking at the site, which is not a thing
+  // anyone wants and not how the delivery works.
   const { pushSupported, getIsSubscribed, subscribePush, unsubscribePush } = push;
-  const [pushOn, setPushOn] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
   const [pushError, setPushError] = useState("");
 
+  // An existing subscription is the stronger evidence of what is set up: the
+  // stored preference can be missing or stale, and showing the switch off for
+  // someone who is subscribed would have turned them off on the next save.
   useEffect(() => {
     let alive = true;
     if (pushSupported && getIsSubscribed) {
-      getIsSubscribed().then((on) => alive && setPushOn(on));
+      getIsSubscribed().then((on) => { if (alive && on) setEnabled(true); });
     }
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [pushSupported, getIsSubscribed]);
 
-  // Turning the in-tab feature on requires OS notification permission; ask for it.
+  // Turning notifications on requires OS notification permission; ask for it.
   const handleToggle = async (next) => {
     if (next && supported && Notification.permission !== "granted") {
       const result = await Notification.requestPermission();
@@ -108,7 +110,7 @@ const NotifySettingsPopup = ({ settings, onSave, close, userLocation, push = {} 
       setPushBusy(true);
       setPushError("");
       try {
-        if (pushOn) {
+        if (enabled && permission === "granted") {
           await subscribePush({ lat: userLocation?.lat, lng: userLocation?.lng, radiusKm: km, leadMinutes: mins });
         } else {
           await unsubscribePush();
@@ -120,7 +122,7 @@ const NotifySettingsPopup = ({ settings, onSave, close, userLocation, push = {} 
         } else if (err.message === "denied") {
           setPushError("Izin notifikasi ditolak.");
         } else {
-          setPushError("Gagal mengaktifkan notifikasi latar belakang. Coba lagi.");
+          setPushError("Gagal mengaktifkan notifikasi. Coba lagi.");
         }
         return;
       }
@@ -159,15 +161,13 @@ const NotifySettingsPopup = ({ settings, onSave, close, userLocation, push = {} 
           </div>
         )}
 
-        <ModalRow icon={faDesktop} title="Saat situs terbuka" subtitle="Notifikasi selama halaman dibuka">
-          <Toggle checked={enabled} disabled={!supported || blocked} onChange={handleToggle} />
+        <ModalRow
+          icon={faBell}
+          title="Notifikasi kajian terdekat"
+          subtitle={pushSupported ? "Tetap diberi tahu walau situs ditutup" : "Notifikasi selama halaman dibuka"}
+        >
+          <Toggle checked={enabled} disabled={!supported || blocked || pushBusy} onChange={handleToggle} />
         </ModalRow>
-
-        {pushSupported && (
-          <ModalRow icon={faMoon} title="Latar belakang" subtitle="Tetap diberi tahu walau situs ditutup">
-            <Toggle checked={pushOn} disabled={pushBusy} onChange={setPushOn} />
-          </ModalRow>
-        )}
 
         <ModalRow icon={faLocationDot} title="Jarak maksimal" subtitle="Radius pencarian kajian">
           <Stepper value={radiusKm} onChange={setRadiusKm} min={1} step={1} unit="km" />
@@ -201,7 +201,7 @@ const NotifySettingsPopup = ({ settings, onSave, close, userLocation, push = {} 
                 <li><span className="font-semibold">Windows:</span> Pengaturan → Sistem → Notifikasi → aktifkan untuk browser; matikan Focus Assist.</li>
                 <li><span className="font-semibold">macOS:</span> Pengaturan Sistem → Notifikasi → izinkan browser; matikan Fokus.</li>
                 <li><span className="font-semibold">Android:</span> Setelan → Aplikasi → browser → Notifikasi → aktif.</li>
-                <li><span className="font-semibold">iPhone:</span> notifikasi latar belakang hanya bekerja jika situs ditambahkan ke Layar Utama.</li>
+                <li><span className="font-semibold">iPhone:</span> notifikasi saat situs ditutup hanya bekerja jika situs ditambahkan ke Layar Utama.</li>
               </ul>
             </div>
           )}

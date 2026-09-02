@@ -78,7 +78,8 @@ const openNotifySettings = async (page) => {
 };
 
 const pushToggle = (page) =>
-  page.getByRole("switch").nth(1); // [0] = in-tab, [1] = background push
+  page.getByRole("switch").first(); // one switch now: push is the delivery,
+// not a second feature sitting beside an in-tab one.
 const saveBtn = (page) => page.getByRole("button", { name: /Simpan/ });
 
 test.describe("Web Push subscription", () => {
