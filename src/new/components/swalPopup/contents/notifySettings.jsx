@@ -36,7 +36,11 @@ function Toggle({ checked, disabled, onChange }) {
       }`}
     >
       <span
-        className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+        // Springs across rather than sliding at a constant rate, so the
+        // switch reads as a thing that moved instead of a value that
+        // changed. Overshoot comes from the easing curve; the page's
+        // reduced-motion rule collapses it to an instant change.
+        className={`absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] ${
           checked ? "translate-x-5" : "translate-x-0"
         }`}
       />

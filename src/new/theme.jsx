@@ -61,6 +61,11 @@ ThemeProvider.propTypes = {
 export const useTheme = () => useContext(ThemeContext);
 
 // Sun/moon toggle button matching the design's top-right control.
+/** One icon of the pair: present, or rotated out and blurred away. */
+const swapClass = (shown) =>
+  "absolute transition-all duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] " +
+  (shown ? "opacity-100 rotate-0 scale-100 blur-0" : "opacity-0 -rotate-90 scale-75 blur-[2px]");
+
 export function ThemeToggle({ className = "" }) {
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
@@ -72,11 +77,22 @@ export function ThemeToggle({ className = "" }) {
       title={isDark ? "Mode terang" : "Mode gelap"}
       className={
         "w-11 h-11 flex items-center justify-center rounded-2xl bg-surface border border-line text-ink " +
-        "shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform " +
+        "shadow-[0_8px_18px_-10px_rgba(60,40,10,.45)] active:scale-90 transition-transform duration-200 " +
+      // Same curve as the switch and the hint, so a press releases with the
+      // same physics the rest of the app moves by.
+      "ease-[cubic-bezier(.34,1.56,.64,1)] " +
         className
       }
     >
-      <FontAwesomeIcon icon={isDark ? faSun : faMoon} />
+      {/* The icon swapped instantly, which read as a redraw rather than a
+          change of state. Both are stacked and cross-faded, each rotating in
+          from the side it is heading toward while a slight blur clears --
+          beui.dev's action-swap and blur signature. Reduced motion collapses
+          it to the same instant swap it used to be. */}
+      <span className="relative grid h-4 w-4 place-items-center">
+        <FontAwesomeIcon icon={faSun} className={swapClass(isDark)} />
+        <FontAwesomeIcon icon={faMoon} className={swapClass(!isDark)} />
+      </span>
     </button>
   );
 }
