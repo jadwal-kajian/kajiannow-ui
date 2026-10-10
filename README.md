@@ -26,6 +26,14 @@ redesign at `/new/`.
 - 📍 **Location-aware** — filter by city, category, and date.
 - 📱 **Installable PWA** — add it to your home screen and use it like a native app.
 
+## Use the data
+
+The kajian schedules are open: free, no sign-up, no key. If you are building
+a bot, a widget for your masjid's website, a map or research, see
+**[docs/API.md](docs/API.md)** for the endpoints, examples and a few
+requests, or try it in the browser at
+[kajian-api.derrylab.com/docs](https://kajian-api.derrylab.com/docs).
+
 ## Tech stack
 
 | Area | Tools |
