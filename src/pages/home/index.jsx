@@ -493,7 +493,7 @@ const Home = () => {
   };
 
   return (
-    <div className="content">
+    <div className="content flex flex-col flex-grow">
       {/* Test-observable geolocation state (hidden; harmless in production) */}
       <div
         data-testid="geo-state"
@@ -544,8 +544,11 @@ const Home = () => {
         )}
       </div>
 
+      {/* The map takes the height the rest of the page leaves, never less than a
+          usable minimum. The box is there before the map so nothing jumps. */}
+      <div className="relative flex-grow min-h-[240px]">
       {mapCenter && (
-        <div className="relative">
+        <>
           <KajianMap
             locations={filteredData}
             ref={mapRef}
@@ -578,11 +581,12 @@ const Home = () => {
               </div>
             </div>
           )}
-        </div>
+        </>
       )}
-      <div className="last-update text-sm text-center text-[#f1dcb7] mt-3">Terakhir Update: {lastUpdate}</div>
+      </div>
+      <div className="last-update text-sm text-center text-[#f1dcb7] mt-2">Terakhir Update: {lastUpdate}</div>
 
-      <div className="action-area w-full flex flex-wrap justify-center items-center gap-2">
+      <div className="action-area w-full mt-2 flex flex-wrap justify-center items-center gap-2">
         {/* Opt-in preview of the redesigned UI. Plain link → full page load to
             the /new/ app (separate build entry); never a react-router Link. */}
         <a
@@ -704,14 +708,14 @@ const Home = () => {
           onClick={handleSetCenter}
           title="Arahkan peta ke lokasi Anda"
           disabled={isLocating}
-          className="my-3 py-2 px-5 flex items-center gap-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 font-semibold shadow-[inset_0_0_12px_-2px_#000] active:scale-95 transition-transform disabled:opacity-70"
+          className="h-11 px-5 flex items-center gap-2 border-none rounded-full bg-custom-yellow-1 text-custom-gray-1 font-semibold shadow-[inset_0_0_12px_-2px_#000] active:scale-95 transition-transform disabled:opacity-70"
         >
           <FontAwesomeIcon icon={isLocating ? faSpinner : faLocationCrosshairs} spin={isLocating} className="text-sm" />
           {isLocating ? "Mencari…" : "Lokasi Saya"}
         </button>
       </div>
 
-      <div className="quotes text-center my-4 md:mt-12 mb-8 text-[12px] md:text-base">
+      <div className="quotes text-center mt-3 mb-2 text-[12px] md:text-sm text-[#f1dcb7]">
         <i>Barangsiapa yang menempuh suatu jalan untuk mencari ilmu, maka Allah akan memudahkan baginya jalan menuju surga. (HR. Muslim)</i>
       </div>
     </div>

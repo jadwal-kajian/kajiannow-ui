@@ -51,6 +51,16 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userL
     }
   }, [center, zoom]);
 
+  // The map's box follows the page (it fills the height left over), and Leaflet
+  // only notices window resizes, so tell it whenever the box itself changes.
+  const box = useRef(null);
+  useEffect(() => {
+    if (!box.current || typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(() => mapInstance.current?.invalidateSize());
+    observer.observe(box.current);
+    return () => observer.disconnect();
+  }, []);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -64,12 +74,12 @@ const KajianMap = forwardRef(({ locations, showAllInfo, center, zoom = 12, userL
   );
 
   return (
-    <div style={{ position: "relative", marginBottom: 12 }}>
+    <div ref={box} style={{ position: "absolute", inset: 0 }}>
     <MapContainer
       ref={mapInstance}
       style={{
         width: "100%",
-        height: "calc(83vh - 185px)",
+        height: "100%",
         borderRadius: 12,
       }}
       center={center}

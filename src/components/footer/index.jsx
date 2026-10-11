@@ -7,6 +7,7 @@ import ContributorsPopup from "../swalPopup/contents/contributors";
 
 const MySwal = withReactContent(Swal);
 
+// Kept to one or two short lines so the home page fits a screen without scrolling.
 function Footer() {
   const showContributors = () => {
     MySwal.fire({
@@ -16,43 +17,41 @@ function Footer() {
   };
 
   return (
-    <footer className="flex flex-col items-center mt-auto">
-      <div className="flex gap-1">
-        <div className="copyright">&copy; {new Date().getFullYear()}</div>
+    <footer className="mt-auto pt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[12px] text-[#f1dcb7]/80">
+      <span className="flex gap-1">
+        <span className="copyright">&copy; {new Date().getFullYear()}</span>
         by
-        <button onClick={showContributors} className='text-blue-300'>
+        <button onClick={showContributors} className="text-blue-300">
           contributors
         </button>
-      </div>
-      <div className="flex gap-1">
+      </span>
+      <span className="flex gap-1">
         hosted on
-        <a href="https://derrylab.com" target="_blank" rel="noopener noreferrer" className='text-blue-300'>
+        <a href="https://derrylab.com" target="_blank" rel="noopener noreferrer" className="text-blue-300">
           derrylab.com
         </a>
-      </div>
-      <div className="flex items-center gap-3 mt-1">
-        <a
-          href="https://github.com/jadwal-kajian/kajiannow-ui"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-blue-300"
-          aria-label="Kode sumber di GitHub (open source)"
-        >
-          <FontAwesomeIcon icon={faGithub} />
-          open source
-        </a>
-        {/* For developers only: the schedules are an open API, documented in the repo. */}
-        <a
-          href="https://github.com/jadwal-kajian/kajiannow-ui/blob/master/docs/API.md"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-blue-300"
-          aria-label="API untuk developer: panduan memakai data jadwal kajian"
-        >
-          <FontAwesomeIcon icon={faCode} />
-          API untuk developer
-        </a>
-      </div>
+      </span>
+      <a
+        href="https://github.com/jadwal-kajian/kajiannow-ui"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1.5 text-blue-300"
+        aria-label="Kode sumber di GitHub (open source)"
+      >
+        <FontAwesomeIcon icon={faGithub} />
+        open source
+      </a>
+      {/* For developers only: the schedules are an open API, documented in the repo. */}
+      <a
+        href="https://github.com/jadwal-kajian/kajiannow-ui/blob/master/docs/API.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-1.5 text-blue-300"
+        aria-label="API untuk developer: panduan memakai data jadwal kajian"
+      >
+        <FontAwesomeIcon icon={faCode} />
+        API untuk developer
+      </a>
     </footer>
   );
 }
