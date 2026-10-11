@@ -15,7 +15,7 @@ function About() {
         <img src={logo_only} alt="KajianNow" className="w-16 h-16 rounded-2xl shadow-[0_0_16px_-4px_#ffe7be]" />
         <h1 className="mt-4 text-2xl font-bold tracking-wide">Tentang KajianNow</h1>
         <p className="mt-2 text-sm leading-relaxed text-custom-yellow-3/90">
-          KajianNow membantu kaum muslimin menemukan info kajian sunnah di Indonesia — kapan dan di mana, langsung dari peta.
+          KajianNow membantu kaum muslimin menemukan info kajian sunnah di Indonesia: kapan dan di mana, langsung dari peta.
         </p>
       </div>
 

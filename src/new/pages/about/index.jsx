@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronLeft, faMosque } from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faCode, faMosque } from "@fortawesome/free-solid-svg-icons";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
@@ -41,7 +41,7 @@ function About() {
           <h1 className="text-3xl font-extrabold">KajianNow</h1>
           <p className="mt-2.5 text-[15px] leading-relaxed text-ink-dim">
             Temukan kajian Islam di sekitarmu, langsung dari peta. Lihat mana yang sedang berlangsung, akan datang, atau
-            sudah selesai — lalu hadir dengan mudah.
+            sudah selesai, lalu hadir dengan mudah.
           </p>
 
           <div className="mt-6 text-[13px] font-extrabold">Cara kerja</div>
@@ -77,7 +77,23 @@ function About() {
             <div className="min-w-0">
               <div className="font-bold text-[14px]">Sumber terbuka di GitHub</div>
               <div className="text-[12px] leading-snug text-ink-dim">
-                KajianNow bersifat open source — lihat kode, laporkan masalah, atau berkontribusi.
+                KajianNow open source. Lihat kodenya, laporkan masalah, atau ikut berkontribusi.
+              </div>
+            </div>
+          </a>
+
+          {/* For developers only: the schedules are an open API, documented in the repo. */}
+          <a
+            href="https://github.com/jadwal-kajian/kajiannow-ui/blob/master/docs/API.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 flex items-center gap-3 rounded-2xl bg-surface border border-line p-4 active:scale-[.98] transition-transform"
+          >
+            <FontAwesomeIcon icon={faCode} className="text-xl text-ink w-6" />
+            <div className="min-w-0">
+              <div className="font-bold text-[14px]">Untuk developer: API terbuka</div>
+              <div className="text-[12px] leading-snug text-ink-dim">
+                Data jadwal ini bisa dipakai untuk bot grup, situs masjid, atau aplikasimu. Gratis, tanpa daftar.
               </div>
             </div>
           </a>
