@@ -8,7 +8,7 @@ const LaporPopup = ({ close }) => {
   const handleSend = () => {
     const phoneNumber = "+6287712607883"; // Replace with the actual phone number
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank");
+    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
   };
 
   return (

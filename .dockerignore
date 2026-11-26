@@ -1,0 +1,10 @@
+# Only dist ships, but the build stage copies the whole checkout: keep local
+# secrets, git history and host-built modules out of it.
+.git
+.env
+.env.*
+node_modules
+dist
+test-results
+playwright-report
+pw-local.config.js

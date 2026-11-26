@@ -20,7 +20,7 @@ import {
   faCalendarPlus,
   faCheck,
 } from "@fortawesome/free-solid-svg-icons";
-import { formatDate } from "../../../utils/helpers";
+import { formatDate, mapsUrlFor } from "../../../utils/helpers";
 import { formatTimeRange, getKajianStatus, getStartMoment, getEndMoment } from "../../../utils/kajianStatus";
 import { REACT } from "../../../services/api";
 import { hasReacted, setReacted, getCounts, setCounts } from "../../../utils/reactions";
@@ -324,18 +324,7 @@ function KajianPopup({ info, group, close }) {
   };
 
   const openGoogleMaps = (info) => {
-    if (info.gmaps_url) {
-      window.open(info.gmaps_url, "_blank");
-    } else if (info.lat && info.lng) {
-      window.open(`https://www.google.com/maps?q=${info.lat},${info.lng}`, "_blank");
-    } else {
-      const placeName = info.loc_name;
-      const address = info.addr;
-      window.open(
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(placeName + " " + address)}`,
-        "_blank"
-      );
-    }
+    window.open(mapsUrlFor(info), "_blank", "noopener,noreferrer");
   };
 
   // Fullscreen poster viewer. Portaled to <body> so it sits above the SweetAlert popup.

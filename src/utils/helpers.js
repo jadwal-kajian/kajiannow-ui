@@ -81,3 +81,37 @@ export const timeStartMapping = {
   bada_isya: "Ba'da Isya'",
   bada_jumat: "Ba'da Jum'at",
 };
+
+// gmaps_url is read out of community posts by a program, so it is not ours to
+// trust: a javascript: value opened with window.open ran as this site. Only an
+// https Google Maps link is opened from it; anything else falls back to a link
+// we build ourselves.
+const MAPS_PATH_PREFIX = new Map([
+  ["www.google.com", "/maps"],
+  ["google.com", "/maps"],
+  ["maps.google.com", "/"],
+  ["maps.app.goo.gl", "/"],
+  ["goo.gl", "/maps"],
+]);
+
+export const safeMapsUrl = (raw) => {
+  if (!raw) return null;
+  try {
+    const u = new URL(String(raw).trim());
+    const prefix = MAPS_PATH_PREFIX.get(u.hostname);
+    if (u.protocol !== "https:" || !prefix || !u.pathname.startsWith(prefix)) return null;
+    return u.href;
+  } catch {
+    return null;
+  }
+};
+
+export const mapsUrlFor = (info) => {
+  const own = safeMapsUrl(info.gmaps_url);
+  if (own) return own;
+  if (info.lat && info.lng) {
+    return `https://www.google.com/maps?q=${encodeURIComponent(info.lat)},${encodeURIComponent(info.lng)}`;
+  }
+  const query = `${info.loc_name || ""} ${info.addr || ""}`.trim();
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+};
