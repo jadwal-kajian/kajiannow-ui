@@ -11,7 +11,7 @@ ENV VITE_BASE_URL=$VITE_BASE_URL \
     VITE_VAPID_PUBLIC_KEY=$VITE_VAPID_PUBLIC_KEY
 
 COPY . .
-RUN npm install
+RUN npm ci
 # Fail loudly at build time rather than shipping a bundle that can't reach the API.
 RUN test -n "$VITE_BASE_URL" || (echo "ERROR: VITE_BASE_URL build-arg is required" && exit 1)
 RUN npm run build

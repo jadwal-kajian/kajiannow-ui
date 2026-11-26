@@ -41,6 +41,19 @@ function stripUiBase(url) {
   return url;
 }
 
+// A notification may only open a page of this site. The URL arrives in the push
+// payload, so a full URL or a "//host" one is dropped rather than followed off
+// the site.
+function sitePath(url) {
+  if (typeof url !== "string" || !url.startsWith("/") || url.startsWith("//") || url.startsWith("/\\")) return "/";
+  return url;
+}
+
+// The stored UI base is only ever one of the two UIs.
+function knownUiBase(base) {
+  return base === "/new" ? "/new" : "";
+}
+
 // Prefix a root-based URL with a UI base ("" classic, "/new" redesign).
 function withUiBase(url, base) {
   const root = stripUiBase(url);
@@ -91,7 +104,7 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   // Deep link is stored root-based ("/?k=...") or may already carry "/new"; both
   // are normalized, then routed to the user's preferred UI.
-  const raw = (event.notification.data && event.notification.data.url) || "/";
+  const raw = sitePath(event.notification.data && event.notification.data.url);
 
   event.waitUntil(
     (async () => {
@@ -107,7 +120,7 @@ self.addEventListener("notificationclick", (event) => {
         }
       }
       // Cold click (no tab) → open the user's last-preferred UI.
-      const base = await readUiBase();
+      const base = knownUiBase(await readUiBase());
       if (self.clients.openWindow) return self.clients.openWindow(withUiBase(raw, base));
     })()
   );
